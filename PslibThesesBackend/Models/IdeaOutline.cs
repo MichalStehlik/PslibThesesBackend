@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PslibThesesBackend.Models
 {
-    public class IdeaGoal
+    public class IdeaOutline
     {
         [Key]
         public int IdeaId { get; set; }

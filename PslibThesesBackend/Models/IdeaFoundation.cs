@@ -17,7 +17,7 @@ namespace PslibThesesBackend.Models
         public string Resources { get; set; }
         public string Subject { get; set; }
         [Required]
-        public User Author { get; set; }
+        public User User { get; set; }
         [Required]
         [Column(TypeName = "datetime2")]
         public DateTime Created { get; set; }

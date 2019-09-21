@@ -21,6 +21,6 @@ namespace PslibThesesBackend.Models
         [Required]
         public string Email { get; set; }
         [NotMapped]
-        public string Name { get { return FirstName + " " + (MiddleName != "" ? (MiddleName + " ") : "") + LastName; } }
+        public string Name { get { return FirstName + " " + (String.IsNullOrEmpty(MiddleName) ? "" : (MiddleName + " ")) + LastName; } }
     }
 }
