@@ -10,8 +10,8 @@ using PslibThesesBackend.Models;
 namespace PslibThesesBackend.Migrations
 {
     [DbContext(typeof(ThesesContext))]
-    [Migration("20190921201329_Initial")]
-    partial class Initial
+    [Migration("20190922130823_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -39,11 +39,13 @@ namespace PslibThesesBackend.Migrations
 
                     b.Property<string>("Resources");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate();
+
                     b.Property<string>("Subject");
 
                     b.Property<DateTime>("Updated")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
@@ -166,6 +168,24 @@ namespace PslibThesesBackend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "1111-1111-1111",
+                            Email = "michal.stehlik@pslib.cz",
+                            FirstName = "Michal",
+                            Gender = 0,
+                            LastName = "Stehlík"
+                        },
+                        new
+                        {
+                            Id = "1111-1111-1112",
+                            Email = "ot@drtina.cz",
+                            FirstName = "Otmar",
+                            Gender = 0,
+                            LastName = "Drtina"
+                        });
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.Idea", b =>

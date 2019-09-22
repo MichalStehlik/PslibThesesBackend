@@ -31,6 +31,8 @@ namespace PslibThesesBackend.Models
             modelBuilder.Entity<Target>().HasData(new Target { Id = 4, Text = "MP Strojírenství", Color = Color.Blue });
             modelBuilder.Entity<Target>().HasData(new Target { Id = 5, Text = "MP Elektrotechnika", Color = Color.Green });
             #endregion
+            modelBuilder.Entity<User>().HasData(new User { Id = "1111-1111-1111", FirstName = "Michal", LastName = "Stehlík", Email = "michal.stehlik@pslib.cz", Gender = Gender.Male });
+            modelBuilder.Entity<User>().HasData(new User { Id = "1111-1111-1112", FirstName = "Otmar", LastName = "Drtina", Email = "ot@drtina.cz", Gender = Gender.Male });
         }
     }
 }

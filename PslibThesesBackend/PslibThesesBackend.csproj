@@ -6,6 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20190922124530_IdeaDataTypes.cs" />
+    <Compile Remove="Migrations\20190922124530_IdeaDataTypes.Designer.cs" />
+    <Compile Remove="Migrations\20190922124829_IdeaDataTypes.cs" />
+    <Compile Remove="Migrations\20190922124829_IdeaDataTypes.Designer.cs" />
+    <Compile Remove="Migrations\20190922124959_IdeaDataTypes.cs" />
+    <Compile Remove="Migrations\20190922124959_IdeaDataTypes.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />

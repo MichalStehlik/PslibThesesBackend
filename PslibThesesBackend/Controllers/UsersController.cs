@@ -147,17 +147,24 @@ namespace PslibThesesBackend.Controllers
 
         // POST: /Users
         /// <summary>
-        /// Creates and stores a new user
+        /// Creates and stores a new user, unless user with this Id already exists
         /// </summary>
         /// <param name="user">User data</param>
-        /// <returns>HTTP 201</returns>
+        /// <returns>HTTP 201, 200</returns>
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            var existingUser = await _context.Users.FindAsync(user.Id);
+            if (existingUser == null)
+            {
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            }
+            else
+            {
+                return Ok(existingUser);
+            }
         }
 
         // DELETE: /Users/xxxx-xxxx-xxxx-xxxx

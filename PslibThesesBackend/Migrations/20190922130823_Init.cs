@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PslibThesesBackend.Migrations
 {
-    public partial class Initial : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -51,6 +51,7 @@ namespace PslibThesesBackend.Migrations
                     UserId = table.Column<string>(nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),
                     Participants = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
@@ -136,6 +137,15 @@ namespace PslibThesesBackend.Migrations
                     { 3, -65536, "MP IT" },
                     { 4, -16776961, "MP Strojírenství" },
                     { 5, -16744448, "MP Elektrotechnika" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "Users",
+                columns: new[] { "Id", "Email", "FirstName", "Gender", "LastName", "MiddleName" },
+                values: new object[,]
+                {
+                    { "1111-1111-1111", "michal.stehlik@pslib.cz", "Michal", 0, "Stehlík", null },
+                    { "1111-1111-1112", "ot@drtina.cz", "Otmar", 0, "Drtina", null }
                 });
 
             migrationBuilder.CreateIndex(

@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PslibThesesBackend.Models;
+using PslibThesesBackend.ViewModels;
 
 namespace PslibThesesBackend.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class IdeasController : ControllerBase
     {
@@ -20,14 +21,40 @@ namespace PslibThesesBackend.Controllers
             _context = context;
         }
 
-        // GET: api/Ideas
+        // GET: Ideas
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Idea>>> GetIdeas()
+        public async Task<ActionResult<IEnumerable<IdeaViewModel>>> GetIdeas(
+            string search = null, 
+            string name = null, 
+            string subject = null, 
+            string user = null, 
+            string firstname = null, 
+            string lastname = null, 
+            int? target = null, 
+            string order = "name", 
+            int page = 0, 
+            int pagesize = 0)
         {
-            return await _context.Ideas.ToListAsync();
+            IQueryable<IdeaViewModel> ideas = _context.Ideas.Select(i =>
+                new IdeaViewModel
+                {
+                    Id = i.Id,
+                    Name = i.Name,
+                    Description = i.Description,
+                    Subject = i.Subject,
+                    Resources = i.Resources,
+                    UserId = i.UserId,
+                    Participants = i.Participants,
+                    UserFirstName = i.User.FirstName,
+                    UserLastName = i.User.LastName,
+                    UserMiddleName = i.User.MiddleName,
+                    UserEmail = i.User.Email
+                }
+            );
+            return Ok(ideas.AsNoTracking());
         }
 
-        // GET: api/Ideas/5
+        // GET: Ideas/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Idea>> GetIdea(int id)
         {
@@ -41,7 +68,7 @@ namespace PslibThesesBackend.Controllers
             return idea;
         }
 
-        // PUT: api/Ideas/5
+        // PUT: Ideas/5
         [HttpPut("{id}")]
         public async Task<IActionResult> PutIdea(int id, Idea idea)
         {
@@ -67,21 +94,35 @@ namespace PslibThesesBackend.Controllers
                     throw;
                 }
             }
-
             return NoContent();
         }
 
-        // POST: api/Ideas
+        // POST: Ideas
         [HttpPost]
-        public async Task<ActionResult<Idea>> PostIdea(Idea idea)
+        public async Task<ActionResult<Idea>> PostIdea(IdeaInputModel ideaIM)
         {
+            var user = _context.Users.FindAsync(ideaIM.UserId).Result;
+            if (user == null)
+            {
+                return NotFound("User with Id equal to userId was not found");
+            }
+            var idea = new Idea {
+                Name = ideaIM.Name,
+                Description = ideaIM.Description,
+                Resources = ideaIM.Resources,
+                Subject = ideaIM.Subject,
+                Participants = ideaIM.Participants,
+                User = user,
+                Created = DateTime.Now,
+                Updated = DateTime.Now
+            };
             _context.Ideas.Add(idea);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetIdea", new { id = idea.Id }, idea);
         }
 
-        // DELETE: api/Ideas/5
+        // DELETE: Ideas/5
         [HttpDelete("{id}")]
         public async Task<ActionResult<Idea>> DeleteIdea(int id)
         {

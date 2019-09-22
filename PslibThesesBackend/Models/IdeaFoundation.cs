@@ -16,13 +16,17 @@ namespace PslibThesesBackend.Models
         public string Description { get; set; }
         public string Resources { get; set; }
         public string Subject { get; set; }
+        public string UserId { get; set; }
         [Required]
+        [ForeignKey("UserId")]
         public User User { get; set; }
         [Required]
         [Column(TypeName = "datetime2")]
         public DateTime Created { get; set; }
-        [Timestamp]
+        [Required]
         [Column(TypeName = "datetime2")]
         public DateTime Updated { get; set; }
+        [Timestamp]
+        public byte[] RowVersion { get; set; }
     }
 }
