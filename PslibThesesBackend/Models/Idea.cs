@@ -9,8 +9,9 @@ namespace PslibThesesBackend.Models
     public class Idea : IdeaFoundation
     {
         public int Participants { get; set; }
+        public bool Offered { get; set; }
         public ICollection<IdeaGoal> Goals { get; } = new List<IdeaGoal>();
-        public ICollection<IdeaOutline> Outlines { get; } = new List<IdeaOutline>();
+        public ICollection<IdeaContent> Contents { get; } = new List<IdeaContent>();
         public ICollection<IdeaTarget> Targets { get; } = new List<IdeaTarget>(); 
     }
 }

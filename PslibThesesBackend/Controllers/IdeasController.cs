@@ -23,20 +23,21 @@ namespace PslibThesesBackend.Controllers
 
         // GET: Ideas
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<IdeaViewModel>>> GetIdeas(
+        public ActionResult<IEnumerable<IdeaListViewModel>> GetIdeas(
             string search = null, 
             string name = null, 
             string subject = null, 
-            string user = null, 
+            string userId = null, 
             string firstname = null, 
             string lastname = null, 
-            int? target = null, 
+            int? target = null,
+            bool? offered = null,
             string order = "name", 
             int page = 0, 
             int pagesize = 0)
         {
-            IQueryable<IdeaViewModel> ideas = _context.Ideas.Select(i =>
-                new IdeaViewModel
+            IQueryable<IdeaListViewModel> ideas = _context.Ideas.Select(i =>
+                new IdeaListViewModel
                 {
                     Id = i.Id,
                     Name = i.Name,
@@ -48,15 +49,67 @@ namespace PslibThesesBackend.Controllers
                     UserFirstName = i.User.FirstName,
                     UserLastName = i.User.LastName,
                     UserMiddleName = i.User.MiddleName,
-                    UserEmail = i.User.Email
+                    UserEmail = i.User.Email,
+                    Offered = i.Offered,
+                    Updated = i.Updated,
+                    //Targets = i.Targets
                 }
-            );
-            return Ok(ideas.AsNoTracking());
+            ).Include("IdeaTargets").Include("Users");
+            int total = ideas.CountAsync().Result;
+            if (!String.IsNullOrEmpty(search))
+                ideas = ideas.Where(t => (t.Name.Contains(search)));
+            if (!String.IsNullOrEmpty(name))
+                ideas = ideas.Where(t => (t.Name.Contains(name)));
+            if (!String.IsNullOrEmpty(subject))
+                ideas = ideas.Where(t => (t.Subject.Contains(subject)));
+            if (!String.IsNullOrEmpty(firstname))
+                ideas = ideas.Where(t => (t.UserFirstName.Contains(firstname)));
+            if (!String.IsNullOrEmpty(lastname))
+                ideas = ideas.Where(t => (t.UserFirstName.Contains(lastname)));
+            if (!String.IsNullOrEmpty(userId))
+                ideas = ideas.Where(t => (t.UserId == userId));
+            if (offered != null)
+                ideas = ideas.Where(t => (t.Offered == offered));
+            int filtered = ideas.CountAsync().Result;
+            switch (order)
+            {
+                case "firstname":
+                    ideas = ideas.OrderBy(t => t.UserFirstName);
+                    break;
+                case "firstname_desc":
+                    ideas = ideas.OrderByDescending(t => t.UserFirstName);
+                    break;
+                case "lastname":
+                    ideas = ideas.OrderBy(t => t.UserLastName);
+                    break;
+                case "lastname_desc":
+                    ideas = ideas.OrderByDescending(t => t.UserLastName);
+                    break;
+                case "updated":
+                    ideas = ideas.OrderBy(t => t.Updated);
+                    break;
+                case "updated_desc":
+                    ideas = ideas.OrderByDescending(t => t.Updated);
+                    break;
+                case "name_desc":
+                    ideas = ideas.OrderByDescending(t => t.Name);
+                    break;
+                case "name":
+                default:
+                    ideas = ideas.OrderBy(t => t.Name);
+                    break;
+            }
+            if (pagesize != 0)
+            {
+                ideas = ideas.Skip(page * pagesize).Take(pagesize);
+            }
+            var count = ideas.CountAsync().Result;
+            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = ideas.AsNoTracking() });
         }
 
         // GET: Ideas/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Idea>> GetIdea(int id)
+        public async Task<ActionResult<IdeaViewModel>> GetIdea(int id)
         {
             var idea = await _context.Ideas.FindAsync(id);
 
@@ -65,19 +118,81 @@ namespace PslibThesesBackend.Controllers
                 return NotFound();
             }
 
-            return idea;
+            return new IdeaViewModel {
+                Name = idea.Name,
+                Description = idea.Description,
+                Subject = idea.Subject,
+                Resources = idea.Resources,
+                UserId = idea.UserId,
+                Participants = idea.Participants,
+                Updated = idea.Updated,
+                Created = idea.Created,
+                Offered = idea.Offered
+            };
         }
 
         // PUT: Ideas/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutIdea(int id, Idea idea)
+        public async Task<IActionResult> PutIdea(int id, IdeaInputModel input)
         {
-            if (id != idea.Id)
+            if (id != input.Id)
             {
                 return BadRequest();
             }
 
+            var idea = await _context.Ideas.FindAsync(id);
             _context.Entry(idea).State = EntityState.Modified;
+            if (idea == null)
+            {
+                return NotFound();
+            }
+
+            var user = _context.Users.FindAsync(input.UserId).Result;
+            if (user == null)
+            {
+                return NotFound("User with Id equal to userId was not found");
+            }
+
+            idea.Name = input.Name;
+            idea.Description = input.Description;
+            idea.Resources = input.Resources;
+            idea.Subject = input.Subject;
+            idea.Participants = input.Participants;
+            idea.User = user;
+            idea.Updated = DateTime.Now;
+            idea.Offered = input.Offered;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!IdeaExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
+        }
+
+        // PUT: Ideas/5/offered
+        [HttpPut("{id}/offered")]
+        public async Task<IActionResult> PutIdeaOffered(int id, bool offered)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            _context.Entry(idea).State = EntityState.Modified;
+            if (idea == null)
+            {
+                return NotFound();
+            }
+
+            idea.Updated = DateTime.Now;
+            idea.Offered = offered;
 
             try
             {
@@ -114,7 +229,8 @@ namespace PslibThesesBackend.Controllers
                 Participants = ideaIM.Participants,
                 User = user,
                 Created = DateTime.Now,
-                Updated = DateTime.Now
+                Updated = DateTime.Now,
+                Offered = ideaIM.Offered
             };
             _context.Ideas.Add(idea);
             await _context.SaveChangesAsync();
@@ -135,12 +251,125 @@ namespace PslibThesesBackend.Controllers
             _context.Ideas.Remove(idea);
             await _context.SaveChangesAsync();
 
-            return idea;
+            return Ok(idea);
         }
 
         private bool IdeaExists(int id)
         {
             return _context.Ideas.Any(e => e.Id == id);
         }
+
+        // --- targets
+        // GET: Ideas/5/targets
+        [HttpGet("{id}/targets")]
+        public async Task<ActionResult<IEnumerable<Target>>> GetIdeaTargets(int id)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+
+            var ideaTargets = _context.IdeaTargets
+                .Where(it => it.Idea == idea)
+                .OrderBy(it => it.Target.Text)
+                .Select(it => 
+                new Target { Text = it.Target.Text, Color = it.Target.Color, Id = it.Target.Id }
+            ).ToList();
+            return Ok(ideaTargets);
+        }
+
+        // POST: Ideas/5/targets
+        [HttpPost("{id}/targets")]
+        public async Task<ActionResult<IdeaTarget>> PostIdeaTarget(int id, [FromBody] int targetId)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+            var target = await _context.Targets.FindAsync(targetId);
+            if (target == null)
+            {
+                return NotFound("target not found");
+            }
+            var ideaTarget = _context.IdeaTargets.Where(it => it.Idea == idea && it.Target == target).FirstOrDefault();
+            if (ideaTarget == null)
+            {
+                var newIdeaTarget = new IdeaTarget
+                {
+                    Idea = idea,
+                    Target = target
+                };
+                _context.IdeaTargets.Add(newIdeaTarget);
+                await _context.SaveChangesAsync();
+                return CreatedAtAction("GetIdeaTargets", new { id = idea.Id });
+            }
+            else
+            {
+                return NoContent();
+            }
+        }
+
+        // DELETE: Ideas/5/targets/3
+        [HttpGet("{id}/targets/{targetId}")]
+        public async Task<ActionResult<IdeaTarget>> DeleteIdeaTarget(int id, int targetId)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+            var target = await _context.Targets.FindAsync(targetId);
+            if (target == null)
+            {
+                return NotFound("target not found");
+            }
+            var ideaTarget = _context.IdeaTargets.Where(it => it.Idea == idea && it.Target == target).FirstOrDefault();
+            if (ideaTarget == null)
+            {
+                _context.IdeaTargets.Remove(ideaTarget);
+                return Ok(ideaTarget);
+            }
+            else
+            {
+                return NotFound("idea does not contain this specific target");
+            }
+        }
+
+        // --- goals
+        // GET: Ideas/5/goals
+        [HttpGet("{id}/goals")]
+        public async Task<ActionResult<IEnumerable<IdeaGoal>>> GetIdeaGoals(int id)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+
+            var goals = _context.IdeaGoals.Where(ig => ig.Idea == idea).OrderBy(ig => ig.Order).ToList();
+            return Ok(goals);
+        }
+
+        // POST: Ideas/5/goals
+
+        // PUT: Ideas/5/goals/1
+
+        // PUT: Ideas/5/goals/1/moveto/2
+
+        // DELETE: Ideas/5/goals/1
+
+        // --- contents
+        // GET: Ideas/5/contents
+
+        // POST: Ideas/5/contents
+
+        // PUT: Ideas/5/contents/1
+
+        // PUT: Ideas/5/contents/1/moveto/2
+
+        // DELETE: Ideas/5/contents/1
     }
 }

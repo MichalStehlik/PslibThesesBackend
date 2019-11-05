@@ -16,13 +16,14 @@ namespace PslibThesesBackend.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Idea> Ideas { get; set; }
         public DbSet<IdeaGoal> IdeaGoals { get; set; }
-        public DbSet<IdeaOutline> IdeaOutlines { get; set; }
+        public DbSet<IdeaContent> IdeaOutlines { get; set; }
+        public DbSet<IdeaTarget> IdeaTargets { get; set; }
         public DbSet<Target> Targets { get; set; }
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<IdeaGoal>().HasKey(ig => new { ig.IdeaId, ig.Order });
-            modelBuilder.Entity<IdeaOutline>().HasKey(io => new { io.IdeaId, io.Order });
+            modelBuilder.Entity<IdeaContent>().HasKey(io => new { io.IdeaId, io.Order });
             modelBuilder.Entity<IdeaTarget>().HasKey(it => new { it.IdeaId, it.TargetId });
             #region IdeaTargetSeed
             modelBuilder.Entity<Target>().HasData(new Target { Id = 1, Text = "MP Lyceum", Color = Color.Yellow});
@@ -31,8 +32,6 @@ namespace PslibThesesBackend.Models
             modelBuilder.Entity<Target>().HasData(new Target { Id = 4, Text = "MP Strojírenství", Color = Color.Blue });
             modelBuilder.Entity<Target>().HasData(new Target { Id = 5, Text = "MP Elektrotechnika", Color = Color.Green });
             #endregion
-            modelBuilder.Entity<User>().HasData(new User { Id = "1111-1111-1111", FirstName = "Michal", LastName = "Stehlík", Email = "michal.stehlik@pslib.cz", Gender = Gender.Male });
-            modelBuilder.Entity<User>().HasData(new User { Id = "1111-1111-1112", FirstName = "Otmar", LastName = "Drtina", Email = "ot@drtina.cz", Gender = Gender.Male });
         }
     }
 }

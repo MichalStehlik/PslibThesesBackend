@@ -1,10 +1,9 @@
 ﻿using System;
-using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PslibThesesBackend.Migrations
 {
-    public partial class Init : Migration
+    public partial class Initial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -13,7 +12,7 @@ namespace PslibThesesBackend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Text = table.Column<string>(nullable: false),
                     RGB = table.Column<int>(nullable: false)
                 },
@@ -43,7 +42,7 @@ namespace PslibThesesBackend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: true),
                     Resources = table.Column<string>(nullable: true),
@@ -52,7 +51,8 @@ namespace PslibThesesBackend.Migrations
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),
-                    Participants = table.Column<int>(nullable: false)
+                    Participants = table.Column<int>(nullable: false),
+                    Offered = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -104,7 +104,7 @@ namespace PslibThesesBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "IdeaTarget",
+                name: "IdeaTargets",
                 columns: table => new
                 {
                     IdeaId = table.Column<int>(nullable: false),
@@ -112,15 +112,15 @@ namespace PslibThesesBackend.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_IdeaTarget", x => new { x.IdeaId, x.TargetId });
+                    table.PrimaryKey("PK_IdeaTargets", x => new { x.IdeaId, x.TargetId });
                     table.ForeignKey(
-                        name: "FK_IdeaTarget_Ideas_IdeaId",
+                        name: "FK_IdeaTargets_Ideas_IdeaId",
                         column: x => x.IdeaId,
                         principalTable: "Ideas",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_IdeaTarget_Targets_TargetId",
+                        name: "FK_IdeaTargets_Targets_TargetId",
                         column: x => x.TargetId,
                         principalTable: "Targets",
                         principalColumn: "Id",
@@ -139,23 +139,14 @@ namespace PslibThesesBackend.Migrations
                     { 5, -16744448, "MP Elektrotechnika" }
                 });
 
-            migrationBuilder.InsertData(
-                table: "Users",
-                columns: new[] { "Id", "Email", "FirstName", "Gender", "LastName", "MiddleName" },
-                values: new object[,]
-                {
-                    { "1111-1111-1111", "michal.stehlik@pslib.cz", "Michal", 0, "Stehlík", null },
-                    { "1111-1111-1112", "ot@drtina.cz", "Otmar", 0, "Drtina", null }
-                });
-
             migrationBuilder.CreateIndex(
                 name: "IX_Ideas_UserId",
                 table: "Ideas",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_IdeaTarget_TargetId",
-                table: "IdeaTarget",
+                name: "IX_IdeaTargets_TargetId",
+                table: "IdeaTargets",
                 column: "TargetId");
         }
 
@@ -168,7 +159,7 @@ namespace PslibThesesBackend.Migrations
                 name: "IdeaOutlines");
 
             migrationBuilder.DropTable(
-                name: "IdeaTarget");
+                name: "IdeaTargets");
 
             migrationBuilder.DropTable(
                 name: "Ideas");

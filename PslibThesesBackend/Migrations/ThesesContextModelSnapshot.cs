@@ -15,7 +15,7 @@ namespace PslibThesesBackend.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "2.2.6-servicing-10079")
+                .HasAnnotation("ProductVersion", "3.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -23,31 +23,42 @@ namespace PslibThesesBackend.Migrations
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Description");
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Participants");
+                    b.Property<bool>("Offered")
+                        .HasColumnType("bit");
 
-                    b.Property<string>("Resources");
+                    b.Property<int>("Participants")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Resources")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate();
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
 
-                    b.Property<string>("Subject");
+                    b.Property<string>("Subject")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime>("Updated")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("UserId")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -56,57 +67,68 @@ namespace PslibThesesBackend.Migrations
                     b.ToTable("Ideas");
                 });
 
-            modelBuilder.Entity("PslibThesesBackend.Models.IdeaGoal", b =>
+            modelBuilder.Entity("PslibThesesBackend.Models.IdeaContent", b =>
                 {
-                    b.Property<int>("IdeaId");
+                    b.Property<int>("IdeaId")
+                        .HasColumnType("int");
 
-                    b.Property<int>("Order");
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
 
                     b.Property<string>("Text")
-                        .IsRequired();
-
-                    b.HasKey("IdeaId", "Order");
-
-                    b.ToTable("IdeaGoals");
-                });
-
-            modelBuilder.Entity("PslibThesesBackend.Models.IdeaOutline", b =>
-                {
-                    b.Property<int>("IdeaId");
-
-                    b.Property<int>("Order");
-
-                    b.Property<string>("Text")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("IdeaId", "Order");
 
                     b.ToTable("IdeaOutlines");
                 });
 
+            modelBuilder.Entity("PslibThesesBackend.Models.IdeaGoal", b =>
+                {
+                    b.Property<int>("IdeaId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdeaId", "Order");
+
+                    b.ToTable("IdeaGoals");
+                });
+
             modelBuilder.Entity("PslibThesesBackend.Models.IdeaTarget", b =>
                 {
-                    b.Property<int>("IdeaId");
+                    b.Property<int>("IdeaId")
+                        .HasColumnType("int");
 
-                    b.Property<int>("TargetId");
+                    b.Property<int>("TargetId")
+                        .HasColumnType("int");
 
                     b.HasKey("IdeaId", "TargetId");
 
                     b.HasIndex("TargetId");
 
-                    b.ToTable("IdeaTarget");
+                    b.ToTable("IdeaTargets");
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.Target", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<int>("RGB");
+                    b.Property<int>("RGB")
+                        .HasColumnType("int");
 
                     b.Property<string>("Text")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
@@ -148,42 +170,29 @@ namespace PslibThesesBackend.Migrations
             modelBuilder.Entity("PslibThesesBackend.Models.User", b =>
                 {
                     b.Property<string>("Id")
-                        .ValueGeneratedOnAdd();
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("Email")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Gender");
+                    b.Property<int>("Gender")
+                        .HasColumnType("int");
 
                     b.Property<string>("LastName")
-                        .IsRequired();
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("MiddleName");
+                    b.Property<string>("MiddleName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
                     b.ToTable("Users");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = "1111-1111-1111",
-                            Email = "michal.stehlik@pslib.cz",
-                            FirstName = "Michal",
-                            Gender = 0,
-                            LastName = "Stehlík"
-                        },
-                        new
-                        {
-                            Id = "1111-1111-1112",
-                            Email = "ot@drtina.cz",
-                            FirstName = "Otmar",
-                            Gender = 0,
-                            LastName = "Drtina"
-                        });
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.Idea", b =>
@@ -191,7 +200,17 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PslibThesesBackend.Models.IdeaContent", b =>
+                {
+                    b.HasOne("PslibThesesBackend.Models.Idea", "Idea")
+                        .WithMany("Contents")
+                        .HasForeignKey("IdeaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.IdeaGoal", b =>
@@ -199,28 +218,23 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.Idea", "Idea")
                         .WithMany("Goals")
                         .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("PslibThesesBackend.Models.IdeaOutline", b =>
-                {
-                    b.HasOne("PslibThesesBackend.Models.Idea", "Idea")
-                        .WithMany("Outlines")
-                        .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.IdeaTarget", b =>
                 {
-                    b.HasOne("PslibThesesBackend.Models.Idea", "idea")
+                    b.HasOne("PslibThesesBackend.Models.Idea", "Idea")
                         .WithMany("Targets")
                         .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("PslibThesesBackend.Models.Target", "Target")
                         .WithMany("Ideas")
                         .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

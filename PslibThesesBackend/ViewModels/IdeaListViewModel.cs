@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PslibThesesBackend.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PslibThesesBackend.ViewModels
 {
-    public class IdeaViewModel
+    public class IdeaListViewModel
     {
         [Required]
         public int Id { get; set; }
@@ -17,9 +18,13 @@ namespace PslibThesesBackend.ViewModels
         public string Subject { get; set; }
         [Required]
         public string UserId { get; set; }
+        public string UserFirstName { get; set; }
+        public string UserLastName { get; set; }
+        public string UserMiddleName { get; set; }
+        public string UserEmail { get; set; }
         public int Participants { get; set; } = 1;
-        public DateTime Created { get; set; }
-        public DateTime Updated { get; set; }
         public bool Offered { get; set; }
+        public List<Target> Targets { get; set; } = new List<Target>();
+        public DateTime Updated { get; set; }
     }
 }
