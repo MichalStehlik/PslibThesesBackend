@@ -1,0 +1,69 @@
+﻿@using Authority.Data
+@using System.Security.Claims
+@model ExtendedUserViewModel
+<div class="container">
+    @if (User != null)
+    {
+    <h1>Uživatel</h1>
+    <div class="row">
+        <div class="col col-12 col-md-6">
+            <h2>Obecné informace</h2>
+            <dl>
+                <dt>Jméno a příjmení</dt>
+                <dd>@Model.User.FirstName @Model.User.MiddleName @Model.User.LastName</dd>
+                <dt>Uživatelské jméno</dt>
+                <dd>@Model.User.UserName</dd>
+                <dt>Id</dt>
+                <dd>@Model.User.Id</dd>
+                <dt>Pohlaví</dt>
+                <dd>@(Model.User.Gender == 0 ? "Muž" : "Žena")</dd>
+                <dt>Email</dt>
+                <dd>@Model.User.Email (@(Model.User.EmailConfirmed != false ? "Potvrzený" : "Nepotvrzený"))</dd>
+                <dt>Telefonní číslo</dt>
+                <dd>@((Model.User.PhoneNumber == null && Model.User.PhoneNumber != "") ? Model.User.PhoneNumber : "Není nastaveno") (@(Model.User.PhoneNumberConfirmed != false ? "Potvrzené" : "Nepotvrzené"))</dd>
+            </dl>
+        </div>
+        <div class="col col-12 col-md-6">
+            <h2>Role</h2>
+            @if (Model.Roles.Count > 0)
+            {
+                <ul>
+                    @foreach (string role in Model.Roles)
+                    {
+                        <li>@role</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p>Uživatel nemá žádné role.</p>
+            }
+            <h2>Claimy</h2>
+            @if (Model.Claims.Count > 0)
+            {
+        <dl>
+            @foreach (Claim claim in Model.Claims)
+            {
+                <dt>@claim.Type</dt>
+                <dd>@claim.Value</dd>
+            }
+        </dl>
+            }
+            else
+            {
+                <p>Uživatel nemá žádné zvláštní claimy.</p>
+            }
+        </div>
+    </div>
+    <div>
+        <a asp-controller="Account" asp-action="Edit" class="btn btn-primary">Editace</a>
+        <a asp-controller="Account" asp-action="Password" class="btn btn-warning">Heslo</a>
+        <a asp-controller="Grants" asp-action="Index" class="btn btn-info">Přidělená oprávnění</a>
+        <a asp-controller="Diagnostics" asp-action="Index" class="btn btn-info">Přihlašovací údaje</a>
+    </div>
+    }
+    else
+    {
+        <div><a asp-action="Login" asp-controller="Account" class="btn btn-secondary btn-lg btn-block">Přihlásit</a></div>
+    }
+</div>

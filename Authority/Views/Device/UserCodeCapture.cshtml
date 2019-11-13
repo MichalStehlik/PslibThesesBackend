@@ -1,0 +1,10 @@
+@model string
+
+<div class="page-header">
+    <h1>Ovìøení kódu</h1>
+    <p>Zadejte kód, kterı je zobrazenı na vašem zaøízení.</p>
+    <form asp-action="UserCodeCapture" method="post">
+        <input for="userCode" name="userCode" />
+        <button class="btn btn-primary">Ovìøit</button>
+    </form>
+</div>

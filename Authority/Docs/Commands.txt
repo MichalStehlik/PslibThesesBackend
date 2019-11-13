@@ -1,0 +1,3 @@
+﻿Update-Database -Context ApplicationDbContext
+Update-Database -Context ConfigurationDbContext
+Update-Database -Context PersistedGrantDbContext

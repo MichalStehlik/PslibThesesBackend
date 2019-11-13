@@ -1,0 +1,53 @@
+﻿@using Authority.Data
+@using X.PagedList
+@using X.PagedList.Mvc.Core
+@model X.PagedList.IPagedList<ApplicationRole>
+@{
+    ViewData["Title"] = "Seznam rolí";
+}
+<h2>Seznam rolí uživatelů</h2>
+@if (TempData.ContainsKey("SuccessMessage"))
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+<div><a class="btn btn-success m-1" asp-action="Create">Nová</a></div>
+<form class="form-inline p-1" asp-action="Index" method="get">
+    <label class="mr-sm-2" for="searchString">Název</label>
+    <input type="text" class="form-control mb-2 mr-sm-2 mb-sm-0" id="searchString" name="searchString" placeholder="část názvu" value="@ViewBag.CurrentFilter" />
+    <button type="submit" class="btn btn-primary">Vybrat</button> <a class="btn btn-secondary" asp-action="Index">Vše</a>
+</form>
+
+@if (Model.Count == 0)
+{
+    <p>Žádné role nejsou.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead>
+                <tr>
+                    <th>@Html.ActionLink("Název", "Index", new { order = ViewBag.NameSortParm })</th>
+                    <th>Akce</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var role in Model)
+                {
+                    <tr>
+                        <td>@role.Name</td>
+                        <td>
+                            <a class="btn btn-info btn-sm" asp-action="Details" asp-route-id="@role.Id">Podrobnosti</a>
+                            <a class="btn btn-primary btn-sm" asp-action="Edit" asp-route-id="@role.Id">Upravit</a>
+                            <a class="btn btn-danger btn-sm" asp-action="Delete" asp-route-id="@role.Id">Odstranit</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="row">
+        <div class="col-md"> @(Model.PageCount < Model.PageNumber ? 0 : Model.PageNumber) z @Model.PageCount </div>
+        <div class="col-md"> @Html.PagedListPager(Model, page => Url.Action("Index", new { page, sortOrder = ViewBag.CurrentSort, currentFilter = ViewBag.CurrentFilter }), new X.PagedList.Mvc.Common.PagedListRenderOptionsBase { LiElementClasses = new string[] { "page-item" }, PageClasses = new string[] { "page-link" } }) </div>
+    </div>
+}

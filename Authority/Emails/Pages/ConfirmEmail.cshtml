@@ -1,0 +1,20 @@
+﻿@using Authority.Emails.ViewModels
+@model ConfirmEmailViewModel
+@{
+    ViewData["Title"] = "Potvrzení adresy";
+}
+@if (Model.User.Gender == Authority.Data.Gender.Male)
+{
+    <p>Milý uživateli,</p>
+}
+else
+{
+    <p>Milá uživatelko,</p>
+}
+<p>zaregistrovali jsme žádost o potvrzení existence a vlastnictví emailové adresy.</p>
+<p>K potvrzení již stačí jen kliknout na následující odkaz.</p>
+<p>Za potvrzení adresy předem děkujeme.</p>
+<div style="text-align:center">
+    <a style="display:inline-block; padding: 10px; text-decoration:none; color:white; background-color: green;" href="@Html.Raw(Model.ConfirmEmailUrl)">Potvrdit email</a>
+</div>
+<p style="color: red; word-wrap: break-word"><code>@Model.ConfirmationCode</code></p>

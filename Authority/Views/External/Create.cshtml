@@ -1,0 +1,51 @@
+﻿@model CreateExternalInputModel
+@using Authority.Data
+
+<div class="register-page">
+    <div class="container">
+        <h1>Registrace nového účtu přes externího poskytovatele</h1>
+        <p>Nepodařilo se propojit Vámi poskytnuté údaje s žádným existujícím účtem. Bude tedy nutné vytvořit nový.</p>
+        <partial name="_ValidationSummary" />
+        <form asp-route-provider="@Model.Provider" asp-route-providerUserId="@Model.ProviderUserId" asp-route-claims="@Model.Claims" method="post" asp-route="CreateExternal">
+            <div class="form-group">
+                <label asp-for="FirstName"></label>
+                <input asp-for="FirstName" class="form-control" />
+                <span asp-validation-for="FirstName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="MiddleName"></label>
+                <input asp-for="MiddleName" class="form-control" />
+                <span asp-validation-for="MiddleName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="LastName"></label>
+                <input asp-for="LastName" class="form-control" />
+                <span asp-validation-for="LastName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Gender"></label>
+                <div>
+                    <label class="radio-inline">
+                        @Html.RadioButtonFor(x => x.Gender, Gender.Male) Muž
+                    </label>
+                    <label class="radio-inline">
+                        @Html.RadioButtonFor(x => x.Gender, Gender.Female) Žena
+                    </label>
+                </div>
+                <span asp-validation-for="Gender" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="UserName"></label>
+                <input asp-for="UserName" class="form-control" />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Email"></label>
+                <input asp-for="Email" class="form-control" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary" name="button" value="login">Registrace</button>
+        </form>
+    </div>
+</div>
+

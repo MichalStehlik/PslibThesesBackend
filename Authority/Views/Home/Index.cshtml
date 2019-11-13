@@ -1,0 +1,30 @@
+﻿@{
+    var version = typeof(IdentityServer4.Hosting.IdentityServerMiddleware).Assembly.GetName().Version.ToString();
+}
+
+<div class="welcome-page">
+    <div class="row page-header">
+        <div class="col-sm-10">
+            <h1>Uživatelské účty</h1>
+            <p>Správa uživatelských účtů je založena na <a href="https://github.com/identityserver/IdentityServer4"><b>IdentityServer4</b></a> ve verzi @version.</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6">
+            <ul>
+                <li><a href="~/.well-known/openid-configuration">Discovery dokument</a></li>
+            </ul>
+        </div>
+        <div class="col-sm-6">
+            <ul>
+                <li><a asp-action="Index" asp-controller="Grants">Aktuálně schválená oprávnění</a></li>
+                @if (/*User.HasClaim(c => { return (c.Type == "admin"); })*/ User.IsInRole("Administrátor"))
+                {
+                    <li><a href="~/Roles">Správa rolí</a></li>
+                    <li><a href="~/Users">Správa uživatelů</a></li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>

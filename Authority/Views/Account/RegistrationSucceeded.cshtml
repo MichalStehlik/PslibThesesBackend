@@ -1,0 +1,14 @@
+﻿@model RegisterInputModel
+
+<div class="registration-page">
+    <div class="page-header container">
+        <h1>Účet vytvořen</h1>
+        <p>Byl vytvořen nový uživatelský účet <b>@Model.UserName</b>. Aby ho bylo možné používat, je potřeba registraci dokončit.</p>
+        <p>To uděláte takto:</p>
+        <ol>
+            <li>Na adresu <b>@Model.Email</b> byl zaslán potvrzovací email. V něm se nachází potvrzovací kód a tlačítko pomocí kterého potvrdíte vlastnictví této emailové adresy.</li>
+            <li>Pak se můžete na přihlašovací obrazovce přihlásit do aplikace.</li>
+        </ol>
+        <div><a asp-action="Login" asp-route-returnUrl="@Model.ReturnUrl">Přihlášení uživatele</a></div>
+    </div>
+</div>

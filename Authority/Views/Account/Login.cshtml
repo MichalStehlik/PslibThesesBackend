@@ -1,0 +1,83 @@
+﻿@model LoginViewModel
+
+<div class="login-page">
+    <div class="page-header">
+        <h1>Přihlášení</h1>
+    </div>
+
+    <partial name="_ValidationSummary" />
+
+    <div class="row">
+
+        @if (Model.VisibleExternalProviders.Any())
+        {
+            <div class="col-md-6 col-sm-6 external-providers">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">Pomocí účtu</h2>
+                        @foreach (var provider in Model.VisibleExternalProviders)
+                        {
+                            <div>
+                                <a class="btn btn-secondary btn-lg btn-block @provider.DisplayName"
+                                   asp-controller="External"
+                                   asp-action="Challenge"
+                                   asp-route-provider="@provider.AuthenticationScheme"
+                                   asp-route-returnUrl="@Model.ReturnUrl">
+                                    @provider.DisplayName
+                                </a>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Model.EnableLocalLogin)
+        {
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h2 class="card-title">Přes lokální účet</h2>
+                        <form asp-route="Login">
+                            <input type="hidden" asp-for="ReturnUrl" />
+                            <fieldset>
+                                <div class="form-group">
+                                    <label asp-for="Username"></label>
+                                    <input class="form-control" placeholder="Uživatelské jméno" asp-for="Username" autofocus>
+                                </div>
+                                <div class="form-group">
+                                    <label asp-for="Password"></label>
+                                    <input type="password" class="form-control" placeholder="Heslo" asp-for="Password" autocomplete="off">
+                                </div>
+                                @if (Model.AllowRememberLogin)
+                                {
+                                    <div class="form-group login-remember">
+                                        <label asp-for="RememberLogin">
+                                            <input asp-for="RememberLogin">
+                                            <strong>Dlouhodobé přihlášení</strong>
+                                        </label>
+                                    </div>
+                                }
+                                <div class="form-group">
+                                    <button class="btn btn-primary" name="button" value="login">Přihlásit</button>
+                                    <button class="btn btn-secondary" name="button" value="cancel">Storno</button>
+                                </div>
+                            </fieldset>
+                        </form>
+                        <p><a asp-action="Register" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">Registrace</a></p>
+                        <p><a asp-action="ForgottenPassword" asp-controller="Account" asp-route-returnUrl="@Model.ReturnUrl">Zapomenuté heslo?</a></p>
+                    </div>
+                </div>
+            </div>
+        }
+
+
+        @if (!Model.EnableLocalLogin && !Model.VisibleExternalProviders.Any())
+        {
+            <div class="alert alert-warning">
+                <strong>Nekorektní žádost o autorizaci</strong>
+                Klient nemá definované žádné schéma pro obsluhu přihlášení.
+            </div>
+        }
+    </div>
+</div>

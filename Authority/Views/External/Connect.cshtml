@@ -1,0 +1,25 @@
+﻿@model RegisterExternalInputModel
+
+    <div class="container">
+        <h1>Propojení účtů</h1>
+        <p>
+            Zatím neexistuje žádný účet svázaný s Vámi poskytnutými údaji. Zadejte své uživatelské jméno a pokusíme se takový účet najít a propojit.
+            Pokud žádný takový účet neexistuje, lze jej vytvořit tlačítkem pod formulářem.
+        </p>
+        <dl>
+            <dt>Poskytovatel</dt>
+            <dd>@Model.Provider</dd>
+            <dt>Id u poskytovatele</dt>
+            <dd>@Model.ProviderUserId</dd>
+        </dl>
+        <partial name="_ValidationSummary" />
+        <form asp-route-provider="@Model.Provider" asp-route-providerUserId="@Model.ProviderUserId" method="post" asp-route="Connect">
+            <div class="form-group">
+                <label asp-for="UserName"></label>
+                <input asp-for="UserName" class="form-control" />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary" name="button" value="login">Propojit</button>
+            <a asp-action="Create" asp-route-provider="@Model.Provider" asp-route-providerUserId="@Model.ProviderUserId" class="btn btn-secondary">Vytvořit nový účet</a>
+        </form>
+    </div>

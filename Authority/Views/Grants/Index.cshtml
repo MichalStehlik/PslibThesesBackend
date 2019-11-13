@@ -1,0 +1,68 @@
+﻿@model GrantsViewModel
+
+<div class="grants">
+    <h1>Registrovaná oprávnění</h1>
+    <p>Toto je seznam aplikací, kterým byla schválena oprávnění a seznam informací, ke kterým mají přístup.</p>
+
+
+    @if (Model.Grants.Any() == false)
+    {
+        <div class="alert alert-info">Nyní nejsou přidélená žádná oprávnění.</div>
+    }
+    else
+    {
+        foreach (var grant in Model.Grants)
+        {
+            <div class="row grant">
+                <div class="col-sm-2">
+                    @if (grant.ClientLogoUrl != null)
+                    {
+                        <img src="@grant.ClientLogoUrl" alt="@grant.ClientName" />
+                    }
+                    else
+                    {
+                        <span>&mdash;</span>
+                    }
+                </div>
+                <div class="col-sm-8">
+                    <h2 class="clientname">@grant.ClientName</h2>
+                    <div><span class="created">Vytvořeno:</span> @grant.Created.ToString("dd. MM. yyyy")</div>
+                    @if (grant.Expires.HasValue)
+                    {
+                        <div><span class="expires">Vyprší:</span> @grant.Expires.Value.ToString("dd. MM. yyyy")</div>
+                    }
+                    @if (grant.IdentityGrantNames.Any())
+                    {
+                        <div>
+                            <div class="granttype">Identita</div>
+                            <ul>
+                                @foreach (var name in grant.IdentityGrantNames)
+                        {
+                                    <li>@name</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    @if (grant.ApiGrantNames.Any())
+                    {
+                        <div>
+                            <div class="granttype">API</div>
+                            <ul>
+                                @foreach (var name in grant.ApiGrantNames)
+                                {
+                                    <li>@name</li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+                <div class="col-sm-2">
+                    <form asp-action="Revoke">
+                        <input type="hidden" name="clientId" value="@grant.ClientId">
+                        <button class="btn btn-danger">Zrušit</button>
+                    </form>
+                </div>
+            </div>
+        }
+    }
+</div>
