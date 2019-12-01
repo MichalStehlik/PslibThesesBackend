@@ -120,10 +120,10 @@ namespace Authority
                     AllowAccessTokensViaBrowser = true,
 
                     // where to redirect to after login
-                    RedirectUris = { "https://localhost:3000/oidc-callback", "https://localhost:3000/oidc-silent-renew" },
+                    RedirectUris = { "http://localhost:3000/oidc-callback", "http://localhost:3000/oidc-silent-renew" },
 
                     // where to redirect to after logout
-                    PostLogoutRedirectUris = { "https://localhost:3000/oidc-signout-callback" },
+                    PostLogoutRedirectUris = { "http://localhost:3000/oidc-signout-callback" },
 
                     AllowedScopes = new List<string>
                     {
