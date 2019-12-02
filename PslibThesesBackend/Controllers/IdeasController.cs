@@ -27,7 +27,7 @@ namespace PslibThesesBackend.Controllers
             string search = null, 
             string name = null, 
             string subject = null, 
-            string userId = null, 
+            int? userId = null, 
             string firstname = null, 
             string lastname = null, 
             int? target = null,
@@ -66,7 +66,7 @@ namespace PslibThesesBackend.Controllers
                 ideas = ideas.Where(t => (t.UserFirstName.Contains(firstname)));
             if (!String.IsNullOrEmpty(lastname))
                 ideas = ideas.Where(t => (t.UserFirstName.Contains(lastname)));
-            if (!String.IsNullOrEmpty(userId))
+            if (userId != null)
                 ideas = ideas.Where(t => (t.UserId == userId));
             if (offered != null)
                 ideas = ideas.Where(t => (t.Offered == offered));

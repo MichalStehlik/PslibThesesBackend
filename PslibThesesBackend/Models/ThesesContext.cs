@@ -22,6 +22,9 @@ namespace PslibThesesBackend.Models
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<User>()
+                .HasAlternateKey(u => u.AuthorityId)
+                .HasName("AlternateKey_AuthorityId");
             modelBuilder.Entity<IdeaGoal>().HasKey(ig => new { ig.IdeaId, ig.Order });
             modelBuilder.Entity<IdeaContent>().HasKey(io => new { io.IdeaId, io.Order });
             modelBuilder.Entity<IdeaTarget>().HasKey(it => new { it.IdeaId, it.TargetId });

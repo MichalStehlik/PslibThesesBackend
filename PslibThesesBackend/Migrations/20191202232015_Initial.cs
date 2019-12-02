@@ -25,16 +25,21 @@ namespace PslibThesesBackend.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     FirstName = table.Column<string>(nullable: false),
                     MiddleName = table.Column<string>(nullable: true),
                     LastName = table.Column<string>(nullable: false),
                     Gender = table.Column<int>(nullable: false),
-                    Email = table.Column<string>(nullable: false)
+                    AuthorityId = table.Column<string>(nullable: false),
+                    Email = table.Column<string>(nullable: false),
+                    CanBeAuthor = table.Column<bool>(nullable: false),
+                    CanBeEvaluator = table.Column<bool>(nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
+                    table.UniqueConstraint("AlternateKey_AuthorityId", x => x.AuthorityId);
                 });
 
             migrationBuilder.CreateTable(
@@ -47,7 +52,7 @@ namespace PslibThesesBackend.Migrations
                     Description = table.Column<string>(nullable: true),
                     Resources = table.Column<string>(nullable: true),
                     Subject = table.Column<string>(nullable: true),
-                    UserId = table.Column<string>(nullable: false),
+                    UserId = table.Column<int>(nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),

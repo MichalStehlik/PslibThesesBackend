@@ -16,7 +16,7 @@ namespace PslibThesesBackend.Models
         public string Description { get; set; }
         public string Resources { get; set; }
         public string Subject { get; set; }
-        public string UserId { get; set; }
+        public int UserId { get; set; }
         [Required]
         [ForeignKey("UserId")]
         public User User { get; set; }
