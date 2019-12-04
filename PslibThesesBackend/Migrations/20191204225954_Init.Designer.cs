@@ -10,8 +10,8 @@ using PslibThesesBackend.Models;
 namespace PslibThesesBackend.Migrations
 {
     [DbContext(typeof(ThesesContext))]
-    [Migration("20191202232015_Initial")]
-    partial class Initial
+    [Migration("20191204225954_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -58,8 +58,9 @@ namespace PslibThesesBackend.Migrations
                     b.Property<DateTime>("Updated")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
@@ -170,13 +171,7 @@ namespace PslibThesesBackend.Migrations
 
             modelBuilder.Entity("PslibThesesBackend.Models.User", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<string>("AuthorityId")
-                        .IsRequired()
+                    b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<bool>("CanBeAuthor")
@@ -204,9 +199,6 @@ namespace PslibThesesBackend.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasAlternateKey("AuthorityId")
-                        .HasName("AlternateKey_AuthorityId");
 
                     b.ToTable("Users");
                 });

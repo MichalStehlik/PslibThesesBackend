@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PslibThesesBackend.Migrations
 {
-    public partial class Initial : Migration
+    public partial class Init : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -25,13 +25,11 @@ namespace PslibThesesBackend.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<string>(nullable: false),
                     FirstName = table.Column<string>(nullable: false),
                     MiddleName = table.Column<string>(nullable: true),
                     LastName = table.Column<string>(nullable: false),
                     Gender = table.Column<int>(nullable: false),
-                    AuthorityId = table.Column<string>(nullable: false),
                     Email = table.Column<string>(nullable: false),
                     CanBeAuthor = table.Column<bool>(nullable: false),
                     CanBeEvaluator = table.Column<bool>(nullable: false)
@@ -39,7 +37,6 @@ namespace PslibThesesBackend.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Users", x => x.Id);
-                    table.UniqueConstraint("AlternateKey_AuthorityId", x => x.AuthorityId);
                 });
 
             migrationBuilder.CreateTable(
@@ -52,7 +49,7 @@ namespace PslibThesesBackend.Migrations
                     Description = table.Column<string>(nullable: true),
                     Resources = table.Column<string>(nullable: true),
                     Subject = table.Column<string>(nullable: true),
-                    UserId = table.Column<int>(nullable: false),
+                    UserId = table.Column<string>(nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),
