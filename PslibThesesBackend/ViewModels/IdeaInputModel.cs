@@ -16,7 +16,7 @@ namespace PslibThesesBackend.ViewModels
         public string Resources { get; set; }
         public string Subject { get; set; }
         [Required]
-        public int UserId { get; set; }
+        public string UserId { get; set; }
         public int Participants { get; set; } = 1;
         public bool Offered { get; set; }
     }

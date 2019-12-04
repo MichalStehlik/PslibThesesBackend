@@ -97,14 +97,14 @@ namespace PslibThesesBackend.Controllers
             return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = users.AsNoTracking() });
         }
 
-        // GET: /Users/5
+        // GET: /Users/aaa
         /// <summary>
         /// Gets data of one user specified by his Id
         /// </summary>
         /// <param name="id">User Id</param>
         /// <returns>User</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(int id)
+        public async Task<ActionResult<User>> GetUser(string id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -115,7 +115,7 @@ namespace PslibThesesBackend.Controllers
             return user;
         }
 
-        // PUT: /Users/5
+        // PUT: /Users/aaa
         /// <summary>
         /// Overwrites data of user specified by his Id
         /// </summary>
@@ -123,7 +123,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="user">New User data</param>
         /// <returns>HTTP 204,400,404</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(int id, User user)
+        public async Task<IActionResult> PutUser(string id, User user)
         {
             if (id != user.Id)
             {
@@ -173,14 +173,14 @@ namespace PslibThesesBackend.Controllers
             }
         }
 
-        // DELETE: /Users/5
+        // DELETE: /Users/aaa
         /// <summary>
         /// Deletes one user specified by his Id
         /// </summary>
         /// <param name="id">User Id</param>
         /// <returns>User data if success, HTTP 404 if not found</returns>
         [HttpDelete("{id}")] 
-        public async Task<ActionResult<User>> DeleteUser(int id)
+        public async Task<ActionResult<User>> DeleteUser(string id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
@@ -198,7 +198,7 @@ namespace PslibThesesBackend.Controllers
         /// </summary>
         /// <param name="id">User Id</param>
         /// <returns>boolean</returns>
-        private bool UserExists(int id)
+        private bool UserExists(string id)
         {
             return _context.Users.Any(e => e.Id == id);
         }

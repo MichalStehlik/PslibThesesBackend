@@ -11,7 +11,7 @@ namespace PslibThesesBackend.Models
     public class User
     {
         [Key]
-        public int Id { get; set; }
+        public string Id { get; set; }
         [Required]
         public string FirstName { get; set; }
         public string  MiddleName { get; set; }
@@ -19,7 +19,6 @@ namespace PslibThesesBackend.Models
         public string LastName { get; set; }
         [Required]
         public Gender Gender { get; set; }
-        public string AuthorityId { get; set; }
         [Required]
         public string Email { get; set; }
         [DefaultValue(false)]

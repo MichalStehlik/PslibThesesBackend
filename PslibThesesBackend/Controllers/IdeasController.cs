@@ -27,7 +27,7 @@ namespace PslibThesesBackend.Controllers
             string search = null, 
             string name = null, 
             string subject = null, 
-            int? userId = null, 
+            string userId = null, 
             string firstname = null, 
             string lastname = null, 
             int? target = null,
