@@ -10,7 +10,7 @@ using PslibThesesBackend.Models;
 namespace PslibThesesBackend.Migrations
 {
     [DbContext(typeof(ThesesContext))]
-    [Migration("20191204225954_Init")]
+    [Migration("20191208204229_Init")]
     partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

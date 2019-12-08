@@ -156,9 +156,9 @@ namespace PslibThesesBackend.Controllers
         /// Creates and stores a new user, unless user with this Id already exists
         /// </summary>
         /// <param name="user">User data</param>
-        /// <returns>HTTP 201, 200</returns>
+        /// <returns>HTTP 201, 200, 400</returns>
         [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
+        public async Task<ActionResult<User>> PostUser([FromBody] User user)
         {
             var existingUser = await _context.Users.FindAsync(user.Id);
             if (existingUser == null)
