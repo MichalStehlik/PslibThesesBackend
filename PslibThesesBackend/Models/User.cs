@@ -14,7 +14,6 @@ namespace PslibThesesBackend.Models
         public string Id { get; set; }
         [Required]
         public string FirstName { get; set; }
-        public string  MiddleName { get; set; }
         [Required]
         public string LastName { get; set; }
         [Required]
@@ -26,6 +25,6 @@ namespace PslibThesesBackend.Models
         [DefaultValue(false)]
         public bool CanBeEvaluator { get; set; } = false;
         [NotMapped]
-        public string Name { get { return FirstName + " " + (String.IsNullOrEmpty(MiddleName) ? "" : (MiddleName + " ")) + LastName; } }
+        public string Name { get { return FirstName + LastName; } }
     }
 }

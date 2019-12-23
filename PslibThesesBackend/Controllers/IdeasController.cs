@@ -36,25 +36,7 @@ namespace PslibThesesBackend.Controllers
             int page = 0, 
             int pagesize = 0)
         {
-            IQueryable<IdeaListViewModel> ideas = _context.Ideas.Select(i =>
-                new IdeaListViewModel
-                {
-                    Id = i.Id,
-                    Name = i.Name,
-                    Description = i.Description,
-                    Subject = i.Subject,
-                    Resources = i.Resources,
-                    UserId = i.UserId,
-                    Participants = i.Participants,
-                    UserFirstName = i.User.FirstName,
-                    UserLastName = i.User.LastName,
-                    UserMiddleName = i.User.MiddleName,
-                    UserEmail = i.User.Email,
-                    Offered = i.Offered,
-                    Updated = i.Updated,
-                    //Targets = i.Targets
-                }
-            ).Include("IdeaTargets").Include("Users");
+            IQueryable<Idea> ideas = _context.Ideas.Include(i => i.User).Include(i => i.IdeaTargets).ThenInclude(it => it.Target);
             int total = ideas.CountAsync().Result;
             if (!String.IsNullOrEmpty(search))
                 ideas = ideas.Where(t => (t.Name.Contains(search)));
@@ -63,27 +45,29 @@ namespace PslibThesesBackend.Controllers
             if (!String.IsNullOrEmpty(subject))
                 ideas = ideas.Where(t => (t.Subject.Contains(subject)));
             if (!String.IsNullOrEmpty(firstname))
-                ideas = ideas.Where(t => (t.UserFirstName.Contains(firstname)));
+                ideas = ideas.Where(t => (t.User.FirstName.Contains(firstname)));
             if (!String.IsNullOrEmpty(lastname))
-                ideas = ideas.Where(t => (t.UserFirstName.Contains(lastname)));
+                ideas = ideas.Where(t => (t.User.FirstName.Contains(lastname)));
             if (userId != null)
                 ideas = ideas.Where(t => (t.UserId == userId));
             if (offered != null)
                 ideas = ideas.Where(t => (t.Offered == offered));
+            if (target != null)
+                ideas = ideas.Where(t => (t.IdeaTargets.Contains(new IdeaTarget { TargetId = (int)target })));
             int filtered = ideas.CountAsync().Result;
             switch (order)
             {
                 case "firstname":
-                    ideas = ideas.OrderBy(t => t.UserFirstName);
+                    ideas = ideas.OrderBy(t => t.User.FirstName);
                     break;
                 case "firstname_desc":
-                    ideas = ideas.OrderByDescending(t => t.UserFirstName);
+                    ideas = ideas.OrderByDescending(t => t.User.FirstName);
                     break;
                 case "lastname":
-                    ideas = ideas.OrderBy(t => t.UserLastName);
+                    ideas = ideas.OrderBy(t => t.User.LastName);
                     break;
                 case "lastname_desc":
-                    ideas = ideas.OrderByDescending(t => t.UserLastName);
+                    ideas = ideas.OrderByDescending(t => t.User.LastName);
                     break;
                 case "updated":
                     ideas = ideas.OrderBy(t => t.Updated);
@@ -354,6 +338,19 @@ namespace PslibThesesBackend.Controllers
         }
 
         // POST: Ideas/5/goals
+        [HttpGet("{id}/goals")]
+        public async Task<ActionResult<IdeaGoal>> PostIdeaGoals(int id, string newGoalText)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+            var maxGoalOrder = _context.IdeaGoals.Where(ig => ig.Idea == idea).Max(i => i.Order);
+            _context.IdeaGoals.Add(new IdeaGoal { IdeaId = id, Order = maxGoalOrder + 1, Text = newGoalText});
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetIdeaGoal", new { id = idea.Id });
+        }
 
         // PUT: Ideas/5/goals/1
 

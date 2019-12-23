@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,7 @@ using PslibThesesBackend.Models;
 
 namespace PslibThesesBackend.Controllers
 {
+    [Authorize]
     [Route("[controller]")]
     [ApiController]
     public class UsersController : ControllerBase
@@ -44,7 +46,7 @@ namespace PslibThesesBackend.Controllers
         /// }
         /// </returns>
         [HttpGet]
-        public ActionResult<IEnumerable<User>> GetUsers(string search = null, string firstname = null, string lastname = null, string email = null, bool? author = null, bool? evaluator = null, string order = "lastname", int page = 0, int pagesize = 0)
+        public ActionResult<IEnumerable<User>> GetUsers(string search = null, string firstname = null, string lastname = null, string email = null, Gender? gender = null, bool? author = null, bool? evaluator = null, string order = "lastname", int page = 0, int pagesize = 0)
         {
             IQueryable<User> users = _context.Users;
             int total = users.CountAsync().Result;
@@ -56,39 +58,24 @@ namespace PslibThesesBackend.Controllers
                 users = users.Where(u => (u.LastName.Contains(lastname)));
             if (!String.IsNullOrEmpty(email))
                 users = users.Where(u => (u.FirstName.Contains(email)));
+            if (gender != null)
+                users = users.Where(u => (u.Gender == gender));
             if (author != null)
                 users = users.Where(u => (u.CanBeAuthor == author));
             if (evaluator != null)
                 users = users.Where(u => (u.CanBeEvaluator == evaluator));
             int filtered = users.CountAsync().Result;
-            switch (order)
+            users = order switch
             {
-                case "firstname":
-                    users = users.OrderBy(u => u.FirstName);
-                    break;
-                case "firstname_desc":
-                    users = users.OrderByDescending(u => u.FirstName);
-                    break;
-                case "lastname":
-                    users = users.OrderBy(u => u.LastName);
-                    break;
-                case "lastname_desc":
-                    users = users.OrderByDescending(u => u.LastName);
-                    break;
-                case "email":
-                    users = users.OrderBy(u => u.Email);
-                    break;
-                case "email_desc":
-                    users = users.OrderByDescending(u => u.Email);
-                    break;
-                case "id_desc":
-                    users = users.OrderByDescending(u => u.Id);
-                    break;
-                case "id":
-                default:
-                    users = users.OrderBy(u => u.Id);
-                    break;
-            }
+                "firstname" => users.OrderBy(u => u.FirstName),
+                "firstname_desc" => users.OrderByDescending(u => u.FirstName),
+                "lastname" => users.OrderBy(u => u.LastName),
+                "lastname_desc" => users.OrderByDescending(u => u.LastName),
+                "email" => users.OrderBy(u => u.Email),
+                "email_desc" => users.OrderByDescending(u => u.Email),
+                "id_desc" => users.OrderByDescending(u => u.Id),
+                _ => users.OrderBy(u => u.Id),
+            };
             if (pagesize != 0 )
             {
                 users = users.Skip(page * pagesize).Take(pagesize);

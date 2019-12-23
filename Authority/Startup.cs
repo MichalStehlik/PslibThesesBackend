@@ -62,9 +62,9 @@ namespace Authority
                 });
                 options.AddPolicy("Admin", policy =>
                 {
-                    //policy.RequireClaim("admin");
-                    //policy.RequireRole("Administrátor");
-                    policy.RequireAuthenticatedUser();
+                    policy.RequireClaim("admin");
+                    policy.RequireRole("Administrátor");
+                    //policy.RequireAuthenticatedUser();
                 });
             });
 

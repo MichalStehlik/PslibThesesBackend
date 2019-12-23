@@ -34,8 +34,18 @@ namespace PslibThesesBackend
                 )
             );
             services.AddControllers();
-            services.AddAuthorization(options => {
-                options.AddPolicy("isQuotesAdministrator", policy => policy.RequireClaim("quotesAdmin"));
+            services.AddAuthorization(options =>
+            {
+                options.AddPolicy("Logged", policy =>
+                {
+                    policy.RequireAuthenticatedUser();
+                });
+                options.AddPolicy("Admin", policy =>
+                {
+                    policy.RequireClaim("admin");
+                    policy.RequireRole("Administrátor");
+                    //policy.RequireAuthenticatedUser();
+                });
             });
             services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>
             {
