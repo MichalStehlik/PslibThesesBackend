@@ -111,7 +111,7 @@ namespace PslibThesesBackend.Controllers
         /// </summary>
         /// <param name="id">Target Id</param>
         /// <param name="target">Target data</param>
-        /// <returns>Target</returns>
+        /// <returns>HTTP 204, 404, 400</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTarget(int id, Target target)
         {
@@ -146,7 +146,7 @@ namespace PslibThesesBackend.Controllers
         /// Creates and stores a new target
         /// </summary>
         /// <param name="target">Target data</param>
-        /// <returns>Target</returns>
+        /// <returns>HTTP 201</returns>
         [HttpPost]
         public async Task<ActionResult<Target>> PostTarget(Target target)
         {
