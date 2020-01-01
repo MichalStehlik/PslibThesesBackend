@@ -46,7 +46,17 @@ namespace PslibThesesBackend.Controllers
         /// }
         /// </returns>
         [HttpGet]
-        public ActionResult<IEnumerable<User>> GetUsers(string search = null, string firstname = null, string lastname = null, string email = null, Gender? gender = null, bool? author = null, bool? evaluator = null, string order = "lastname", int page = 0, int pagesize = 0)
+        public ActionResult<IEnumerable<User>> GetUsers(
+            string search = null, 
+            string firstname = null, 
+            string lastname = null, 
+            string email = null, 
+            Gender? gender = null, 
+            bool? author = null, 
+            bool? evaluator = null, 
+            string order = "lastname", 
+            int page = 0, 
+            int pagesize = 0)
         {
             IQueryable<User> users = _context.Users;
             int total = users.CountAsync().Result;

@@ -22,9 +22,9 @@ namespace PslibThesesBackend.Models
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<IdeaGoal>().HasKey(ig => new { ig.IdeaId, ig.Order });
-            modelBuilder.Entity<IdeaContent>().HasKey(io => new { io.IdeaId, io.Order });
-            modelBuilder.Entity<IdeaTarget>().HasKey(it => new { it.IdeaId, it.TargetId });
+            modelBuilder.Entity<IdeaGoal>().HasIndex(ig => new { ig.IdeaId, ig.Order }).IsUnique();
+            modelBuilder.Entity<IdeaContent>().HasIndex(io => new { io.IdeaId, io.Order }).IsUnique();
+            modelBuilder.Entity<IdeaTarget>().HasIndex(it => new { it.IdeaId, it.TargetId }).IsUnique();
             #region IdeaTargetSeed
             modelBuilder.Entity<Target>().HasData(new Target { Id = 1, Text = "MP Lyceum", Color = Color.Yellow});
             modelBuilder.Entity<Target>().HasData(new Target { Id = 2, Text = "RP Lyceum", Color = Color.Orange });

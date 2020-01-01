@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
@@ -331,9 +332,8 @@ namespace PslibThesesBackend.Controllers
             var ideaTargets = _context.IdeaTargets
                 .Where(it => it.Idea == idea)
                 .OrderBy(it => it.Target.Text)
-                .Select(it => 
-                new Target { Text = it.Target.Text, Color = it.Target.Color, Id = it.Target.Id }
-            ).ToList();
+                .Select(it => new { Text = it.Target.Text, Color = it.Target.Color, Id = it.Target.Id })
+                .AsNoTracking();
             return Ok(ideaTargets);
         }
 
@@ -345,14 +345,14 @@ namespace PslibThesesBackend.Controllers
         /// <param name="targetId">New Target Id from requests body. If idea already contains this target, nothing happens.</param>
         /// <returns>HTTP 201, 202, 404</returns>
         [HttpPost("{id}/targets")]
-        public async Task<ActionResult<IdeaTarget>> PostIdeaTarget(int id, [FromBody] int targetId)
+        public async Task<ActionResult<IdeaTarget>> PostIdeaTarget(int id, [FromBody] IdeaTargetIdInputModel im)
         {
             var idea = await _context.Ideas.FindAsync(id);
             if (idea == null)
             {
                 return NotFound("idea not found");
             }
-            var target = await _context.Targets.FindAsync(targetId);
+            var target = await _context.Targets.FindAsync(im.Id);
             if (target == null)
             {
                 return NotFound("target not found");
@@ -367,7 +367,7 @@ namespace PslibThesesBackend.Controllers
                 };
                 _context.IdeaTargets.Add(newIdeaTarget);
                 await _context.SaveChangesAsync();
-                return CreatedAtAction("GetIdeaTargets", new { id = idea.Id });
+                return CreatedAtAction("GetIdeaTargets", new { id = idea.Id }, new { IdeaId = idea.Id, TargetId = target.Id});
             }
             else
             {
@@ -425,13 +425,23 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            var goals = _context.IdeaGoals.Where(ig => ig.Idea == idea).OrderBy(ig => ig.Order).ToList();
+            var goals = _context.IdeaGoals
+                .Where(ig => ig.Idea == idea)
+                .Select(ig => new { IdeaId = ig.IdeaId, Order = ig.Order, Text = ig.Text})
+                .OrderBy(ig => ig.Order)
+                .AsNoTracking();
             return Ok(goals);
         }
 
         // GET: Ideas/5/goals/1
+        /// <summary>
+        /// Fetch specific goal of an idea in certain order
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="order">Order (1+)</param>
+        /// <returns>Goal, HTTP 404</returns>
         [HttpGet("{id}/goals/{order}")]
-        public async Task<ActionResult<IdeaGoal>> GetIdeaGoalsOfOrder(int id, int order)
+        public async Task<ActionResult<IdeaGoal>> GetIdeaGoal(int id, int order)
         {
             var idea = await _context.Ideas.FindAsync(id);
             if (idea == null)
@@ -439,7 +449,10 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            var goal = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == order).FirstOrDefault();
+            var goal = _context.IdeaGoals
+                .Where(ig => ig.Idea == idea && ig.Order == order)
+                .Select(ig => new { IdeaId = ig.IdeaId, ig.Order, ig.Text})
+                .FirstOrDefault();
             if (goal == null)
             {
                 return NotFound("goal not found");
@@ -448,24 +461,46 @@ namespace PslibThesesBackend.Controllers
         }
 
         // POST: Ideas/5/goals
+        /// <summary>
+        /// Creates and stores a new goal for an idea
+        /// </summary>
+        /// <param name="id">Idea id</param>
+        /// <param name="goalText">Object containing text</param>
+        /// <returns>New goal, HTTP 404</returns>
         [HttpPost("{id}/goals")]
-        public async Task<ActionResult<IdeaGoal>> PostIdeaGoals(int id, string newGoalText)
+        public async Task<ActionResult<IdeaGoal>> PostIdeaGoals(int id, [FromBody] IdeaGoalInputModel goalText)
         {
             var idea = await _context.Ideas.FindAsync(id);
             if (idea == null)
             {
                 return NotFound("idea not found");
             }
-            var maxGoalOrder = _context.IdeaGoals.Where(ig => ig.Idea == idea).Max(i => i.Order);
-            _context.IdeaGoals.Add(new IdeaGoal { IdeaId = id, Order = maxGoalOrder + 1, Text = newGoalText});
+            int maxGoalOrder;
+            try
+            {
+                maxGoalOrder = _context.IdeaGoals.Where(ig => ig.IdeaId == id).Max(ig => ig.Order);
+            }
+            catch
+            {
+                maxGoalOrder = 0;
+            }
+            var newGoal = new IdeaGoal { IdeaId = id, Order = maxGoalOrder + 1, Text = goalText.Text };
+            _context.IdeaGoals.Add(newGoal);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetIdeaGoal", new { id = idea.Id });
+            return CreatedAtAction("GetIdeaGoal", new { id = newGoal.IdeaId, order = newGoal.Order }, new { IdeaId = id, Order = maxGoalOrder + 1, Text = goalText.Text });
         }
 
 
         // PUT: Ideas/5/goals/1
+        /// <summary>
+        /// Changes text of goal inside na idea
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="order">Order of goal</param>
+        /// <param name="goalText">New text of goal</param>
+        /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/goals/{order}")]
-        public async Task<ActionResult<IdeaGoal>> PutIdeaGoalsOfOrder(int id, int order, string text)
+        public async Task<ActionResult<IdeaGoal>> PutIdeaGoalsOfOrder(int id, int order, [FromBody] IdeaGoalInputModel goalText)
         {
             var idea = await _context.Ideas.FindAsync(id);
             if (idea == null)
@@ -479,7 +514,7 @@ namespace PslibThesesBackend.Controllers
             }
 
             idea.Updated = DateTime.Now;
-            goal.Text = text;
+            goal.Text = goalText.Text;
          
             await _context.SaveChangesAsync();           
             return NoContent();
@@ -499,20 +534,36 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("goal not found");
             }
-            var maxGoalOrder = _context.IdeaGoals.Where(ig => ig.Idea == idea).Max(i => i.Order);
 
-            if (goal.Order > newOrder)
+            int maxGoalOrder;
+            try
+            {
+                maxGoalOrder = _context.IdeaGoals.Where(ig => ig.IdeaId == id).Max(ig => ig.Order);
+            }
+            catch
+            {
+                maxGoalOrder = 0;
+            }
+
+            if (goal.Order > newOrder) // moving down
             {
                 for (int i = newOrder; i < goal.Order; i++)
                 {
                     var item = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == i).FirstOrDefault();
                     if (item != null) item.Order = item.Order + 1;
+                    _context.SaveChanges();
                 }
                 goal.Order = newOrder;
             }
-            else if (goal.Order < newOrder)
+            else if (goal.Order < newOrder) // moving up
             {
-
+                for (int i = newOrder; i > goal.Order; i--)
+                {
+                    var item = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order - 1;
+                    _context.SaveChanges();
+                }
+                goal.Order = newOrder;
             }
             _context.SaveChanges();
             return NoContent();
@@ -534,6 +585,16 @@ namespace PslibThesesBackend.Controllers
             }
             else
             {
+                int maxGoalOrder;
+                try
+                {
+                    maxGoalOrder = _context.IdeaGoals.Where(ig => ig.IdeaId == id).Max(ig => ig.Order);
+                }
+                catch
+                {
+                    maxGoalOrder = 0;
+                }
+
                 _context.IdeaGoals.Remove(goal);
                 _context.SaveChanges();
                 return Ok(goal);
@@ -552,5 +613,31 @@ namespace PslibThesesBackend.Controllers
         // PUT: Ideas/5/contents/1/moveto/2
 
         // DELETE: Ideas/5/contents/1
+    }
+
+    // InputModels
+    public class IdeaInputModel
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Resources { get; set; }
+        public string Subject { get; set; }
+        [Required]
+        public string UserId { get; set; }
+        public int Participants { get; set; } = 1;
+        public bool Offered { get; set; }
+    }
+
+    public class IdeaGoalInputModel
+    {
+        public string Text { get; set; }
+    }
+
+    public class IdeaTargetIdInputModel
+    {
+        public int Id { get; set; }
     }
 }

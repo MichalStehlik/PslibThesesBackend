@@ -9,9 +9,9 @@ namespace PslibThesesBackend.Models
     public class IdeaTarget
     {
         [Key]
+        public int Id { get; set; }
         public int IdeaId { get; set; }
         public Idea Idea { get; set; }
-        [Key]
         public int TargetId { get; set; }
         public Target Target { get; set; }
     }
