@@ -40,11 +40,19 @@ namespace PslibThesesBackend
                 {
                     policy.RequireAuthenticatedUser();
                 });
-                options.AddPolicy("Admin", policy =>
+                options.AddPolicy("Administrator", policy =>
                 {
-                    policy.RequireClaim("admin");
+                    policy.RequireClaim("admin","true");
                     policy.RequireRole("Administrátor");
                     //policy.RequireAuthenticatedUser();
+                });
+                options.AddPolicy("Student", policy =>
+                {
+                    policy.RequireClaim("student");
+                });
+                options.AddPolicy("Evaluator", policy =>
+                {
+                    policy.RequireClaim("teacher");
                 });
             });
             services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>

@@ -16,14 +16,14 @@ namespace PslibThesesBackend.Models
         public DbSet<User> Users { get; set; }
         public DbSet<Idea> Ideas { get; set; }
         public DbSet<IdeaGoal> IdeaGoals { get; set; }
-        public DbSet<IdeaContent> IdeaOutlines { get; set; }
+        public DbSet<IdeaOutline> IdeaOutlines { get; set; }
         public DbSet<IdeaTarget> IdeaTargets { get; set; }
         public DbSet<Target> Targets { get; set; }
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<IdeaGoal>().HasIndex(ig => new { ig.IdeaId, ig.Order }).IsUnique();
-            modelBuilder.Entity<IdeaContent>().HasIndex(io => new { io.IdeaId, io.Order }).IsUnique();
+            modelBuilder.Entity<IdeaOutline>().HasIndex(io => new { io.IdeaId, io.Order }).IsUnique();
             modelBuilder.Entity<IdeaTarget>().HasIndex(it => new { it.IdeaId, it.TargetId }).IsUnique();
             #region IdeaTargetSeed
             modelBuilder.Entity<Target>().HasData(new Target { Id = 1, Text = "MP Lyceum", Color = Color.Yellow});

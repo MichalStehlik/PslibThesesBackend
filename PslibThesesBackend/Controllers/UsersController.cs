@@ -10,8 +10,8 @@ using PslibThesesBackend.Models;
 
 namespace PslibThesesBackend.Controllers
 {
-    [Authorize]
     [Route("[controller]")]
+    [Authorize]
     [ApiController]
     public class UsersController : ControllerBase
     {
@@ -176,7 +176,8 @@ namespace PslibThesesBackend.Controllers
         /// </summary>
         /// <param name="id">User Id</param>
         /// <returns>User data if success, HTTP 404 if not found</returns>
-        [HttpDelete("{id}")] 
+        [Authorize(Policy = "Administrator")]
+        [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(string id)
         {
             var user = await _context.Users.FindAsync(id);

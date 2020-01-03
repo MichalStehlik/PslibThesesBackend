@@ -11,7 +11,7 @@ namespace PslibThesesBackend.Models
         public int Participants { get; set; }
         public bool Offered { get; set; }
         public ICollection<IdeaGoal> Goals { get; } = new List<IdeaGoal>();
-        public ICollection<IdeaContent> Contents { get; } = new List<IdeaContent>();
+        public ICollection<IdeaOutline> Outlines { get; } = new List<IdeaOutline>();
         public ICollection<IdeaTarget> IdeaTargets { get; } = new List<IdeaTarget>(); 
     }
 }
