@@ -91,3 +91,31 @@ Nabídnutí námětu studentům
 Smazání námětu
 
     DELETE /ideas/{id}
+
+Seznam cílových skupin pro námět
+
+    GET /ideas/{id}/targets
+    
+Přidání cílové skupiny pro námět
+
+    POST /ideas/{id}/targets
+
+Odebrání cílové skupiny pro námět
+
+    DELETE /ideas/{id}/targets/{target}
+
+Seznam cílů námětu
+
+    GET /ideas/{id}/goals
+    
+Získání cíle námětu
+
+    GET /ideas/{id}/goals/{order}
+
+Přidání cíle námětu
+
+    POST /ideas/{id}/goals
+
+Změna textu cíle námětu
+
+    PUT /ideas/{id}/goals/{order}
