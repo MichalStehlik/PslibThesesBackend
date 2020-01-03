@@ -110,7 +110,7 @@ Seznam cílů námětu
     
 Získání cíle námětu
 
-    GET /ideas/{id}/goals/{order}
+    GET /ideas/{id}/goals/{position}
 
 Přidání cíle námětu
 
@@ -118,4 +118,28 @@ Přidání cíle námětu
 
 Změna textu cíle námětu
 
-    PUT /ideas/{id}/goals/{order}
+    PUT /ideas/{id}/goals/{position}
+
+Změna pořadí cíle námětu
+
+    PUT /ideas/{id}/goals/{oldPosition}/moveto/{newPosition}
+
+Vymazání všech cílů námětu
+
+    DELETE /ideas/{id}/goals
+
+Smazání cíle námětu
+
+    DELETE /ideas/{id}/goals/{position}
+
+Seznam bodů osnovy námětu
+
+    GET /ideas/{id}/outlines
+    
+Získání určitého bodu osnovy námětu
+
+    GET /ideas/{id}/outlines/{position}
+
+Přidání nového bodu osnovy námětu
+
+    POST /ideas/{id}/outlines
