@@ -12,7 +12,6 @@ using PslibThesesBackend.ViewModels;
 namespace PslibThesesBackend.Controllers
 {
     [Route("[controller]")]
-    [Authorize(Policy = "Administrator")]
     [ApiController]
     public class TargetsController : ControllerBase
     {
@@ -95,6 +94,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">Target Id</param>
         /// <returns>Target</returns>
         [HttpGet("{id}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<Target>> GetTarget(int id)
         {
             var target = await _context.Targets.FindAsync(id);
@@ -115,6 +115,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="target">Target data</param>
         /// <returns>HTTP 204, 404, 400</returns>
         [HttpPut("{id}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<IActionResult> PutTarget(int id, Target target)
         {
             if (id != target.Id)
@@ -150,6 +151,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="target">Target data</param>
         /// <returns>HTTP 201</returns>
         [HttpPost]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<Target>> PostTarget(Target target)
         {
             _context.Targets.Add(target);
@@ -164,6 +166,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">Target id</param>
         /// <returns>Target data if success, HTTP 404 if not found</returns>
         [HttpDelete("{id}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<Target>> DeleteTarget(int id)
         {
             var target = await _context.Targets.FindAsync(id);
