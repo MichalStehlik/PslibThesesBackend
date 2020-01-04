@@ -7,8 +7,8 @@ namespace PslibThesesBackend.Models
 {
     public enum ApplicationTemplate
     {
-        DP = 0,
-        RP = 1,
-        AP = 2
+        GraduationWork = 0,
+        SeminarWork = 1,
+        GraduationWorkHigher = 2
     }
 }

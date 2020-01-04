@@ -12,6 +12,10 @@
     <Compile Remove="Migrations\20191208204106_Initial.Designer.cs" />
     <Compile Remove="Migrations\20191231181256_Removal of composite key.cs" />
     <Compile Remove="Migrations\20191231181256_Removal of composite key.Designer.cs" />
+    <Compile Remove="Migrations\20200104181416_Sets.cs" />
+    <Compile Remove="Migrations\20200104181416_Sets.Designer.cs" />
+    <Compile Remove="Migrations\20200104182348_SetsKeys.cs" />
+    <Compile Remove="Migrations\20200104182348_SetsKeys.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,11 +24,13 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="3.1.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="3.1.0" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="3.1.0" />
     <PackageReference Include="Utf8Json" Version="1.3.7" />
   </ItemGroup>

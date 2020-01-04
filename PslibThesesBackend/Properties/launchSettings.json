@@ -12,7 +12,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "ideas",
+      "launchUrl": "sets",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -20,7 +20,7 @@
     "PslibThesesBackend": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "ideas",
+      "launchUrl": "sets",
       "applicationUrl": "https://localhost:44356",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
