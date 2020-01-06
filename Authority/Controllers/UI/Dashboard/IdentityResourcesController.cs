@@ -82,27 +82,30 @@ namespace Authority.Controllers.UI.Dashboard
         // POST: IdentityResources/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create(IFormCollection collection)
+        public ActionResult Create(IdentityResource model)
         {
+            IdentityResource ires = new IdentityResource
+            {
+                Name = model.Name,
+                DisplayName = model.DisplayName,
+                Description = model.Description,
+                Enabled = model.Enabled,
+                Required = model.Required,
+                Emphasize = model.Emphasize,
+                ShowInDiscoveryDocument = model.ShowInDiscoveryDocument
+            };
             try
             {
-                IdentityResource ires = new IdentityResource
-                {
-                    Name = collection["Name"].ToString(),
-                    DisplayName = collection["DisplayName"].ToString(),
-                    Description = collection["Description"].ToString(),
-                    Enabled = collection["Enabled"] == "true",
-                    Required = collection["Required"] == "true",
-                    Emphasize = collection["Emphasize"] == "true",
-                    ShowInDiscoveryDocument = collection["ShowInDiscoveryDocument"] == "true"
-                };
+                if (model.Name == "") throw new ArgumentException();                
                 var result = _context.IdentityResources.Add(ires);
+                _context.SaveChanges();
                 TempData["SuccessMessage"] = "Zdroj byl vytvořen";
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
-                return View();
+                TempData["ErrorMessage"] = "Při vytváření zdroje došlo k chybě";
+                return View(ires);
             }
         }
 
@@ -116,24 +119,35 @@ namespace Authority.Controllers.UI.Dashboard
         // POST: IdentityResources/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, IdentityResource model)
         {
+            var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+            ires.Name = model.Name;
+            ires.DisplayName = model.DisplayName;
+            ires.Description = model.Description;
+            ires.Enabled = model.Enabled;
+            ires.Required = model.Required;
+            ires.Emphasize = model.Emphasize;
+            ires.ShowInDiscoveryDocument = model.ShowInDiscoveryDocument;
             try
             {
-                // TODO: Add update logic here
-
+                if (model.Name.ToString() == "") throw new ArgumentException();
+                _context.SaveChanges();
+                TempData["SuccessMessage"] = "Zdroj byl uložen";
                 return RedirectToAction(nameof(Index));
             }
             catch
             {
-                return View();
+                TempData["ErrorMessage"] = "Při ukládání zdroje došlo k chybě";
+                return View(ires);
             }
         }
 
         // GET: IdentityResources/Delete/5
         public ActionResult Delete(int id)
         {
-            return View();
+            var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+            return View(ires);
         }
 
         // POST: IdentityResources/Delete/5
@@ -143,8 +157,9 @@ namespace Authority.Controllers.UI.Dashboard
         {
             try
             {
-                // TODO: Add delete logic here
-
+                var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+                _context.IdentityResources.Remove(ires);
+                _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
             }
             catch

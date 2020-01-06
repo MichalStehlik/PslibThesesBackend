@@ -18,6 +18,6 @@ namespace PslibThesesBackend.Models
         public Set Set { get; set; }
         [Required]
         public int SetId { get; set; }
-        //public ICollection<SetQuestion> Questions { get; set; }
+        public ICollection<SetQuestion> Questions { get; set; }
     }
 }

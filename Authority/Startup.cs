@@ -62,7 +62,7 @@ namespace Authority
                 });
                 options.AddPolicy("Admin", policy =>
                 {
-                    policy.RequireClaim("admin");
+                    //policy.RequireClaim("admin");
                     policy.RequireRole("Administrátor");
                     //policy.RequireAuthenticatedUser();
                 });
@@ -125,7 +125,8 @@ namespace Authority
                 .AddInMemoryApiResources(Config.GetApis())
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddProfileService<ProfileService<ApplicationUser>>()
-                .AddInMemoryClients(Config.GetClients());
+                .AddInMemoryClients(Config.GetClients())
+                ;
 
             services.AddScoped<EmailSender>();
             services.AddScoped<RazorViewToStringRenderer>();

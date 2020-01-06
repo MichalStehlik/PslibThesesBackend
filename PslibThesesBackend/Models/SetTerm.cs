@@ -19,6 +19,6 @@ namespace PslibThesesBackend.Models
         [Required]
         [Column(TypeName = "date")]
         public DateTime Date { get; set; }
-        // public ICollection<SetQuestion> Questions { get; set; }
+        public ICollection<SetQuestion> Questions { get; set; }
     }
 }

@@ -2,13 +2,14 @@
 @using X.PagedList
 @using X.PagedList.Mvc.Core
 @using IdentityServer4.EntityFramework.Entities
-@model X.PagedList.IPagedList<IdentityResource>
+@using Authority.Controllers.UI.Dashboard
+@model X.PagedList.IPagedList<ClientListViewModel>
 
 @{
     ViewData["Title"] = "Index";
 }
 
-<h2>Seznam zdrojů pro identitu uživatelů</h2>
+<h2>Seznam klientů</h2>
 @if (TempData.ContainsKey("SuccessMessage"))
 {
     <div class="alert alert-success">@TempData["SuccessMessage"]</div>
@@ -26,7 +27,7 @@
 
 @if (Model.Count == 0)
 {
-    <p>Žádné zdroje nejsou.</p>
+    <p>Žádní klienti nejsou.</p>
 }
 else
 {
@@ -35,10 +36,8 @@ else
             <thead>
                 <tr>
                     <th>@Html.ActionLink("Název", "Index", new { order = ViewBag.NameSortParm })</th>
-                    <th>Aktivní</th>
-                    <th>Povinný</th>
-                    <th>Zvýrazněný</th>
-                    <th>Zjistitelný</th>
+                    <th>Id</th>
+                    <th>Povolený</th>
                     <th>Akce</th>
                 </tr>
             </thead>
@@ -47,19 +46,13 @@ else
                 {
                     <tr>
                         <td>
-                            @Html.DisplayFor(modelItem => item.Name)
+                            @Html.DisplayFor(modelItem => item.ClientName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.ClientId)
                         </td>
                         <td>
                             @Html.DisplayFor(modelItem => item.Enabled)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Required)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Emphasize)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.ShowInDiscoveryDocument)
                         </td>
                         <td>
                             <a asp-action="Details" class="btn btn-info btn-sm" asp-route-id="@item.Id">Podrobnosti</a>
@@ -76,3 +69,4 @@ else
         <div class="col-md"> @Html.PagedListPager(Model, page => Url.Action("Index", new { page, sortOrder = ViewBag.CurrentSort, currentFilter = ViewBag.CurrentFilter }), new X.PagedList.Mvc.Common.PagedListRenderOptionsBase { LiElementClasses = new string[] { "page-item" }, PageClasses = new string[] { "page-link" } }) </div>
     </div>
 }
+
