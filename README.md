@@ -70,7 +70,7 @@ Smazání cíle
 
 Seznam
 
-    GET /ideas[search][name][subject][iserId][firstname][lastname][target][offered][order][page][pagesize]
+    GET /ideas[search][name][subject][userId][firstname][lastname][target][offered][order][page][pagesize]
     
 Data námětu
 
@@ -143,3 +143,29 @@ Získání určitého bodu osnovy námětu
 Přidání nového bodu osnovy námětu
 
     POST /ideas/{id}/outlines
+
+Změna textu bodu osnovy námětu
+
+    PUT /ideas/{id}/outlines/{position}
+
+Změna pořadí bodů osnovy námětu
+
+    PUT /ideas/{id}/outlines/{oldPosition}/moveto/{newPosition}
+
+Vymazání celé osnovy námětu
+
+    DELETE /ideas/{id}/outlines
+
+Smazání bodu osnovy námětu
+
+    DELETE /ideas/{id}/outlines/{position}
+    
+### Sady
+
+Seznam
+
+    GET /sets[search][name][year][active][order][page][pagesize]
+    
+Data námětu
+
+    GET /sets/{id}
