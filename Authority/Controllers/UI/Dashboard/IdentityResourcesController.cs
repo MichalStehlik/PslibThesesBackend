@@ -69,6 +69,7 @@ namespace Authority.Controllers.UI.Dashboard
         public ActionResult Details(int id)
         {
             var ires = _context.IdentityResources.SingleOrDefault(ir => ir.Id == id);
+            if (ires == null) return NotFound();
             return View(ires);
         }
 
@@ -113,6 +114,7 @@ namespace Authority.Controllers.UI.Dashboard
         public ActionResult Edit(int id)
         {
             var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+            if (ires == null) return NotFound();
             return View(ires);
         }
 
@@ -122,6 +124,7 @@ namespace Authority.Controllers.UI.Dashboard
         public ActionResult Edit(int id, IdentityResource model)
         {
             var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+            if (ires == null) return NotFound();
             ires.Name = model.Name;
             ires.DisplayName = model.DisplayName;
             ires.Description = model.Description;
@@ -131,6 +134,7 @@ namespace Authority.Controllers.UI.Dashboard
             ires.ShowInDiscoveryDocument = model.ShowInDiscoveryDocument;
             try
             {
+                if (id != model.Id) throw new ArgumentException();
                 if (model.Name.ToString() == "") throw new ArgumentException();
                 _context.SaveChanges();
                 TempData["SuccessMessage"] = "Zdroj byl uložen";
@@ -147,6 +151,7 @@ namespace Authority.Controllers.UI.Dashboard
         public ActionResult Delete(int id)
         {
             var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+            if (ires == null) return NotFound();
             return View(ires);
         }
 
@@ -158,6 +163,7 @@ namespace Authority.Controllers.UI.Dashboard
             try
             {
                 var ires = _context.IdentityResources.SingleOrDefault(u => u.Id == id);
+                if (ires == null) return NotFound();
                 _context.IdentityResources.Remove(ires);
                 _context.SaveChanges();
                 return RedirectToAction(nameof(Index));
