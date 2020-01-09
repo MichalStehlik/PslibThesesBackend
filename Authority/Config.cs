@@ -7,57 +7,22 @@ namespace Authority
 {
     public static class Config
     {
+        /*
         public static IEnumerable<ApiResource> GetApis()
         {
             return new List<ApiResource>
             {
-                new ApiResource("testapi", "Test quotes API"),
-                new ApiResource("theses", "Theses API"),
+                new ApiResource("QuotesApi", "Test quotes API"),
+                new ApiResource("ThesesApi", "Theses API"),
                 new ApiResource(IdentityServerConstants.LocalApi.ScopeName),
             };
         }
+        */
 
         public static IEnumerable<Client> GetClients()
         {
             return new List<Client>
             {
-                new Client
-                {
-                    ClientId = "client",
-
-                    // no interactive user, use the clientid/secret for authentication
-                    AllowedGrantTypes = GrantTypes.ClientCredentials,
-
-                    // secret for authentication
-                    ClientSecrets =
-                    {
-                        new Secret("secret".Sha256())
-                    },
-
-                    // scopes that client has access to
-                    AllowedScopes = { "testapi" }
-                },
-                new Client
-                {
-                    ClientId = "robot.client",
-                    AllowedGrantTypes = GrantTypes.ClientCredentials,
-                    ClientSecrets =
-                    {
-                        new Secret("secret".Sha256())
-                    },
-                    AllowedScopes = { IdentityServerConstants.LocalApi.ScopeName }
-                },
-                new Client
-                {
-                    ClientId = "ro.client",
-                    AllowedGrantTypes = GrantTypes.ResourceOwnerPassword,
-
-                    ClientSecrets =
-                    {
-                        new Secret("secret".Sha256())
-                    },
-                    AllowedScopes = { "testapi", "theses" }
-                },
                 new Client
                 {
                     ClientId = "quotes.mvc",
@@ -78,7 +43,7 @@ namespace Authority
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        "testapi",
+                        "QuotesApi",
                         "email",
                         "phone",
                         "roles",
@@ -105,10 +70,23 @@ namespace Authority
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        "testapi",
+                        "QuotesApi",
                         "email"
                     },
                     AllowOfflineAccess = true
+                },
+                new Client
+                {
+                    ClientId = "theses.client",
+
+                    AllowedGrantTypes = GrantTypes.ClientCredentials,
+
+                    ClientSecrets =
+                    {
+                        new Secret("theses-secret".Sha256())
+                    },
+
+                    AllowedScopes = { "ThesesApi" }
                 },
                 new Client
                 {
@@ -119,21 +97,67 @@ namespace Authority
                     RequirePkce = false,
                     AllowAccessTokensViaBrowser = true,
 
-                    // where to redirect to after login
                     RedirectUris = { "http://localhost:3000/oidc-callback", "http://localhost:3000/oidc-silent-renew" },
 
-                    // where to redirect to after logout
                     PostLogoutRedirectUris = { "http://localhost:3000/oidc-signout-callback" },
 
                     AllowedScopes = new List<string>
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
                         IdentityServerConstants.StandardScopes.Profile,
-                        "theses",
+                        "ThesesApi",
                         "email"
                     },
                     AllowOfflineAccess = true
-                }
+                },
+                new Client
+                {
+                    ClientId = "rentals.js",
+                    ClientName = "Rentals Javascript Client",
+                    AllowedGrantTypes = GrantTypes.Code,
+                    RequireClientSecret = false,
+                    RequirePkce = false,
+                    AllowAccessTokensViaBrowser = true,
+
+                    RedirectUris = { "http://localhost:3000/oidc-callback", "http://localhost:3000/oidc-silent-renew" },
+
+                    PostLogoutRedirectUris = { "http://localhost:3000/oidc-signout-callback" },
+
+                    AllowedScopes = new List<string>
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "RentalsApi",
+                        "email"
+                    },
+                    AllowOfflineAccess = true
+                },
+                new Client
+                {
+                    ClientId = "rentals.mvc",
+                    ClientName = "Rentals MVC Client",
+                    ClientSecrets =
+                    {
+                        new Secret("secret".Sha256())
+                    },
+                    AllowedGrantTypes = GrantTypes.Hybrid,
+
+                    RedirectUris = { "http://localhost:5002/signin-oidc" },
+
+                    PostLogoutRedirectUris = { "http://localhost:5002/signout-callback-oidc" },
+
+                    AllowedScopes = new List<string>
+                    {
+                        IdentityServerConstants.StandardScopes.OpenId,
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "RentalsApi",
+                        "email",
+                        "phone",
+                        "roles",
+                        IdentityServerConstants.LocalApi.ScopeName
+                    },
+                    AllowOfflineAccess = true
+                },
             };
         }
 

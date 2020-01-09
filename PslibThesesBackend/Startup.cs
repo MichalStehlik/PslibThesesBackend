@@ -43,7 +43,7 @@ namespace PslibThesesBackend
                 options.AddPolicy("Administrator", policy =>
                 {
                     policy.RequireClaim("admin","true");
-                    policy.RequireRole("Administrátor");
+                    //policy.RequireRole("Administrátor");
                     //policy.RequireAuthenticatedUser();
                 });
                 options.AddPolicy("Student", policy =>
@@ -59,7 +59,7 @@ namespace PslibThesesBackend
             {
                 options.Authority = Configuration["Authority:Server"];
                 options.RequireHttpsMetadata = true;
-                options.Audience = "theses";
+                options.Audience = "ThesesApi";
             }
             );
 

@@ -11,6 +11,9 @@ using Authority.Services;
 using System.Reflection;
 using Microsoft.Extensions.Hosting;
 using IdentityServer4;
+using System.Linq;
+using System.Collections.Generic;
+using IdentityServer4.Models;
 
 namespace Authority
 {
@@ -97,6 +100,12 @@ namespace Authority
                 });
             });
 
+            List<ApiResource> ApiResources = new List<ApiResource>();
+            foreach (var ar in Configuration.GetSection("ApiResources").GetChildren())
+            {
+                ApiResources.Add(new ApiResource(ar.GetValue<string>("Name"), ar.GetValue<string>("DisplayName")));
+            };
+
             var builder = services.AddIdentityServer(options =>
             {
                 options.UserInteraction.LoginUrl = "/Login";
@@ -122,7 +131,8 @@ namespace Authority
                     options.TokenCleanupInterval = 90;
                 })
                 .AddInMemoryIdentityResources(Config.GetIdentityResources())
-                .AddInMemoryApiResources(Config.GetApis())
+                //.AddInMemoryApiResources(Config.GetApis())
+                .AddInMemoryApiResources(ApiResources)
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddProfileService<ProfileService<ApplicationUser>>()
                 .AddInMemoryClients(Config.GetClients())
