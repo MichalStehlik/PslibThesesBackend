@@ -95,7 +95,15 @@ Smazání námětu
 Seznam cílových skupin pro námět
 
     GET /ideas/{id}/targets
-    
+ 
+Seznam všech cílových skupin
+
+    GET /ideas/{id}/allTargets 
+
+Seznam nepřiřazených cílových skupin
+
+    GET /ideas/{id}/unusedTargets
+
 Přidání cílové skupiny pro námět
 
     POST /ideas/{id}/targets
