@@ -1,0 +1,30 @@
+﻿@using IdentityServer4.EntityFramework.Entities
+@using Authority.Controllers.UI.Dashboard
+@model ClientUriInputModel
+
+@{
+    ViewData["Title"] = "CreateCors";
+}
+
+<h1>Nový CORS</h1>
+@if (TempData.ContainsKey("SuccessMessage"))
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData.ContainsKey("ErrorMessage"))
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
+<form method="post">
+    <h2>Přidání nového zdroje CORS ke klientovi</h2>
+    <hr />
+    <input type="hidden" asp-for="ClientId" />
+    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+    <div class="form-group">
+        <label asp-for="Uri"></label>
+        <input asp-for="Uri" class="form-control" />
+        <span asp-validation-for="Uri" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Uložit</button>
+    <a class="btn" asp-action="Details" asp-route-id="@Model.ClientId">Zpět</a>
+</form>

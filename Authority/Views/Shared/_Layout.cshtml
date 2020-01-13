@@ -55,24 +55,24 @@
                             <a class="dropdown-item" asp-controller="Users" asp-action="Index">Uživatelé</a>
                             <a class="dropdown-item" asp-controller="Roles" asp-action="Index">Role</a>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" asp-controller="IdentityResources" asp-action="Index">Zdroje pro identitu</a>
+                            @*<a class="dropdown-item" asp-controller="IdentityResources" asp-action="Index">Zdroje pro identitu</a>*@
                             <a class="dropdown-item disabled" asp-controller="Resources" asp-action="Index">Zdroje API</a>
-                            <a class="dropdown-item" asp-controller="Clients" asp-action="Index">Klienti</a>
+                            @*<a class="dropdown-item" asp-controller="Clients" asp-action="Index">Klienti</a>*@
+                                </div>
+                            </li>
+                            }
+                        </ul>
                         </div>
-                    </li>
-                    }                        
-                </ul>
-                </div>
+                    </div>
+                </nav>
+            </header>
+
+            <div class="container body-content">
+                @RenderBody()
             </div>
-        </nav>
-    </header>
 
-    <div class="container body-content">
-        @RenderBody()
-    </div>
-
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
-    @RenderSection("scripts", required: false)
-</body>
-</html>
+            <script src="~/lib/jquery/dist/jquery.min.js"></script>
+            <script src="~/lib/bootstrap/dist/js/bootstrap.js"></script>
+            @RenderSection("scripts", required: false)
+        </body>
+        </html>

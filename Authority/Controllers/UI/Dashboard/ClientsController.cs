@@ -244,9 +244,384 @@ namespace Authority.Controllers.UI.Dashboard
 
             return RedirectToAction("Details", new { id = client });
         }
+
+        // GET: Clients/CreateScope/5
+        public ActionResult CreateScope(int id, string scope = "")
+        {
+            var c = _context.Clients.SingleOrDefault(c => c.Id == id);
+            if (c != null)
+            {
+                return View(new ClientScopeInputModel { Scope = scope, ClientId = id });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Neznámý klient.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clients/CreateScope/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateScope(int id, ClientScopeInputModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                IdentityServer4.EntityFramework.Entities.Client client = _context.Clients.Include(x => x.AllowedScopes).FirstOrDefaultAsync(n => n.Id == model.ClientId).Result;
+                if (client == null)
+                {
+                    TempData["ErrorMessage"] = "Neznámý klient.";
+                    return RedirectToAction(nameof(Index));
+                }
+                client.AllowedScopes.Add(new ClientScope
+                {
+                    ClientId = model.ClientId,
+                    Scope = model.Scope
+                });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+                catch (Exception)
+                {
+                    TempData["ErrorMessage"] = "Aktualizace klienta se nepodařila.";
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+            }
+            return View(model);
+        }
+
+        // GET: Clients/RemoveScope/5?Client=1
+        public async Task<ActionResult> RemoveScope(int id, int client)
+        {
+            var c = _context.Clients.Include(x => x.AllowedScopes).FirstOrDefaultAsync(cl => cl.Id == client).Result;
+            if (c == null)
+            {
+                return NotFound();
+            }
+
+            var scope = c.AllowedScopes.Where(x => x.Id == id).FirstOrDefault();
+            if (scope == null)
+            {
+                return NotFound();
+            }
+            c.AllowedScopes.Remove(scope);
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Klientovi byl odebrán scope.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Odstranění scope se nepodařilo.";
+            }
+
+            return RedirectToAction("Details", new { id = client });
+        }
+
+        // GET: Clients/CreateGrant/5
+        public ActionResult CreateGrant(int id, string grant = "")
+        {
+            var c = _context.Clients.SingleOrDefault(c => c.Id == id);
+            if (c != null)
+            {
+                return View(new ClientGrantInputModel { GrantType = grant, ClientId = id });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Neznámý klient.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clients/CreateGrant/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateGrant(int id, ClientGrantInputModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                IdentityServer4.EntityFramework.Entities.Client client = _context.Clients.Include(x => x.AllowedGrantTypes).FirstOrDefaultAsync(n => n.Id == model.ClientId).Result;
+                if (client == null)
+                {
+                    TempData["ErrorMessage"] = "Neznámý klient.";
+                    return RedirectToAction(nameof(Index));
+                }
+                client.AllowedGrantTypes.Add(new ClientGrantType
+                {
+                    ClientId = model.ClientId,
+                    GrantType = model.GrantType
+                });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+                catch (Exception)
+                {
+                    TempData["ErrorMessage"] = "Aktualizace klienta se nepodařila.";
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+            }
+            return View(model);
+        }
+
+        // GET: Clients/RemoveGrant/5?Client=1
+        public async Task<ActionResult> RemoveGrant(int id, int client)
+        {
+            var c = _context.Clients.Include(x => x.AllowedGrantTypes).FirstOrDefaultAsync(cl => cl.Id == client).Result;
+            if (c == null)
+            {
+                return NotFound();
+            }
+
+            var grant = c.AllowedGrantTypes.Where(x => x.Id == id).FirstOrDefault();
+            if (grant == null)
+            {
+                return NotFound();
+            }
+            c.AllowedGrantTypes.Remove(grant);
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Klientovi byl odebrán scope.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Odstranění scope se nepodařilo.";
+            }
+
+            return RedirectToAction("Details", new { id = client });
+        }
+
+        // GET: Clients/CreateRedirectUri/5
+        public ActionResult CreateRedirectUri(int id, string uri = "")
+        {
+            var c = _context.Clients.SingleOrDefault(c => c.Id == id);
+            if (c != null)
+            {
+                return View(new ClientUriInputModel { Uri = uri, ClientId = id });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Neznámý klient.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clients/CreateRedirectUri/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateRedirectUri(int id, ClientUriInputModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                IdentityServer4.EntityFramework.Entities.Client client = _context.Clients.Include(x => x.RedirectUris).FirstOrDefaultAsync(n => n.Id == model.ClientId).Result;
+                if (client == null)
+                {
+                    TempData["ErrorMessage"] = "Neznámý klient.";
+                    return RedirectToAction(nameof(Index));
+                }
+                client.RedirectUris.Add(new ClientRedirectUri
+                {
+                    ClientId = model.ClientId,
+                    RedirectUri = model.Uri
+                });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+                catch (Exception)
+                {
+                    TempData["ErrorMessage"] = "Aktualizace klienta se nepodařila.";
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+            }
+            return View(model);
+        }
+
+        // GET: Clients/RemoveRedirectUri/5?Client=1
+        public async Task<ActionResult> RemoveRedirectUri(int id, int client)
+        {
+            var c = _context.Clients.Include(x => x.RedirectUris).FirstOrDefaultAsync(cl => cl.Id == client).Result;
+            if (c == null)
+            {
+                return NotFound();
+            }
+
+            var uri = c.RedirectUris.Where(x => x.Id == id).FirstOrDefault();
+            if (uri == null)
+            {
+                return NotFound();
+            }
+            c.RedirectUris.Remove(uri);
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Klientovi byla odebrána URI.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Odstranění URI se nepodařilo.";
+            }
+
+            return RedirectToAction("Details", new { id = client });
+        }
+
+        // GET: Clients/CreateLogoutUri/5
+        public ActionResult CreateLogoutUri(int id, string uri = "")
+        {
+            var c = _context.Clients.SingleOrDefault(c => c.Id == id);
+            if (c != null)
+            {
+                return View(new ClientUriInputModel { Uri = uri, ClientId = id });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Neznámý klient.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clients/CreateLogoutUri/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateLogoutUri(int id, ClientUriInputModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                IdentityServer4.EntityFramework.Entities.Client client = _context.Clients.Include(x => x.PostLogoutRedirectUris).FirstOrDefaultAsync(n => n.Id == model.ClientId).Result;
+                if (client == null)
+                {
+                    TempData["ErrorMessage"] = "Neznámý klient.";
+                    return RedirectToAction(nameof(Index));
+                }
+                client.PostLogoutRedirectUris.Add(new ClientPostLogoutRedirectUri
+                {
+                    ClientId = model.ClientId,
+                    PostLogoutRedirectUri = model.Uri
+                });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+                catch (Exception)
+                {
+                    TempData["ErrorMessage"] = "Aktualizace klienta se nepodařila.";
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+            }
+            return View(model);
+        }
+
+        // GET: Clients/RemoveLogoutUri/5?Client=1
+        public async Task<ActionResult> RemoveLogoutUri(int id, int client)
+        {
+            var c = _context.Clients.Include(x => x.PostLogoutRedirectUris).FirstOrDefaultAsync(cl => cl.Id == client).Result;
+            if (c == null)
+            {
+                return NotFound();
+            }
+
+            var uri = c.PostLogoutRedirectUris.Where(x => x.Id == id).FirstOrDefault();
+            if (uri == null)
+            {
+                return NotFound();
+            }
+            c.PostLogoutRedirectUris.Remove(uri);
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Klientovi byla odebrána URI.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Odstranění URI se nepodařilo.";
+            }
+
+            return RedirectToAction("Details", new { id = client });
+        }
+
+        // GET: Clients/CreateCors/5
+        public ActionResult CreateCors(int id, string uri = "")
+        {
+            var c = _context.Clients.SingleOrDefault(c => c.Id == id);
+            if (c != null)
+            {
+                return View(new ClientUriInputModel { Uri = uri, ClientId = id });
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Neznámý klient.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+
+        // POST: Clients/CreateCors/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<ActionResult> CreateCors(int id, ClientUriInputModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                IdentityServer4.EntityFramework.Entities.Client client = _context.Clients.Include(x => x.AllowedCorsOrigins).FirstOrDefaultAsync(n => n.Id == model.ClientId).Result;
+                if (client == null)
+                {
+                    TempData["ErrorMessage"] = "Neznámý klient.";
+                    return RedirectToAction(nameof(Index));
+                }
+                client.AllowedCorsOrigins.Add(new ClientCorsOrigin
+                {
+                    ClientId = model.ClientId,
+                    Origin = model.Uri
+                });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+                catch (Exception)
+                {
+                    TempData["ErrorMessage"] = "Aktualizace klienta se nepodařila.";
+                    return RedirectToAction("Details", new { id = model.ClientId });
+                }
+            }
+            return View(model);
+        }
+
+        // GET: Clients/RemoveCors/5?Client=1
+        public async Task<ActionResult> RemoveCors(int id, int client)
+        {
+            var c = _context.Clients.Include(x => x.AllowedCorsOrigins).FirstOrDefaultAsync(cl => cl.Id == client).Result;
+            if (c == null)
+            {
+                return NotFound();
+            }
+
+            var uri = c.AllowedCorsOrigins.Where(x => x.Id == id).FirstOrDefault();
+            if (uri == null)
+            {
+                return NotFound();
+            }
+            c.AllowedCorsOrigins.Remove(uri);
+            try
+            {
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Klientovi byla odebrána URI.";
+            }
+            catch (Exception)
+            {
+                TempData["ErrorMessage"] = "Odstranění URI se nepodařilo.";
+            }
+
+            return RedirectToAction("Details", new { id = client });
+        }
     }
 
-    public class ClientListViewModel
+public class ClientListViewModel
     {
         public int Id { get; set; }
         public string ClientId { get; set; }
@@ -267,10 +642,35 @@ namespace Authority.Controllers.UI.Dashboard
 
     public class ClientSecretInputModel
     {
+        [Required]
         public int ClientId { get; set; }
         [Required]
         public string Value { get; set; }
         public DateTime? Expiration { get; set; }
         public string Description { get; set; }
+    }
+
+    public class ClientScopeInputModel
+    {
+        [Required]
+        public int ClientId { get; set; }
+        [Required]
+        public string Scope { get; set; }
+    }
+
+    public class ClientGrantInputModel
+    {
+        [Required]
+        public int ClientId { get; set; }
+        [Required]
+        public string GrantType { get; set; }
+    }
+
+    public class ClientUriInputModel
+    {
+        [Required]
+        public int ClientId { get; set; }
+        [Required]
+        public string Uri { get; set; }
     }
 }

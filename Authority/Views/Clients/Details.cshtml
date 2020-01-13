@@ -9,7 +9,14 @@
 }
 
 <h1>Podrobnosti</h1>
-
+@if (TempData.ContainsKey("SuccessMessage"))
+{
+    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+}
+@if (TempData.ContainsKey("ErrorMessage"))
+{
+    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+}
 <div>
     <div class="row">
         <div class="col-md-6">
@@ -225,7 +232,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
                             <th>Typ</th>
                             <th>Hodnota (SHA256)</th>
                             <th>Expirace</th>
@@ -236,7 +242,6 @@
                         @foreach (var s in Model.Client.ClientSecrets)
                         {
                             <tr>
-                                <td>@s.Id</td>
                                 <td>@s.Type</td>
                                 <td>@s.Value</td>
                                 <td>@s.Expiration</td>
@@ -255,15 +260,14 @@
             <h3>Povolené scope</h3>
             <div>
                 <a class="btn btn-success m-1" asp-action="CreateScope" asp-route-id="@Model.Client.Id">Nový</a>
-                <a class="btn btn-default" asp-action="CreateScopeOpenId" asp-route-id="@Model.Client.Id">OpenId</a>
-                <a class="btn btn-default" asp-action="CreateScopeProfile" asp-route-id="@Model.Client.Id">Profile</a>
+                <a class="btn btn-default" asp-action="CreateScope" asp-route-id="@Model.Client.Id" asp-route-scope="openid">OpenId</a>
+                <a class="btn btn-default" asp-action="CreateScope" asp-route-id="@Model.Client.Id" asp-route-scope="profile">Profile</a>
             </div>
             @if (Model.AllowedScopes.Count() > 0)
             {
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
                             <th>Scope</th>
                             <th>Akce</th>
                         </tr>
@@ -272,7 +276,6 @@
                         @foreach (var s in Model.AllowedScopes)
                         {
                             <tr>
-                                <td>@s.Id</td>
                                 <td>@s.Scope</td>
                                 <td>
                                     <a class="btn btn-danger btn-sm" asp-action="RemoveScope" asp-route-id="@s.Id" asp-route-client="@Model.Client.Id">Odstranit</a>
@@ -290,21 +293,20 @@
             <h3>Povolené typy grantů</h3>
             <div>
                 <a class="btn btn-success" asp-action="CreateGrant" asp-route-id="@Model.Client.Id">Nový</a>
-                <a class="btn btn-default" asp-action="CreateGrantClientCredentials" asp-route-id="@Model.Client.Id">Client Credentials</a>
-                <a class="btn btn-default" asp-action="CreateGrantResourceOwnerPassword" asp-route-id="@Model.Client.Id">Password</a>
-                <a class="btn btn-default" asp-action="CreateGrantImplicit" asp-route-id="@Model.Client.Id">Implicit</a>
-                <a class="btn btn-default" asp-action="CreateGrantJwt" asp-route-id="@Model.Client.Id">Jwt</a>
-                <a class="btn btn-default" asp-action="CreateGrantRefresh" asp-route-id="@Model.Client.Id">Refresh</a>
-                <a class="btn btn-default" asp-action="CreateGrantCode" asp-route-id="@Model.Client.Id">Code</a>
-                <a class="btn btn-default" asp-action="CreateGrantSaml" asp-route-id="@Model.Client.Id">Saml2</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="client">Client Credentials</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="password">Password</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="implicit">Implicit</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="jwt">Jwt</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="refresh">Refresh</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="code">Code</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="saml">Saml2</a>
             </div>
             @if (Model.AllowedGrantTypes.Count() > 0)
             {
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
-                            <th>Scope</th>
+                            <th>Grant</th>
                             <th>Akce</th>
                         </tr>
                     </thead>
@@ -312,7 +314,6 @@
                         @foreach (var s in Model.AllowedGrantTypes)
                         {
                             <tr>
-                                <td>@s.Id</td>
                                 <td>@s.GrantType</td>
                                 <td>
                                     <a class="btn btn-danger btn-sm" asp-action="RemoveGrant" asp-route-id="@s.Id" asp-route-client="@Model.Client.Id">Odstranit</a>
@@ -325,7 +326,7 @@
             }
             else
             {
-                <p>Klient nemá povolená žádné typy grantů.</p>
+                <p>Klient nemá povolené žádné typy grantů.</p>
             }
             <h3>Redirect URI</h3>
             <div>
@@ -336,7 +337,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
                             <th>Uri</th>
                             <th>Akce</th>
                         </tr>
@@ -345,7 +345,6 @@
                         @foreach (var s in Model.RedirectUris)
                         {
                             <tr>
-                                <td>@s.Id</td>
                                 <td>@s.RedirectUri</td>
                                 <td>
                                     <a class="btn btn-danger btn-sm" asp-action="RemoveRedirectUri" asp-route-id="@s.Id" asp-route-client="@Model.Client.Id">Odstranit</a>
@@ -402,7 +401,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
                             <th>Origin</th>
                             <th>Akce</th>
                         </tr>
@@ -411,7 +409,6 @@
                         @foreach (var s in Model.AllowedCorsOrigins)
                         {
                             <tr>
-                                <td>@s.Id</td>
                                 <td>@s.Origin</td>
                                 <td>
                                     <a class="btn btn-danger btn-sm" asp-action="RemoveCors" asp-route-id="@s.Id" asp-route-client="@Model.Client.Id">Odstranit</a>
