@@ -293,13 +293,12 @@
             <h3>Povolené typy grantů</h3>
             <div>
                 <a class="btn btn-success" asp-action="CreateGrant" asp-route-id="@Model.Client.Id">Nový</a>
-                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="client">Client Credentials</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="client_credentials">Client Credentials</a>
                 <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="password">Password</a>
                 <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="implicit">Implicit</a>
-                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="jwt">Jwt</a>
-                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="refresh">Refresh</a>
-                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="code">Code</a>
-                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="saml">Saml2</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="refresh_token">Refresh</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="authorization_code">Code</a>
+                <a class="btn btn-default" asp-action="CreateGrant" asp-route-id="@Model.Client.Id" asp-route-grant="urn:ietf:params:oauth:grant-type:device_code">Device Code</a>
             </div>
             @if (Model.AllowedGrantTypes.Count() > 0)
             {

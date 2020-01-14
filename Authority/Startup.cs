@@ -135,7 +135,7 @@ namespace Authority
                 .AddInMemoryApiResources(ApiResources)
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddProfileService<ProfileService<ApplicationUser>>()
-                .AddInMemoryClients(Config.GetClients())
+                //.AddInMemoryClients(Config.GetClients())
                 ;
 
             services.AddScoped<EmailSender>();
