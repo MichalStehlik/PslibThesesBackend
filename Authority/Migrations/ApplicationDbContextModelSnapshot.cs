@@ -15,7 +15,7 @@ namespace Authority.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.0.0")
+                .HasAnnotation("ProductVersion", "3.1.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
@@ -49,31 +49,31 @@ namespace Authority.Migrations
                         new
                         {
                             Id = "ADMIN",
-                            ConcurrencyStamp = "10009f36-74e7-47a2-8daa-3de8637ce269",
+                            ConcurrencyStamp = "db54cd75-c099-4f1d-997d-d46e6e69526c",
                             Name = "Administrátor"
                         },
                         new
                         {
                             Id = "MANAGER",
-                            ConcurrencyStamp = "1caa1b9c-beb8-4f8d-8a65-cf5eddbcecd9",
+                            ConcurrencyStamp = "a4b2adee-388b-44b6-a82b-61e889e381e3",
                             Name = "Manažer"
                         },
                         new
                         {
                             Id = "TEACHER",
-                            ConcurrencyStamp = "596f3663-10b7-4bb8-b3c9-56fd1eca75b1",
+                            ConcurrencyStamp = "1fca845f-1a10-45ec-a142-0b1b4363178d",
                             Name = "Učitel"
                         },
                         new
                         {
                             Id = "STUDENT",
-                            ConcurrencyStamp = "4ea49182-882d-46f8-be4e-af20b4977c64",
+                            ConcurrencyStamp = "e1e3454d-0a73-4e60-9bb1-c534d3d17490",
                             Name = "Student"
                         },
                         new
                         {
                             Id = "EXT",
-                            ConcurrencyStamp = "ff43f4e5-32d5-498c-8adf-c90db3f5a6c1",
+                            ConcurrencyStamp = "2ae52b97-4f3c-4b14-a2fd-a68980e72ea0",
                             Name = "Externista"
                         });
                 });
@@ -156,6 +156,26 @@ namespace Authority.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "ADMINUSER",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "b1fd60d3-c433-4334-8055-f275820d0e33",
+                            Email = "st@pslib.cloud",
+                            EmailConfirmed = true,
+                            FirstName = "Hlavní",
+                            Gender = 3,
+                            LastName = "Administrátor",
+                            LockoutEnabled = false,
+                            MiddleName = "",
+                            PasswordHash = "AQAAAAEAACcQAAAAEEHOpd0Bili3GcRu+rS17GgO3RZUmqvPLQEfSiLrOkV5EdXWQ+AKA9LGgx5V0StKzQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "",
+                            TwoFactorEnabled = false,
+                            UserName = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("Authority.ViewModels.ApplicationUserViewModel", b =>
@@ -227,6 +247,36 @@ namespace Authority.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetRoleClaims");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            ClaimType = "admin",
+                            ClaimValue = "1",
+                            RoleId = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            ClaimType = "theses_evaluator",
+                            ClaimValue = "1",
+                            RoleId = "TEACHER"
+                        },
+                        new
+                        {
+                            Id = 3,
+                            ClaimType = "theses_evaluator",
+                            ClaimValue = "1",
+                            RoleId = "EXT"
+                        },
+                        new
+                        {
+                            Id = 4,
+                            ClaimType = "theses_manager",
+                            ClaimValue = "1",
+                            RoleId = "MANAGER"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
@@ -288,6 +338,13 @@ namespace Authority.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles");
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "ADMINUSER",
+                            RoleId = "ADMIN"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>

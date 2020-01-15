@@ -10,8 +10,8 @@ using PslibThesesBackend.Models;
 namespace PslibThesesBackend.Migrations
 {
     [DbContext(typeof(ThesesContext))]
-    [Migration("20200104192711_Sets")]
-    partial class Sets
+    [Migration("20200115230152_Init")]
+    partial class Init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -168,6 +168,68 @@ namespace PslibThesesBackend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Sets");
+                });
+
+            modelBuilder.Entity("PslibThesesBackend.Models.SetAnswer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<bool>("Critical")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SetQuestionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SetQuestionId");
+
+                    b.ToTable("SetAnswer");
+                });
+
+            modelBuilder.Entity("PslibThesesBackend.Models.SetQuestion", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SetRoleId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SetTermId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SetRoleId");
+
+                    b.HasIndex("SetTermId");
+
+                    b.ToTable("SetQuestion");
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.SetRole", b =>
@@ -344,6 +406,30 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.Target", "Target")
                         .WithMany("Ideas")
                         .HasForeignKey("TargetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PslibThesesBackend.Models.SetAnswer", b =>
+                {
+                    b.HasOne("PslibThesesBackend.Models.SetQuestion", "Question")
+                        .WithMany("Answers")
+                        .HasForeignKey("SetQuestionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("PslibThesesBackend.Models.SetQuestion", b =>
+                {
+                    b.HasOne("PslibThesesBackend.Models.SetRole", "Role")
+                        .WithMany("Questions")
+                        .HasForeignKey("SetRoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PslibThesesBackend.Models.SetTerm", "Term")
+                        .WithMany("Questions")
+                        .HasForeignKey("SetTermId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
