@@ -14,6 +14,7 @@ namespace PslibThesesBackend.Models
         public string Name { get; set; }
         public bool ClassTeacher { get; set; } = false;
         public bool RequiredForPrint { get; set; } = false;
+        public bool RequiredForAdvancement { get; set; } = false;
         public bool ShowsOnApplication { get; set; } = false;
         public Set Set { get; set; }
         [Required]

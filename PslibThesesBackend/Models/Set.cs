@@ -22,7 +22,9 @@ namespace PslibThesesBackend.Models
         public ApplicationTemplate Template { get; set; } = ApplicationTemplate.GraduationWork;
         public ICollection<SetTerm> Terms { get; set; }
         public ICollection<SetRole> Roles { get; set; }
-        //public ICollection<Work> Works { get; set; }
+        public ICollection<Work> Works { get; set; }
+        public int RequiredGoals { get; set; } = 3;
+        public int RequiredOutlines { get; set; } = 5;
 
     }
 }

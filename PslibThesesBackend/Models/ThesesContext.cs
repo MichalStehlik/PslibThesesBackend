@@ -22,8 +22,11 @@ namespace PslibThesesBackend.Models
         public DbSet<Set> Sets { get; set; }
         public DbSet<SetTerm> SetTerms { get; set; }
         public DbSet<SetRole> SetRoles { get; set; }
-        //public DbSet<SetQuestion> SetQuestions { get; set; }
-        //public DbSet<SetAnswer> SetAnswers { get; set; }
+        public DbSet<SetQuestion> SetQuestions { get; set; }
+        public DbSet<SetAnswer> SetAnswers { get; set; }
+        public DbSet<Work> Works { get; set; }
+        public DbSet<WorkGoal> WorkGoals { get; set; }
+        public DbSet<WorkOutline> WorkOutlines { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
