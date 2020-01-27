@@ -160,6 +160,58 @@ namespace PslibThesesBackend.Controllers
         {
             return _context.Sets.Any(e => e.Id == id);
         }
+
+        [HttpGet("{id}/terms")]
+        public async Task<ActionResult<IEnumerable<SetTerm>>> GetSetTerms(int id)
+        {
+            if (SetExists(id))
+            {
+                return NotFound("set not found");
+            }
+
+            var setTerms = _context.SetTerms
+                .Where(st => st.SetId == id)
+                .OrderBy(st => st.Date)
+                .Select(st => new { Name = st.Name, Date = st.Date, WarningDate = st.WarningDate, QuestionsCount = st.Questions.Count })
+                .AsNoTracking();
+            return Ok(setTerms);
+        }
+
+        [HttpGet("{id}/terms/{termId}")]
+        public async Task<ActionResult<SetTerm>> GetSetTerm(int id, int termId)
+        {
+            var @set = await _context.Sets.FindAsync(id);
+            if (@set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @term = await _context.SetTerms.FindAsync(termId);
+            if (@term == null)
+            {
+                return NotFound("term not found");
+            }
+            var setTerm = _context.SetTerms.Where(st => (st.SetId == id && st.Id == termId)).FirstOrDefault();
+            if (@setTerm == null)
+            {
+                return NotFound("term is not in this set");
+            }
+            return @term;
+        }
+
+        [HttpPost("{id}/terms")]
+        public async Task<ActionResult<SetTerm>> PostSetTerms(int id, [FromBody] SetTermIdInputModel st)
+        {
+            var set = await _context.Sets.FindAsync(id);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            if (st.WarningDate == null) st.WarningDate = st.Date.AddDays(-2);
+            var newTerm = new SetTerm { SetId = id, Date = st.Date, WarningDate = st.WarningDate };
+            _context.SetTerms.Add(newTerm);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId});
+        }
     }
 
     class SetListViewModel
@@ -170,5 +222,12 @@ namespace PslibThesesBackend.Controllers
         public bool Active { get; set; }
         public ApplicationTemplate Template { get; set; }
         public int MaxGrade { get; set; }
+    }
+
+    public class SetTermIdInputModel
+    {
+        public string Name { get; set; }
+        public DateTime Date { get; set; }
+        public DateTime WarningDate { get; set; }
     }
 }
