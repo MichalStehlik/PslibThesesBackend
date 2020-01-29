@@ -90,8 +90,9 @@ namespace PslibThesesBackend.Controllers
             {
                 users = users.Skip(page * pagesize).Take(pagesize);
             }
-            var count = users.CountAsync().Result;
-            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = users.AsNoTracking() });
+            var result = users.ToList();
+            int count = result.Count();
+            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = result });
         }
 
         // GET: /Users/aaa
@@ -122,6 +123,7 @@ namespace PslibThesesBackend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(string id, User user)
         {
+            // TODO user roles
             if (id != user.Id)
             {
                 return BadRequest();
@@ -157,6 +159,7 @@ namespace PslibThesesBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser([FromBody] User user)
         {
+            // TODO User roles
             var existingUser = await _context.Users.FindAsync(user.Id);
             if (existingUser == null)
             {
@@ -180,6 +183,7 @@ namespace PslibThesesBackend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(string id)
         {
+            // TODO User roles
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {

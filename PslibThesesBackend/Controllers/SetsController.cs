@@ -77,9 +77,10 @@ namespace PslibThesesBackend.Controllers
             {
                 sets = sets.Skip(page * pagesize).Take(pagesize);
             }
-            var count = sets.CountAsync().Result;
+            var result = sets.ToList();
+            int count = result.Count();
 
-            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = sets.AsNoTracking() });
+            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = result });
         }
 
         // GET: Sets/5

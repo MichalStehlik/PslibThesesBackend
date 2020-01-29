@@ -79,12 +79,13 @@ namespace PslibThesesBackend.Controllers
                     targets = targets.OrderBy(t => t.Id);
                     break;
             }
-            if (pagesize != 0)
+                if (pagesize != 0)
             {
-                targets = targets.Skip(page * pagesize).Take(pagesize);
+                targets = targets/*.Skip(page * pagesize)*/.Take(pagesize);
             }
-            var count = targets.CountAsync().Result;
-            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = targets.AsNoTracking() });
+            var result = targets.ToList();
+            int count = result.Count();
+            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = result });
         }
 
         // GET: Targets/5

@@ -113,7 +113,6 @@ namespace PslibThesesBackend.Controllers
             {
                 ideas = ideas.Skip(page * pagesize).Take(pagesize);
             }
-            var count = ideas.CountAsync().Result;
             List<IdeaListViewModel> ideasVM = ideas.Select(i => new IdeaListViewModel
             {
                 Id = i.Id,
@@ -130,6 +129,7 @@ namespace PslibThesesBackend.Controllers
                 Updated = i.Updated,
                 Targets = i.IdeaTargets.Select(it => it.Target)
             }).ToList();
+            int count = ideasVM.Count();
             return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = ideasVM });
         }
 
