@@ -34,6 +34,7 @@ namespace Authority.Controllers.UI.Dashboard
                 Id = c.Id,
                 ClientId = c.ClientId,
                 ClientName = c.ClientName,
+                Enabled = c.Enabled
             });
             if (!String.IsNullOrEmpty(searchString))
             {

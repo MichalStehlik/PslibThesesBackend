@@ -8,74 +8,79 @@
     <h1>Podrobnosti</h1>
 
     <div>
-        <h4>Uživatel</h4>
-        <hr />
-        <dl class="row">
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.EmailConfirmed)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.EmailConfirmed)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.PhoneNumberConfirmed)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.PhoneNumberConfirmed)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.AccessFailedCount)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.AccessFailedCount)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.FirstName)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.FirstName)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.MiddleName)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.MiddleName)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.LastName)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.LastName)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.UserName)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.UserName)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.Email)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.Email)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.PhoneNumber)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.PhoneNumber)
-            </dd>
-            <dt class="col-sm-2">
-                @Html.DisplayNameFor(model => model.User.Gender)
-            </dt>
-            <dd class="col-sm-10">
-                @Html.DisplayFor(model => model.User.Gender)
-            </dd>
-        </dl>
         <section>
-        <h2>Externí poskytovatelé</h2>
-        <form asp-action="CreateExternal" asp-route-user="@Model.User.Id" method="post">
-            <input type="hidden" asp-for="User.Id" />
+            <h4>Uživatel</h4>
+            <hr />
+            <dl class="row">
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.EmailConfirmed)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.EmailConfirmed)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.PhoneNumberConfirmed)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.PhoneNumberConfirmed)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.AccessFailedCount)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.AccessFailedCount)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.FirstName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.FirstName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.MiddleName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.MiddleName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.LastName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.LastName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.UserName)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.UserName)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.Email)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.Email)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.PhoneNumber)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.PhoneNumber)
+                </dd>
+                <dt class="col-sm-2">
+                    @Html.DisplayNameFor(model => model.User.Gender)
+                </dt>
+                <dd class="col-sm-10">
+                    @Html.DisplayFor(model => model.User.Gender)
+                </dd>
+            </dl>
+            <div>
+                <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.User.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
+            </div>
+        </section>
+        <section>
+            <h2>Externí poskytovatelé</h2>
+            <form asp-action="CreateExternal" asp-route-user="@Model.User.Id" method="post">
+                <input type="hidden" asp-for="User.Id" />
                 <table class="table table-striped">
                     <thead>
                         <tr>
@@ -93,7 +98,7 @@
                                 <td>@ex.ProviderDisplayName</td>
                                 <td>@ex.ProviderKey</td>
                                 <td>
-                                    <a asp-action="RemoveExternal" asp-route-user="@Model.User.Id" asp-route-role="@ex.LoginProvider" class="btn btn-danger btn-sm">Odebrat</a>
+                                    <a asp-action="RemoveExternal" asp-route-user="@Model.User.Id" asp-route-provider="@ex.LoginProvider" asp-route-key="@ex.ProviderKey" class="btn btn-danger btn-sm">Odebrat</a>
                                 </td>
                             </tr>
                         }
@@ -108,7 +113,8 @@
                     </tfoot>
                 </table>
             </form>
-            </section>
+        </section>
+        <section>
             <h2>Role</h2>
             <table class="table table-striped">
                 @foreach (var r in Model.AllRoles)
@@ -129,6 +135,8 @@
                     </tr>
                 }
             </table>
+        </section>
+        <section>
             <h2>Claimy</h2>
             <form asp-action="CreateClaim" asp-route-user="@Model.User.Id" method="post">
                 <input type="hidden" asp-for="User.Id" />
@@ -159,7 +167,5 @@
                     </tfoot>
                 </table>
             </form>
-    </div>
-<div>
-    <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.User.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
+        </section>
 </div>
