@@ -8,65 +8,67 @@
 <h1>Podrobnosti</h1>
 
 <div>
-    <h4>Role</h4>
-    <hr />
-    <dl class="row">
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Role.Id)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Role.Id)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Role.Name)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Role.Name)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Role.NormalizedName)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Role.NormalizedName)
-        </dd>
-        <dt class="col-sm-2">
-            @Html.DisplayNameFor(model => model.Role.ConcurrencyStamp)
-        </dt>
-        <dd class="col-sm-10">
-            @Html.DisplayFor(model => model.Role.ConcurrencyStamp)
-        </dd>
-    </dl>
+    <section>
+        <h4>Role</h4>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Role.Id)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Role.Id)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Role.Name)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Role.Name)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Role.NormalizedName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Role.NormalizedName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.Role.ConcurrencyStamp)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.Role.ConcurrencyStamp)
+            </dd>
+        </dl>
+        <div>
+            <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.Role.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
+        </div>
+    </section>
     <h2>Claimy</h2>
     <form asp-action="CreateClaim" asp-route-role="@Model.Role.Id" method="post">
-    <table class="table">
-        <thead>
-            <tr>
-                <td>Typ</td>
-                <td>Hodnota</td>
-                <td>Akce</td>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var claim in Model.Claims)
-        {
-        <tr>
-            <th>@claim.Type</th>
-            <td>@claim.Value</td>
-            <td><a asp-action="RemoveClaim" asp-route-role="@Model.Role.Id" asp-route-type="@claim.Type" asp-route-value="@claim.Value" class="btn btn-danger btn-sm">Zrušit</a></td>
-        </tr>
-        }
-        </tbody>
-        <tfoot>
-            <tr>
-                <td><input name="type" class="form-control" /></td>
-                <td><input name="value" class="form-control" /></td>
-                <td><button type="submit" class="btn btn-success btn-sm">Přidat</button></td>
-            </tr>
-        </tfoot>
-    </table>
+        <table class="table">
+            <thead>
+                <tr>
+                    <td>Typ</td>
+                    <td>Hodnota</td>
+                    <td>Akce</td>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var claim in Model.Claims)
+                {
+                    <tr>
+                        <th>@claim.Type</th>
+                        <td>@claim.Value</td>
+                        <td><a asp-action="RemoveClaim" asp-route-role="@Model.Role.Id" asp-route-type="@claim.Type" asp-route-value="@claim.Value" class="btn btn-danger btn-sm">Zrušit</a></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td><input name="type" class="form-control" /></td>
+                    <td><input name="value" class="form-control" /></td>
+                    <td><button type="submit" class="btn btn-success btn-sm">Přidat</button></td>
+                </tr>
+            </tfoot>
+        </table>
     </form>
 
-</div>
-<div>
-    <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.Role.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
 </div>

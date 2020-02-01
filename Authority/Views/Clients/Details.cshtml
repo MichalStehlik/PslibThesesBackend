@@ -222,6 +222,9 @@
                     @Html.DisplayFor(model => model.Client.UpdateAccessTokenClaimsOnRefresh)
                 </dd>
             </dl>
+            <div>
+                <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.Client.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
+            </div>
         </div>
         <div class="col-md-6">
             <h2>Secrets</h2>
@@ -367,7 +370,6 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Id</th>
                             <th>Uri</th>
                             <th>Akce</th>
                         </tr>
@@ -376,7 +378,6 @@
                         @foreach (var s in Model.PostLogoutRedirectUris)
                         {
                             <tr>
-                                <td>@s.Id</td>
                                 <td>@s.PostLogoutRedirectUri</td>
                                 <td>
                                     <a class="btn btn-danger btn-sm" asp-action="RemoveLogoutUri" asp-route-id="@s.Id" asp-route-client="@Model.Client.Id">Odstranit</a>
@@ -423,8 +424,5 @@
                 <p>Klient nemá uvedeny žádné Originy.</p>
             }
         </div>
-    </div>
-    <div>
-        <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.Client.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
     </div>
 </div>

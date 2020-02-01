@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using PslibThesesBackend.Models;
+using Serilog;
 
 namespace PslibThesesBackend
 {
@@ -83,6 +84,8 @@ namespace PslibThesesBackend
                 app.UseDeveloperExceptionPage();
             }
 
+            app.UseStaticFiles();
+            app.UseSerilogRequestLogging();
             app.UseHttpsRedirection();
 
             app.UseRouting();
