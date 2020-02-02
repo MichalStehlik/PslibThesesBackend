@@ -163,7 +163,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("{id}/terms")]
-        public async Task<ActionResult<IEnumerable<SetTerm>>> GetSetTerms(int id)
+        public ActionResult<IEnumerable<SetTerm>> GetSetTerms(int id)
         {
             if (SetExists(id))
             {
@@ -199,6 +199,45 @@ namespace PslibThesesBackend.Controllers
             return @term;
         }
 
+        [HttpPut("{id}/terms/{termId}")]
+        public async Task<ActionResult<SetTerm>> PutSetTerms(int id, int termId, [FromBody] SetTermIdInputModel st)
+        {
+            var set = await _context.Sets.FindAsync(id);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @term = await _context.SetTerms.FindAsync(termId);
+            if (@term == null)
+            {
+                return NotFound("term not found");
+            }
+            if (st.WarningDate == null) st.WarningDate = st.Date.AddDays(-2);
+            term.Name = st.Name;
+            term.Date = st.Date;
+            term.WarningDate = st.WarningDate;
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetSetTerm", new { id = term.SetId, termId = term.Id });
+        }
+
+        [HttpDelete("{id}/terms/{termId}")]
+        public async Task<ActionResult<SetTerm>> DeleteSetTerms(int id, int termId, [FromBody] SetTermIdInputModel st)
+        {
+            var set = await _context.Sets.FindAsync(id);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @term = await _context.SetTerms.FindAsync(termId);
+            if (@term == null)
+            {
+                return NotFound("term not found");
+            }
+            _context.SetTerms.Remove(term);
+            await _context.SaveChangesAsync();
+            return term;
+        }
+
         [HttpPost("{id}/terms")]
         public async Task<ActionResult<SetTerm>> PostSetTerms(int id, [FromBody] SetTermIdInputModel st)
         {
@@ -211,7 +250,23 @@ namespace PslibThesesBackend.Controllers
             var newTerm = new SetTerm { SetId = id, Date = st.Date, WarningDate = st.WarningDate };
             _context.SetTerms.Add(newTerm);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId});
+            return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId, termId = newTerm.Id });
+        }
+
+        [HttpGet("{id}/roles")]
+        public ActionResult<IEnumerable<SetTerm>> GetSetRoles(int id)
+        {
+            if (SetExists(id))
+            {
+                return NotFound("set not found");
+            }
+
+            var setTerms = _context.SetRoles
+                .Where(st => st.SetId == id)
+                .OrderBy(st => st.Name)
+                .Select(st => new { Name = st.Name, st.ClassTeacher, st.RequiredForAdvancement, st.RequiredForPrint, QuestionsCount = st.Questions.Count })
+                .AsNoTracking();
+            return Ok(setTerms);
         }
     }
 

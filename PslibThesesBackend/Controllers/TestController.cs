@@ -12,11 +12,17 @@ namespace PslibThesesBackend.Controllers
     [ApiController]
     public class TestController : ControllerBase
     {
-        [HttpGet("User")]
-        public ActionResult<ClaimsPrincipal> GetUser()
+        [HttpGet("Claims")]
+        public List<ClaimViewModel> GetClaims()
         {
-            var user = User;
-            return user;
+            var claims = User.Claims;
+            return claims.Select(c => new ClaimViewModel { Type = c.Type, Value = c.Value}).ToList();
         }
+    }
+
+    public class ClaimViewModel
+    {
+        public string Type { get; set; }
+        public string Value { get; set; }
     }
 }
