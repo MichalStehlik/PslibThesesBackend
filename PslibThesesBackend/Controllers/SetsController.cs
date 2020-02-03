@@ -212,6 +212,11 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("term not found");
             }
+            var setTerm = _context.SetTerms.Where(st => (st.SetId == id && st.Id == termId)).FirstOrDefault();
+            if (@setTerm == null)
+            {
+                return NotFound("term is not in this set");
+            }
             if (st.WarningDate == null) st.WarningDate = st.Date.AddDays(-2);
             term.Name = st.Name;
             term.Date = st.Date;
@@ -221,7 +226,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpDelete("{id}/terms/{termId}")]
-        public async Task<ActionResult<SetTerm>> DeleteSetTerms(int id, int termId, [FromBody] SetTermIdInputModel st)
+        public async Task<ActionResult<SetTerm>> DeleteSetTerms(int id, int termId)
         {
             var set = await _context.Sets.FindAsync(id);
             if (set == null)
@@ -232,6 +237,11 @@ namespace PslibThesesBackend.Controllers
             if (@term == null)
             {
                 return NotFound("term not found");
+            }
+            var setTerm = _context.SetTerms.Where(st => (st.SetId == id && st.Id == termId)).FirstOrDefault();
+            if (@setTerm == null)
+            {
+                return NotFound("term is not in this set");
             }
             _context.SetTerms.Remove(term);
             await _context.SaveChangesAsync();
@@ -268,6 +278,90 @@ namespace PslibThesesBackend.Controllers
                 .AsNoTracking();
             return Ok(setTerms);
         }
+
+        [HttpGet("{id}/roles/{roleId}")]
+        public async Task<ActionResult<SetRole>> GetSetRole(int id, int roleId)
+        {
+            var @set = await _context.Sets.FindAsync(id);
+            if (@set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @role = await _context.SetRoles.FindAsync(roleId);
+            if (@role == null)
+            {
+                return NotFound("role not found");
+            }
+            var setRole = _context.SetRoles.Where(st => (st.SetId == id && st.Id == roleId)).FirstOrDefault();
+            if (@setRole == null)
+            {
+                return NotFound("role is not in this set");
+            }
+            return @role;
+        }
+
+        [HttpPut("{id}/roles/{roleId}")]
+        public async Task<ActionResult<SetTerm>> PutSetRoles(int id, int roleId, [FromBody] SetRoleIdInputModel sr)
+        {
+            var set = await _context.Sets.FindAsync(id);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @role = await _context.SetRoles.FindAsync(roleId);
+            if (@role == null)
+            {
+                return NotFound("role not found");
+            }
+            var setRole = _context.SetRoles.Where(st => (st.SetId == id && st.Id == roleId)).FirstOrDefault();
+            if (@setRole == null)
+            {
+                return NotFound("role is not in this set");
+            }
+            role.Name = sr.Name;
+            role.ClassTeacher = sr.ClassTeacher;
+            role.RequiredForAdvancement = sr.RequiredForAdvancement;
+            role.RequiredForPrint = sr.RequiredForPrint;
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetSetRole", new { id = role.SetId, roleId = role.Id });
+        }
+
+        [HttpDelete("{id}/roles/{roleId}")]
+        public async Task<ActionResult<SetRole>> DeleteSetRoles(int id, int roleId)
+        {
+            var set = await _context.Sets.FindAsync(id);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @role = await _context.SetRoles.FindAsync(roleId);
+            if (@role == null)
+            {
+                return NotFound("role not found");
+            }
+            var setRole = _context.SetRoles.Where(st => (st.SetId == id && st.Id == roleId)).FirstOrDefault();
+            if (@setRole == null)
+            {
+                return NotFound("role is not in this set");
+            }
+            _context.SetRoles.Remove(role);
+            await _context.SaveChangesAsync();
+            return role;
+        }
+
+        [HttpPost("{id}/roles")]
+        public async Task<ActionResult<SetTerm>> PostSetRoles(int id, [FromBody] SetRoleIdInputModel sr)
+        {
+            var set = await _context.Sets.FindAsync(id);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var newRole = new SetRole { SetId = id, Name = sr.Name, ClassTeacher = sr.ClassTeacher, RequiredForAdvancement = sr.RequiredForAdvancement, RequiredForPrint = sr.RequiredForPrint};
+            _context.SetRoles.Add(newRole);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetSetRole", new { id = newRole.SetId, roleId = newRole.Id });
+        }
     }
 
     class SetListViewModel
@@ -285,5 +379,13 @@ namespace PslibThesesBackend.Controllers
         public string Name { get; set; }
         public DateTime Date { get; set; }
         public DateTime WarningDate { get; set; }
+    }
+
+    public class SetRoleIdInputModel
+    {
+        public string Name { get; set; }
+        public bool ClassTeacher { get; set; }
+        public bool RequiredForAdvancement { get; set; }
+        public bool RequiredForPrint { get; set; }
     }
 }
