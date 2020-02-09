@@ -9,12 +9,12 @@ namespace PslibThesesBackend.Models
 {
     public class Work : IdeaFoundation
     {
-        public string AuthorId { get; set; }
+        public Guid AuthorId { get; set; }
         [Required]
         [ForeignKey("AuthorId")]
         public User Author { get; set; }
         public string ClassName { get; set; }
-        public string ManagerId { get; set; }
+        public Guid ManagerId { get; set; }
         [Required]
         [ForeignKey("ManagerId")]
         public User Manager { get; set; }
@@ -23,9 +23,9 @@ namespace PslibThesesBackend.Models
         [ForeignKey("SetId")]
         public Set Set { get; set; }
         public int MaterialCosts { get; set; } = 0;
-        public int MaterialCostsBySchool { get; set; } = 0;
+        public int MaterialCostsProvidedBySchool { get; set; } = 0;
         public int ServicesCosts { get; set; } = 0;
-        public int ServicesCostsBySchool { get; set; } = 0;
+        public int ServicesCostsProvidedBySchool { get; set; } = 0;
         public string DetailExpenditures { get; set; }
         public WorkState State { get; set; } = WorkState.InPreparation;
         public ICollection<WorkGoal> Goals { get; } = new List<WorkGoal>();

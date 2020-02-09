@@ -121,7 +121,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="user">New User data</param>
         /// <returns>HTTP 204,400,404</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string id, User user)
+        public async Task<IActionResult> PutUser(Guid id, User user)
         {
             // TODO user roles
             if (id != user.Id)
@@ -200,7 +200,7 @@ namespace PslibThesesBackend.Controllers
         /// </summary>
         /// <param name="id">User Id</param>
         /// <returns>boolean</returns>
-        private bool UserExists(string id)
+        private bool UserExists(Guid id)
         {
             return _context.Users.Any(e => e.Id == id);
         }

@@ -44,7 +44,7 @@ namespace PslibThesesBackend.Controllers
             string search = null, 
             string name = null, 
             string subject = null, 
-            string userId = null, 
+            Guid? userId = null, 
             string firstname = null, 
             string lastname = null, 
             int? target = null,
@@ -235,6 +235,7 @@ namespace PslibThesesBackend.Controllers
             idea.User = user;
             idea.Updated = DateTime.Now;
             idea.Offered = input.Offered;
+
 
             try
             {
@@ -991,7 +992,7 @@ namespace PslibThesesBackend.Controllers
         public string Resources { get; set; }
         public string Subject { get; set; }
         [Required]
-        public string UserId { get; set; }
+        public Guid UserId { get; set; }
         public int Participants { get; set; } = 1;
         public bool Offered { get; set; }
     }
