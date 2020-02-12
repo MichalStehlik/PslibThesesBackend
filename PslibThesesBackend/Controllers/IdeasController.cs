@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -171,6 +172,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">Idea Id</param>
         /// <returns>Idea</returns>
         [HttpGet("{id}/full")]
+        [Authorize]
         public async Task<ActionResult<IdeaViewModel>> GetFullIdea(int id)
         {
             var idea = await _context.Ideas
@@ -312,7 +314,7 @@ namespace PslibThesesBackend.Controllers
                 Resources = ideaIM.Resources,
                 Subject = ideaIM.Subject,
                 Participants = ideaIM.Participants,
-                User = user,
+                UserId = ideaIM.UserId,
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
                 Offered = ideaIM.Offered
@@ -555,6 +557,10 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+            if (String.IsNullOrEmpty(goalText.Text))
+            {
+                return BadRequest("text of goal cannot be empty");
+            }
             int maxGoalOrder;
             try
             {
@@ -585,6 +591,10 @@ namespace PslibThesesBackend.Controllers
             if (idea == null)
             {
                 return NotFound("idea not found");
+            }
+            if (String.IsNullOrEmpty(goalText.Text))
+            {
+                return BadRequest("text of goal cannot be empty");
             }
             var goal = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == order).FirstOrDefault();
             if (goal == null)
@@ -801,6 +811,10 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+            if (String.IsNullOrEmpty(outlineText.Text))
+            {
+                return BadRequest("text of outline cannot be empty");
+            }
             int maxOrder;
             try
             {
@@ -831,6 +845,10 @@ namespace PslibThesesBackend.Controllers
             if (idea == null)
             {
                 return NotFound("idea not found");
+            }
+            if (String.IsNullOrEmpty(outlineText.Text))
+            {
+                return BadRequest("text of outline cannot be empty");
             }
             var goal = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == order).FirstOrDefault();
             if (goal == null)

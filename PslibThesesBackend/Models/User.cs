@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace PslibThesesBackend.Models
@@ -26,5 +27,11 @@ namespace PslibThesesBackend.Models
         public bool CanBeEvaluator { get; set; } = false;
         [NotMapped]
         public string Name { get { return FirstName + LastName; } }
+        [JsonIgnore]
+        public ICollection<Idea> OwnedIdeas { get; set; }
+        [JsonIgnore]
+        public ICollection<Work> ManagedWorks { get; set; }
+        [JsonIgnore]
+        public ICollection<Work> AuthoredWorks { get; set; }
     }
 }

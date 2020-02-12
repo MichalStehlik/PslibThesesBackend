@@ -102,7 +102,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">User Id</param>
         /// <returns>User</returns>
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(string id)
+        public async Task<ActionResult<User>> GetUser(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -181,7 +181,7 @@ namespace PslibThesesBackend.Controllers
         /// <returns>User data if success, HTTP 404 if not found</returns>
         [Authorize(Policy = "Administrator")]
         [HttpDelete("{id}")]
-        public async Task<ActionResult<User>> DeleteUser(string id)
+        public async Task<ActionResult<User>> DeleteUser(Guid id)
         {
             // TODO User roles
             var user = await _context.Users.FindAsync(id);

@@ -17,7 +17,9 @@ namespace PslibThesesBackend.Migrations
                     MaxGrade = table.Column<int>(nullable: false),
                     Active = table.Column<bool>(nullable: false),
                     Year = table.Column<int>(nullable: false),
-                    Template = table.Column<int>(nullable: false)
+                    Template = table.Column<int>(nullable: false),
+                    RequiredGoals = table.Column<int>(nullable: false),
+                    RequiredOutlines = table.Column<int>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -42,7 +44,7 @@ namespace PslibThesesBackend.Migrations
                 name: "Users",
                 columns: table => new
                 {
-                    Id = table.Column<string>(nullable: false),
+                    Id = table.Column<Guid>(nullable: false),
                     FirstName = table.Column<string>(nullable: false),
                     LastName = table.Column<string>(nullable: false),
                     Gender = table.Column<int>(nullable: false),
@@ -64,6 +66,7 @@ namespace PslibThesesBackend.Migrations
                     Name = table.Column<string>(nullable: false),
                     ClassTeacher = table.Column<bool>(nullable: false),
                     RequiredForPrint = table.Column<bool>(nullable: false),
+                    RequiredForAdvancement = table.Column<bool>(nullable: false),
                     ShowsOnApplication = table.Column<bool>(nullable: false),
                     SetId = table.Column<int>(nullable: false)
                 },
@@ -75,7 +78,7 @@ namespace PslibThesesBackend.Migrations
                         column: x => x.SetId,
                         principalTable: "Sets",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -86,7 +89,8 @@ namespace PslibThesesBackend.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(nullable: false),
                     SetId = table.Column<int>(nullable: false),
-                    Date = table.Column<DateTime>(type: "date", nullable: false)
+                    Date = table.Column<DateTime>(type: "date", nullable: false),
+                    WarningDate = table.Column<DateTime>(type: "date", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -96,7 +100,7 @@ namespace PslibThesesBackend.Migrations
                         column: x => x.SetId,
                         principalTable: "Sets",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -109,7 +113,7 @@ namespace PslibThesesBackend.Migrations
                     Description = table.Column<string>(nullable: true),
                     Resources = table.Column<string>(nullable: true),
                     Subject = table.Column<string>(nullable: true),
-                    UserId = table.Column<string>(nullable: false),
+                    UserId = table.Column<Guid>(nullable: false),
                     Created = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
                     RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),
@@ -128,7 +132,61 @@ namespace PslibThesesBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SetQuestion",
+                name: "Works",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(nullable: false),
+                    Description = table.Column<string>(nullable: true),
+                    Resources = table.Column<string>(nullable: true),
+                    Subject = table.Column<string>(nullable: true),
+                    UserId = table.Column<Guid>(nullable: false),
+                    Created = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Updated = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RowVersion = table.Column<byte[]>(rowVersion: true, nullable: true),
+                    AuthorId = table.Column<Guid>(nullable: false),
+                    ClassName = table.Column<string>(nullable: true),
+                    ManagerId = table.Column<Guid>(nullable: false),
+                    SetId = table.Column<int>(nullable: false),
+                    MaterialCosts = table.Column<int>(nullable: false),
+                    MaterialCostsProvidedBySchool = table.Column<int>(nullable: false),
+                    ServicesCosts = table.Column<int>(nullable: false),
+                    ServicesCostsProvidedBySchool = table.Column<int>(nullable: false),
+                    DetailExpenditures = table.Column<string>(nullable: true),
+                    State = table.Column<int>(nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Works", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Works_Users_AuthorId",
+                        column: x => x.AuthorId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Works_Users_ManagerId",
+                        column: x => x.ManagerId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Works_Sets_SetId",
+                        column: x => x.SetId,
+                        principalTable: "Sets",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Works_Users_UserId",
+                        column: x => x.UserId,
+                        principalTable: "Users",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SetQuestions",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -141,19 +199,19 @@ namespace PslibThesesBackend.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SetQuestion", x => x.Id);
+                    table.PrimaryKey("PK_SetQuestions", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SetQuestion_SetRoles_SetRoleId",
+                        name: "FK_SetQuestions_SetRoles_SetRoleId",
                         column: x => x.SetRoleId,
                         principalTable: "SetRoles",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_SetQuestion_SetTerms_SetTermId",
+                        name: "FK_SetQuestions_SetTerms_SetTermId",
                         column: x => x.SetTermId,
                         principalTable: "SetTerms",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -225,7 +283,63 @@ namespace PslibThesesBackend.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "SetAnswer",
+                name: "WorkGoals",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WorkId = table.Column<int>(nullable: false),
+                    Order = table.Column<int>(nullable: false),
+                    Text = table.Column<string>(nullable: false),
+                    WorkId1 = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkGoals", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WorkGoals_Ideas_WorkId",
+                        column: x => x.WorkId,
+                        principalTable: "Ideas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WorkGoals_Works_WorkId1",
+                        column: x => x.WorkId1,
+                        principalTable: "Works",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "WorkOutlines",
+                columns: table => new
+                {
+                    Id = table.Column<int>(nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    WorkId = table.Column<int>(nullable: false),
+                    Order = table.Column<int>(nullable: false),
+                    Text = table.Column<string>(nullable: false),
+                    WorkId1 = table.Column<int>(nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_WorkOutlines", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_WorkOutlines_Ideas_WorkId",
+                        column: x => x.WorkId,
+                        principalTable: "Ideas",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_WorkOutlines_Works_WorkId1",
+                        column: x => x.WorkId1,
+                        principalTable: "Works",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SetAnswers",
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
@@ -238,13 +352,13 @@ namespace PslibThesesBackend.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SetAnswer", x => x.Id);
+                    table.PrimaryKey("PK_SetAnswers", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_SetAnswer_SetQuestion_SetQuestionId",
+                        name: "FK_SetAnswers_SetQuestions_SetQuestionId",
                         column: x => x.SetQuestionId,
-                        principalTable: "SetQuestion",
+                        principalTable: "SetQuestions",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.InsertData(
@@ -288,18 +402,18 @@ namespace PslibThesesBackend.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_SetAnswer_SetQuestionId",
-                table: "SetAnswer",
+                name: "IX_SetAnswers_SetQuestionId",
+                table: "SetAnswers",
                 column: "SetQuestionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SetQuestion_SetRoleId",
-                table: "SetQuestion",
+                name: "IX_SetQuestions_SetRoleId",
+                table: "SetQuestions",
                 column: "SetRoleId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SetQuestion_SetTermId",
-                table: "SetQuestion",
+                name: "IX_SetQuestions_SetTermId",
+                table: "SetQuestions",
                 column: "SetTermId");
 
             migrationBuilder.CreateIndex(
@@ -311,6 +425,46 @@ namespace PslibThesesBackend.Migrations
                 name: "IX_SetTerms_SetId",
                 table: "SetTerms",
                 column: "SetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkGoals_WorkId",
+                table: "WorkGoals",
+                column: "WorkId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkGoals_WorkId1",
+                table: "WorkGoals",
+                column: "WorkId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkOutlines_WorkId",
+                table: "WorkOutlines",
+                column: "WorkId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_WorkOutlines_WorkId1",
+                table: "WorkOutlines",
+                column: "WorkId1");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Works_AuthorId",
+                table: "Works",
+                column: "AuthorId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Works_ManagerId",
+                table: "Works",
+                column: "ManagerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Works_SetId",
+                table: "Works",
+                column: "SetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Works_UserId",
+                table: "Works",
+                column: "UserId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -325,25 +479,34 @@ namespace PslibThesesBackend.Migrations
                 name: "IdeaTargets");
 
             migrationBuilder.DropTable(
-                name: "SetAnswer");
+                name: "SetAnswers");
 
             migrationBuilder.DropTable(
-                name: "Ideas");
+                name: "WorkGoals");
+
+            migrationBuilder.DropTable(
+                name: "WorkOutlines");
 
             migrationBuilder.DropTable(
                 name: "Targets");
 
             migrationBuilder.DropTable(
-                name: "SetQuestion");
+                name: "SetQuestions");
 
             migrationBuilder.DropTable(
-                name: "Users");
+                name: "Ideas");
+
+            migrationBuilder.DropTable(
+                name: "Works");
 
             migrationBuilder.DropTable(
                 name: "SetRoles");
 
             migrationBuilder.DropTable(
                 name: "SetTerms");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "Sets");

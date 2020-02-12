@@ -33,9 +33,21 @@ namespace PslibThesesBackend.Models
             modelBuilder.Entity<IdeaGoal>().HasIndex(ig => new { ig.IdeaId, ig.Order }).IsUnique();
             modelBuilder.Entity<IdeaOutline>().HasIndex(io => new { io.IdeaId, io.Order }).IsUnique();
             modelBuilder.Entity<IdeaTarget>().HasIndex(it => new { it.IdeaId, it.TargetId }).IsUnique();
-            
-            //modelBuilder.Entity<SetQuestion>().HasOne(typeof(SetTerm), "Term").WithMany().HasForeignKey("SetTermId").OnDelete(DeleteBehavior.Cascade);
-            //modelBuilder.Entity<SetQuestion>().HasIndex(sq => new { sq.SetRoleId, sq.SetTermId }).IsUnique();
+            modelBuilder.Entity<Work>(entity =>
+            {
+                entity.HasOne(w => w.Manager).WithMany(u => u.ManagedWorks).HasForeignKey(w => w.ManagerId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(w => w.Author).WithMany(u => u.AuthoredWorks).HasForeignKey(w => w.AuthorId).OnDelete(DeleteBehavior.Restrict);
+            });
+            modelBuilder.Entity<SetQuestion>(entity =>
+            {
+                entity.HasMany(q => q.Answers).WithOne(a => a.Question).HasForeignKey(a => a.SetQuestionId).OnDelete(DeleteBehavior.Restrict);
+            });
+            modelBuilder.Entity<Set>(entity =>
+            {
+                entity.HasMany(s => s.Terms).WithOne(t => t.Set).HasForeignKey(t => t.SetId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasMany(s => s.Roles).WithOne(r => r.Set).HasForeignKey(r => r.SetId).OnDelete(DeleteBehavior.Restrict);
+            });
+
             #region IdeaTargetSeed
             modelBuilder.Entity<Target>().HasData(new Target { Id = 1, Text = "MP Lyceum", Color = Color.Yellow});
             modelBuilder.Entity<Target>().HasData(new Target { Id = 2, Text = "RP Lyceum", Color = Color.Orange });

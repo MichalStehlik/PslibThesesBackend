@@ -516,7 +516,7 @@ namespace PslibThesesBackend.Migrations
             modelBuilder.Entity("PslibThesesBackend.Models.Idea", b =>
                 {
                     b.HasOne("PslibThesesBackend.Models.User", "User")
-                        .WithMany()
+                        .WithMany("OwnedIdeas")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -560,7 +560,7 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.SetQuestion", "Question")
                         .WithMany("Answers")
                         .HasForeignKey("SetQuestionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -584,7 +584,7 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.Set", "Set")
                         .WithMany("Roles")
                         .HasForeignKey("SetId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
@@ -593,22 +593,22 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.Set", "Set")
                         .WithMany("Terms")
                         .HasForeignKey("SetId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.Work", b =>
                 {
                     b.HasOne("PslibThesesBackend.Models.User", "Author")
-                        .WithMany()
+                        .WithMany("AuthoredWorks")
                         .HasForeignKey("AuthorId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("PslibThesesBackend.Models.User", "Manager")
-                        .WithMany()
+                        .WithMany("ManagedWorks")
                         .HasForeignKey("ManagerId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("PslibThesesBackend.Models.Set", "Set")
