@@ -43,17 +43,22 @@ namespace PslibThesesBackend
                 });
                 options.AddPolicy("Administrator", policy =>
                 {
-                    policy.RequireClaim("admin","true");
+                    //policy.RequireClaim("theses_admin", "1");
+                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == "theses_admin" && c.Value == "1") && context.User.HasClaim(c => c.Type == "theses_robot" && c.Value == "1")));
                     //policy.RequireRole("Administrátor");
                     //policy.RequireAuthenticatedUser();
                 });
-                options.AddPolicy("Student", policy =>
+                options.AddPolicy("Author", policy =>
                 {
-                    policy.RequireClaim("student");
+                    policy.RequireClaim("theses_author","1");
                 });
                 options.AddPolicy("Evaluator", policy =>
                 {
-                    policy.RequireClaim("teacher");
+                    policy.RequireClaim("theses_evaluator","1");
+                });
+                options.AddPolicy("Manager", policy =>
+                {
+                    policy.RequireClaim("theses_manager", "1");
                 });
             });
             services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>

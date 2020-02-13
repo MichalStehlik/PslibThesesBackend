@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PslibThesesBackend.Models;
 
 namespace PslibThesesBackend.Controllers
@@ -16,10 +17,12 @@ namespace PslibThesesBackend.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ThesesContext _context;
+        private ILogger _logger;
 
-        public UsersController(ThesesContext context)
+        public UsersController(ThesesContext context, ILogger logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: /Users
@@ -105,9 +108,9 @@ namespace PslibThesesBackend.Controllers
         public async Task<ActionResult<User>> GetUser(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
-
             if (user == null)
             {
+                _logger.LogError("user not found",id);
                 return NotFound();
             }
             return user;
@@ -126,13 +129,14 @@ namespace PslibThesesBackend.Controllers
             // TODO user roles
             if (id != user.Id)
             {
+                _logger.LogError("user not found, so cannot be updated", id);
                 return BadRequest();
             }
 
             _context.Entry(user).State = EntityState.Modified;
 
             try
-            {
+            {       
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -143,8 +147,14 @@ namespace PslibThesesBackend.Controllers
                 }
                 else
                 {
+                    _logger.LogError("storing of updated user has failed", user);
                     throw;
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("storing of updated user has failed", ex, user);
+                throw;
             }
 
             return NoContent();
@@ -163,9 +173,17 @@ namespace PslibThesesBackend.Controllers
             var existingUser = await _context.Users.FindAsync(user.Id);
             if (existingUser == null)
             {
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                return CreatedAtAction("GetUser", new { id = user.Id }, user);
+                try
+                {
+                    _context.Users.Add(user);
+                    await _context.SaveChangesAsync();
+                    return CreatedAtAction("GetUser", new { id = user.Id }, user);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError("storing of new user has failed", ex, user);
+                    throw ex;
+                }
             }
             else
             {
@@ -187,11 +205,19 @@ namespace PslibThesesBackend.Controllers
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
+                _logger.LogError("user not found, so cannot be deleted", id);
                 return NotFound();
             }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("deleting of user has failed", ex, user);
+                throw ex;
+            }
 
             return user;
         }

@@ -45,11 +45,11 @@ namespace Authority
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Password.RequireDigit = false;
-                options.Password.RequiredLength = 6;
+                options.Password.RequiredLength = 12;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
                 options.Password.RequireLowercase = false;
-                //options.SignIn.RequireConfirmedEmail = true;
+                options.SignIn.RequireConfirmedEmail = true;
                 options.ClaimsIdentity.UserIdClaimType = "sub";
                 options.ClaimsIdentity.RoleClaimType = "role";
                 options.User.RequireUniqueEmail = true;

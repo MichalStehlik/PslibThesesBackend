@@ -18,6 +18,12 @@ namespace PslibThesesBackend.Controllers
             var claims = User.Claims;
             return claims.Select(c => new ClaimViewModel { Type = c.Type, Value = c.Value}).ToList();
         }
+
+        [HttpGet("Name")]
+        public string GetName()
+        {
+            return User.Identity.Name;
+        }
     }
 
     public class ClaimViewModel
