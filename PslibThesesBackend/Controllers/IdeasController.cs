@@ -578,7 +578,7 @@ namespace PslibThesesBackend.Controllers
 
         // PUT: Ideas/5/goals/1
         /// <summary>
-        /// Changes text of goal inside na idea
+        /// Changes text of goal inside an idea
         /// </summary>
         /// <param name="id">Idea Id</param>
         /// <param name="order">Order of goal</param>

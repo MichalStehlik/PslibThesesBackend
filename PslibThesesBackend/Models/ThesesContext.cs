@@ -27,6 +27,8 @@ namespace PslibThesesBackend.Models
         public DbSet<Work> Works { get; set; }
         public DbSet<WorkGoal> WorkGoals { get; set; }
         public DbSet<WorkOutline> WorkOutlines { get; set; }
+        public DbSet<WorkRole> WorkRoles { get; set; }
+        public DbSet<WorkRoleUser> WorkRoleUsers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

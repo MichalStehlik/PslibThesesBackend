@@ -13,7 +13,7 @@ namespace PslibThesesBackend.Models
         public int Id { get; set; }
         public int WorkId { get; set; }
         [ForeignKey("WorkId")]
-        public Idea Work { get; set; }
+        public Work Work { get; set; }
         public int Order { get; set; }
         [Required]
         public string Text { get; set; }

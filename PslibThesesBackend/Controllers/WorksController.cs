@@ -17,6 +17,15 @@ namespace PslibThesesBackend.Controllers
     {
         private readonly ThesesContext _context;
 
+        private readonly Dictionary<WorkState, List<WorkState>> _stateTransitions = new Dictionary<WorkState, List<WorkState>>
+        {
+            { WorkState.InPreparation, new List<WorkState> {WorkState.WorkedOut} },
+            { WorkState.WorkedOut, new List<WorkState> {WorkState.Completed, WorkState.Failed} },
+            { WorkState.Completed, new List<WorkState> {WorkState.Undefended, WorkState.Succesful} },
+            { WorkState.Failed, new List<WorkState> {} },
+            { WorkState.Succesful, new List<WorkState> {} },
+            { WorkState.Undefended, new List<WorkState> {} }
+        };
         public WorksController(ThesesContext context)
         {
             _context = context;
@@ -197,8 +206,64 @@ namespace PslibThesesBackend.Controllers
 
         // POST: Works
         [HttpPost]
-        public void Post([FromBody] string value)
+        public async Task<ActionResult<Idea>> Post([FromBody] WorkInputModel input)
         {
+            var user = _context.Users.FindAsync(input.UserId).Result;
+            if (user == null)
+            {
+                return NotFound("User with Id equal to userId was not found");
+            }
+            var author = _context.Users.FindAsync(input.AuthorId).Result;
+            if (author == null)
+            {
+                return NotFound("User with Id equal to authorId was not found");
+            }
+
+            var manager = _context.Users.FindAsync(input.ManagerId).Result;
+            if (manager == null)
+            {
+                return NotFound("User with Id equal to managerId was not found");
+            }
+
+            var set = _context.Sets.FindAsync(input.SetId).Result;
+            if (set == null)
+            {
+                return NotFound("Set not found");
+            }
+
+            if (manager.CanBeEvaluator == false)
+            {
+                return BadRequest("User with ManagerId cannot be assigned as manager.");
+            }
+
+            if (author.CanBeAuthor == false)
+            {
+                return BadRequest("User with AuthorId cannot be assigned as author.");
+            }
+            var work = new Work
+            {
+                Name = input.Name,
+                Description = input.Description,
+                Resources = input.Resources,
+                Subject = input.Subject,
+                Set = set,
+                User = user,
+                Created = DateTime.Now,
+                Updated = DateTime.Now,
+                MaterialCosts = input.MaterialCosts,
+                MaterialCostsProvidedBySchool = input.MaterialCostsProvidedBySchool,
+                ServicesCosts = input.ServicesCosts,
+                ServicesCostsProvidedBySchool = input.ServicesCostsProvidedBySchool,
+                State = WorkState.InPreparation,
+                DetailExpenditures = input.DetailExpenditures,
+                Author = author,
+                Manager = manager,
+                ClassName = input.ClassName
+            };
+            _context.Works.Add(work);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetWork", new { id = work.Id }, work);
         }
 
         // PUT: Works/5
@@ -288,13 +353,277 @@ namespace PslibThesesBackend.Controllers
 
         // DELETE: Works/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task<ActionResult<Idea>> Delete(int id)
         {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound();
+            }
+
+            _context.Works.Remove(work);
+            await _context.SaveChangesAsync();
+
+            return Ok(work);
         }
 
         private bool WorkExists(int id)
         {
             return _context.Works.Any(e => e.Id == id);
+        }
+
+        // --- goals
+        // GET: Works/5/goals
+        /// <summary>
+        /// Fetch list of all goals for this work
+        /// </summary>
+        /// <param name="id">Work id</param>
+        /// <returns>Array of goals ordered by value in Order field, HTTP 404</returns>
+        [HttpGet("{id}/goals")]
+        public async Task<ActionResult<IEnumerable<WorkGoal>>> GetWorkGoals(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+
+            var goals = _context.WorkGoals
+                .Where(wg => wg.Work == work)
+                .Select(wg => new { WorkId = wg.WorkId, Order = wg.Order, Text = wg.Text })
+                .OrderBy(wg => wg.Order)
+                .AsNoTracking();
+            return Ok(goals);
+        }
+
+        // GET: Works/5/goals/1
+        /// <summary>
+        /// Fetch specific goal of an work in certain order
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Order (1+)</param>
+        /// <returns>Goal, HTTP 404</returns>
+        [HttpGet("{id}/goals/{order}")]
+        public async Task<ActionResult<WorkGoal>> GetWorkGoal(int id, int order)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+
+            var goal = _context.WorkGoals
+                .Where(wg => wg.Work == work && wg.Order == order)
+                .Select(wg => new { WorkId = wg.WorkId, wg.Order, wg.Text })
+                .FirstOrDefault();
+            if (goal == null)
+            {
+                return NotFound("goal not found");
+            }
+            return Ok(goal);
+        }
+
+        // POST: Works/5/goals
+        /// <summary>
+        /// Creates and stores a new goal for a work
+        /// </summary>
+        /// <param name="id">Work id</param>
+        /// <param name="goalText">Object containing text</param>
+        /// <returns>New goal, HTTP 404</returns>
+        [HttpPost("{id}/goals")]
+        public async Task<ActionResult<WorkGoal>> PostWorkGoals(int id, [FromBody] WorkGoalInputModel goalText)
+        {
+            var work = await _context.Ideas.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            if (String.IsNullOrEmpty(goalText.Text))
+            {
+                return BadRequest("text of goal cannot be empty");
+            }
+            int maxGoalOrder;
+            try
+            {
+                maxGoalOrder = _context.WorkGoals.Where(wg => wg.WorkId == id).Max(wg => wg.Order);
+            }
+            catch
+            {
+                maxGoalOrder = 0;
+            }
+            var newGoal = new WorkGoal { WorkId = id, Order = maxGoalOrder + 1, Text = goalText.Text };
+            _context.WorkGoals.Add(newGoal);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetWorkGoal", new { id = newGoal.WorkId, order = newGoal.Order }, new { WorkId = id, Order = maxGoalOrder + 1, Text = goalText.Text });
+        }
+
+        // PUT: Works/5/goals/1
+        /// <summary>
+        /// Changes text of goal inside a work
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Order of goal</param>
+        /// <param name="goalText">New text of goal</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/goals/{order}")]
+        public async Task<ActionResult<WorkGoal>> PutWorkGoalsOfOrder(int id, int order, [FromBody] WorkGoalInputModel goalText)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            if (String.IsNullOrEmpty(goalText.Text))
+            {
+                return BadRequest("text of goal cannot be empty");
+            }
+            var goal = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == order).FirstOrDefault();
+            if (goal == null)
+            {
+                return NotFound("goal not found");
+            }
+
+            work.Updated = DateTime.Now;
+            goal.Text = goalText.Text;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // PUT: Works/5/goals/1/moveto/2
+        /// <summary>
+        /// Moves goal to a new position and shifts other goals to reorganize them in new order
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Original position</param>
+        /// <param name="newOrder">New position</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/goals/{order}/moveto/{newOrder}")]
+        public async Task<ActionResult<WorkGoal>> PutWorkGoalsMove(int id, int order, int newOrder)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var goal = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == order).FirstOrDefault();
+            if (goal == null)
+            {
+                return NotFound("goal not found");
+            }
+
+            int maxOrder;
+            try
+            {
+                maxOrder = _context.WorkGoals.Where(wg => wg.WorkId == id).Max(wg => wg.Order);
+            }
+            catch
+            {
+                maxOrder = 0;
+            }
+
+            if (newOrder > maxOrder) newOrder = maxOrder;
+
+            WorkGoal temp = new WorkGoal { WorkId = id, Order = newOrder, Text = goal.Text }; // future record
+            _context.WorkGoals.Remove(goal); // remove old record, we made backup of it in temp
+            _context.SaveChanges();
+
+            if (order > newOrder) // moving down
+            {
+                for (int i = order - 1; i >= newOrder; i--)
+                {
+                    var item = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order + 1;
+                    _context.SaveChanges();
+                }
+            }
+            else if (order < newOrder) // moving up
+            {
+                for (int i = order + 1; i <= newOrder; i++)
+                {
+                    var item = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order - 1;
+                    _context.SaveChanges();
+                }
+            }
+            _context.WorkGoals.Add(temp);
+            work.Updated = DateTime.Now;
+            _context.SaveChanges();
+            return NoContent();
+        }
+
+        // DELETE: Works/5/goals
+        /// <summary>
+        /// Removes all goals in specified work
+        /// </summary>
+        /// <param name="id">Work id</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpDelete("{id}/goals")]
+        public async Task<ActionResult<IdeaGoal>> DeleteAllWorkGoals(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var goals = _context.WorkGoals.Where(ig => ig.Work == work).AsNoTracking().ToList();
+            if (goals != null)
+            {
+                _context.WorkGoals.RemoveRange(goals);
+                work.Updated = DateTime.Now;
+                _context.SaveChanges();
+            }
+            return NoContent();
+        }
+
+        // DELETE: Works/5/goals/1
+        /// <summary>
+        /// Removes selected goal and shift all others to fill a hole
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Order of removed goal</param>
+        /// <returns>Removed goal, HTTP 404</returns>
+        [HttpDelete("{id}/goals/{order}")]
+        public async Task<ActionResult<WorkGoal>> DeleteWorkGoal(int id, int order)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var goal = _context.WorkGoals.Where(ig => ig.Work == work && ig.Order == order).AsNoTracking().FirstOrDefault();
+            if (goal == null)
+            {
+                return NotFound("goal not found");
+            }
+
+            WorkGoal removedGoal = new WorkGoal { Id = goal.Id, WorkId = id, Order = order, Text = goal.Text };
+            int maxGoalOrder;
+            try
+            {
+                maxGoalOrder = _context.WorkGoals.Where(ig => ig.WorkId == id).Max(ig => ig.Order);
+            }
+            catch
+            {
+                maxGoalOrder = 0;
+            }
+
+            _context.WorkGoals.Remove(goal);
+            work.Updated = DateTime.Now;
+            _context.SaveChanges();
+
+            for (int i = order; i <= maxGoalOrder; i++)
+            {
+                var row = _context.WorkGoals.Where(ig => ig.WorkId == id && ig.Order == i).FirstOrDefault();
+                if (row != null)
+                {
+                    row.Order = i - 1;
+                    _context.SaveChanges();
+                }
+            }
+
+            return Ok(new { removedGoal.Id, removedGoal.WorkId, removedGoal.Order, removedGoal.Text });
         }
     }
 
@@ -321,5 +650,15 @@ namespace PslibThesesBackend.Controllers
         public string DetailExpenditures { get; set; }
         public WorkState State { get; set; } = WorkState.InPreparation;
         public string ClassName { get; set; }
+    }
+
+    public class WorkGoalInputModel
+    {
+        public string Text { get; set; }
+    }
+
+    public class WorkOutlineInputModel
+    {
+        public string Text { get; set; }
     }
 }
