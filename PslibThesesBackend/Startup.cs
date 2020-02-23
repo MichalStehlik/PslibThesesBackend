@@ -13,6 +13,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Hosting;
 using PslibThesesBackend.Models;
+using PslibThesesBackend.Constants;
 using Serilog;
 
 namespace PslibThesesBackend
@@ -44,21 +45,21 @@ namespace PslibThesesBackend
                 options.AddPolicy("Administrator", policy =>
                 {
                     //policy.RequireClaim("theses_admin", "1");
-                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == "theses_admin" && c.Value == "1") && context.User.HasClaim(c => c.Type == "theses_robot" && c.Value == "1")));
+                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == Security.THESES_ADMIN_CLAIM && c.Value == "1") && context.User.HasClaim(c => c.Type == Security.THESES_ROBOT_CLAIM && c.Value == "1")));
                     //policy.RequireRole("Administrátor");
                     //policy.RequireAuthenticatedUser();
                 });
                 options.AddPolicy("Author", policy =>
                 {
-                    policy.RequireClaim("theses_author","1");
+                    policy.RequireClaim(Security.THESES_AUTHOR_CLAIM,"1");
                 });
                 options.AddPolicy("Evaluator", policy =>
                 {
-                    policy.RequireClaim("theses_evaluator","1");
+                    policy.RequireClaim(Security.THESES_EVALUATOR_CLAIM, "1");
                 });
                 options.AddPolicy("Manager", policy =>
                 {
-                    policy.RequireClaim("theses_manager", "1");
+                    policy.RequireClaim(Security.THESES_MANAGER_CLAIM, "1");
                 });
             });
             services.AddAuthentication("Bearer").AddJwtBearer("Bearer", options =>

@@ -156,7 +156,7 @@ namespace PslibThesesBackend.Controllers
                 _logger.LogError("storing of updated user has failed", ex, user);
                 throw;
             }
-
+            _logger.LogInformation("¨new user data stored", user);
             return NoContent();
         }
 
@@ -187,6 +187,7 @@ namespace PslibThesesBackend.Controllers
             }
             else
             {
+                _logger.LogInformation("new user created", user);
                 return Ok(existingUser);
             }
         }
@@ -211,6 +212,7 @@ namespace PslibThesesBackend.Controllers
             try
             {
                 _context.Users.Remove(user);
+                _logger.LogInformation("user deleted", user);
                 await _context.SaveChangesAsync();
             }
             catch (Exception ex)

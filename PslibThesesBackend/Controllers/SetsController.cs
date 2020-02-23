@@ -318,6 +318,11 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("role is not in this set");
             }
+            var works = _context.Works.Where(w => (w.SetId == id)).Count();
+            if (works != 0)
+            {
+                return BadRequest("it is not possible to add any roles after set already contains at least one work");
+            }
             role.Name = sr.Name;
             role.ClassTeacher = sr.ClassTeacher;
             role.RequiredForAdvancement = sr.RequiredForAdvancement;

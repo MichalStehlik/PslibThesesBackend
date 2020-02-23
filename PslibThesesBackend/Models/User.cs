@@ -33,5 +33,7 @@ namespace PslibThesesBackend.Models
         public ICollection<Work> ManagedWorks { get; set; }
         [JsonIgnore]
         public ICollection<Work> AuthoredWorks { get; set; }
+        [JsonIgnore]
+        public ICollection<WorkRoleUser> WorkRoleUsers { get; set; }
     }
 }

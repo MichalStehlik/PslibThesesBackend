@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using PslibThesesBackend.Models;
 using PslibThesesBackend.ViewModels;
 
@@ -18,10 +19,12 @@ namespace PslibThesesBackend.Controllers
     public class IdeasController : ControllerBase
     {
         private readonly ThesesContext _context;
+        private ILogger _logger;
 
-        public IdeasController(ThesesContext context)
+        public IdeasController(ThesesContext context, ILogger logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         // GET: Ideas
@@ -209,6 +212,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="input">Idea data in body of request</param>
         /// <returns>HTTP 204, 404, 400</returns>
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutIdea(int id, [FromBody] IdeaInputModel input)
         {
             if (id != input.Id)
@@ -238,7 +242,6 @@ namespace PslibThesesBackend.Controllers
             idea.Updated = DateTime.Now;
             idea.Offered = input.Offered;
 
-
             try
             {
                 await _context.SaveChangesAsync();
@@ -254,6 +257,12 @@ namespace PslibThesesBackend.Controllers
                     throw;
                 }
             }
+            catch (Exception ex)
+            {
+                _logger.LogError("idea update faled", ex, idea);
+                throw;
+            }
+            _logger.LogInformation("idea updated", idea);
             return NoContent();
         }
 
@@ -265,6 +274,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="offered">New value (true/false) in body of request</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/offered")]
+        [Authorize]
         public async Task<IActionResult> PutIdeaOffered(int id, [FromBody] bool offered)
         {
             var idea = await _context.Ideas.FindAsync(id);

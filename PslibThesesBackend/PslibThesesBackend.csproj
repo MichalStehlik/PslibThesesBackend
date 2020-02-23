@@ -23,6 +23,8 @@
     <Compile Remove="Migrations\20200104181416_Sets.Designer.cs" />
     <Compile Remove="Migrations\20200104182348_SetsKeys.cs" />
     <Compile Remove="Migrations\20200104182348_SetsKeys.Designer.cs" />
+    <Compile Remove="Migrations\20200223191420_WorkRoles.cs" />
+    <Compile Remove="Migrations\20200223191420_WorkRoles.Designer.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -42,6 +42,7 @@ namespace PslibThesesBackend.Controllers
         /// }
         /// </returns>
         [HttpGet]
+        [Authorize]
         public ActionResult<IEnumerable<Target>> GetTargets(
             string search = null, 
             string text = null, 

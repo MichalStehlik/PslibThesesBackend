@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PslibThesesBackend.Constants;
 using PslibThesesBackend.Models;
 using PslibThesesBackend.ViewModels;
+using Microsoft.AspNetCore.Identity;
+using System.IO;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -178,7 +181,8 @@ namespace PslibThesesBackend.Controllers
         {
             var work = await _context.Works
                 .Where(i => i.Id == id)
-                .Select(i => new {
+                .Select(i => new
+                {
                     i.Id,
                     i.Name,
                     i.User,
@@ -262,7 +266,7 @@ namespace PslibThesesBackend.Controllers
             };
             _context.Works.Add(work);
             await _context.SaveChangesAsync();
-
+            // -- TODO - Create roles and assign them
             return CreatedAtAction("GetWork", new { id = work.Id }, work);
         }
 
@@ -291,7 +295,7 @@ namespace PslibThesesBackend.Controllers
             var author = _context.Users.FindAsync(input.AuthorId).Result;
             if (author == null)
             {
-                return NotFound("User with Id equal to authorId was not found"); 
+                return NotFound("User with Id equal to authorId was not found");
             }
 
             var manager = _context.Users.FindAsync(input.ManagerId).Result;
@@ -624,6 +628,356 @@ namespace PslibThesesBackend.Controllers
             }
 
             return Ok(new { removedGoal.Id, removedGoal.WorkId, removedGoal.Order, removedGoal.Text });
+        }
+
+        // --- outlines
+        // GET: Works/5/outlines
+        /// <summary>
+        /// Fetch list of all outlines for this work
+        /// </summary>
+        /// <param name="id">Work id</param>
+        /// <returns>Array of items ordered by value in Order field, HTTP 404</returns>
+        [HttpGet("{id}/outlines")]
+        public async Task<ActionResult<IEnumerable<WorkOutline>>> GetWorkOutlines(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+
+            var contents = _context.WorkOutlines
+                .Where(wc => wc.Work == work)
+                .Select(wc => new { WorkId = wc.WorkId, Order = wc.Order, Text = wc.Text })
+                .OrderBy(ic => ic.Order)
+                .AsNoTracking();
+            return Ok(contents);
+        }
+
+        // GET: Works/5/outlines/1
+        /// <summary>
+        /// Fetch specific outline of a work in certain order
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Order (1+)</param>
+        /// <returns>Content, HTTP 404</returns>
+        [HttpGet("{id}/outlines/{order}")]
+        public async Task<ActionResult<WorkOutline>> GetWorkOutline(int id, int order)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+
+            var content = _context.WorkOutlines
+                .Where(wg => wg.Work == work && wg.Order == order)
+                .Select(wg => new { WorkId = wg.WorkId, wg.Order, wg.Text })
+                .FirstOrDefault();
+            if (content == null)
+            {
+                return NotFound("outline not found");
+            }
+            return Ok(content);
+        }
+
+        // POST: Works/5/outlines
+        /// <summary>
+        /// Creates and stores a new outline item for a work
+        /// </summary>
+        /// <param name="id">Work id</param>
+        /// <param name="goalText">Object containing text</param>
+        /// <returns>New goal, HTTP 404</returns>
+        [HttpPost("{id}/outlines")]
+        public async Task<ActionResult<WorkGoal>> PostIdeaOutlines(int id, [FromBody] WorkOutlineInputModel outlineText)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            if (String.IsNullOrEmpty(outlineText.Text))
+            {
+                return BadRequest("text of outline cannot be empty");
+            }
+            int maxOrder;
+            try
+            {
+                maxOrder = _context.WorkOutlines.Where(wo => wo.WorkId == id).Max(ig => ig.Order);
+            }
+            catch
+            {
+                maxOrder = 0;
+            }
+            var newOutline = new WorkOutline { WorkId = id, Order = maxOrder + 1, Text = outlineText.Text };
+            _context.WorkOutlines.Add(newOutline);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetWorkOutline", new { id = newOutline.WorkId, order = newOutline.Order }, new { WorkId = id, Order = maxOrder + 1, Text = outlineText.Text });
+        }
+
+        // PUT: Works/5/outlines/1
+        /// <summary>
+        /// Changes text of outline inside a work
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Order of outline</param>
+        /// <param name="goalText">New text of outline</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/goals/{order}")]
+        public async Task<ActionResult<WorkOutline>> PutWorkOutlineOfOrder(int id, int order, [FromBody] WorkOutlineInputModel outlineText)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            if (String.IsNullOrEmpty(outlineText.Text))
+            {
+                return BadRequest("text of outline cannot be empty");
+            }
+            var goal = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == order).FirstOrDefault();
+            if (goal == null)
+            {
+                return NotFound("outline not found");
+            }
+
+            work.Updated = DateTime.Now;
+            goal.Text = outlineText.Text;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        // PUT: Works/5/outlines/1/moveto/2
+        /// <summary>
+        /// Moves outline to a new position and shifts other outline points to reorganize them in new order
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="order">Original position</param>
+        /// <param name="newOrder">New position</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/outlines/{order}/moveto/{newOrder}")]
+        public async Task<ActionResult<WorkGoal>> PutWorkOutlinesMove(int id, int order, int newOrder)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var outline = _context.WorkOutlines.Where(wg => wg.Work == work && wg.Order == order).FirstOrDefault();
+            if (outline == null)
+            {
+                return NotFound("outline not found");
+            }
+
+            int maxOrder;
+            try
+            {
+                maxOrder = _context.IdeaOutlines.Where(wg => wg.IdeaId == id).Max(wg => wg.Order);
+            }
+            catch
+            {
+                maxOrder = 0;
+            }
+
+            if (newOrder > maxOrder) newOrder = maxOrder;
+
+            WorkOutline temp = new WorkOutline { WorkId = id, Order = newOrder, Text = outline.Text }; // future record
+            _context.WorkOutlines.Remove(outline); // remove old record, we backup it in temp
+            _context.SaveChanges();
+
+            if (order > newOrder) // moving down
+            {
+                for (int i = order - 1; i >= newOrder; i--)
+                {
+                    var item = _context.WorkOutlines.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order + 1;
+                    _context.SaveChanges();
+                }
+            }
+            else if (order < newOrder) // moving up
+            {
+                for (int i = order + 1; i <= newOrder; i++)
+                {
+                    var item = _context.WorkOutlines.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order - 1;
+                    _context.SaveChanges();
+                }
+            }
+            _context.WorkOutlines.Add(temp);
+            work.Updated = DateTime.Now;
+            _context.SaveChanges();
+            return NoContent();
+        }
+
+        // DELETE: Works/5/outlines
+        /// <summary>
+        /// Removes all outlines in specified work
+        /// </summary>
+        /// <param name="id">Idea id</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpDelete("{id}/outlines")]
+        public async Task<ActionResult<WorkGoal>> DeleteAllWorkOulines(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var outlines = _context.WorkOutlines.Where(wg => wg.Work == work).AsNoTracking().ToList();
+            if (outlines != null)
+            {
+                _context.WorkOutlines.RemoveRange(outlines);
+                work.Updated = DateTime.Now;
+                _context.SaveChanges();
+            }
+            return NoContent();
+        }
+
+        // DELETE: Ideas/5/outlines/1
+        /// <summary>
+        /// Removes selected outline and shift all others to fill hole
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="order">Order of removed goal</param>
+        /// <returns>Removed goal, HTTP 404</returns>
+        [HttpDelete("{id}/outlines/{order}")]
+        public async Task<ActionResult<IdeaGoal>> DeleteWorkOutline(int id, int order)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var outline = _context.WorkOutlines.Where(wg => wg.Work == work && wg.Order == order).AsNoTracking().FirstOrDefault();
+            if (outline == null)
+            {
+                return NotFound("outline not found");
+            }
+
+            WorkOutline removedOutline = new WorkOutline { Id = outline.Id, WorkId = id, Order = order, Text = outline.Text };
+            int maxOrder;
+            try
+            {
+                maxOrder = _context.WorkOutlines.Where(wg => wg.WorkId == id).Max(ig => ig.Order);
+            }
+            catch
+            {
+                maxOrder = 0;
+            }
+
+            _context.WorkOutlines.Remove(outline);
+            work.Updated = DateTime.Now;
+            _context.SaveChanges();
+
+            for (int i = order; i <= maxOrder; i++)
+            {
+                var row = _context.WorkOutlines.Where(wg => wg.WorkId == id && wg.Order == i).FirstOrDefault();
+                if (row != null)
+                {
+                    row.Order = i - 1;
+                    _context.SaveChanges();
+                }
+            }
+            return Ok(new { removedOutline.Id, removedOutline.WorkId, removedOutline.Order, removedOutline.Text });
+        }
+
+        // --- state
+        [HttpGet("{id}/state")]
+        public async Task<ActionResult<WorkState>> GetWorkState(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound();
+            }
+            return work.State;
+        }
+
+        [HttpGet("{id}/nextstates")]
+        public async Task<ActionResult<List<WorkState>>> GetWorkNextStates(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            return _stateTransitions[work.State];
+        }
+
+        [HttpPost("{id}/state")]
+        public async Task<ActionResult<WorkState>> PostWorkState(int id, WorkState newState)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var next = _stateTransitions[work.State];
+            if (!next.Contains(newState) || (User.HasClaim(c => ((c.Type == Security.THESES_ADMIN_CLAIM) && (c.Value == "1")))) || (User.HasClaim(c => ((c.Type == Security.THESES_ROBOT_CLAIM) && (c.Value == "1")))))
+            {
+                return BadRequest("state transition is not valid");
+            }
+            work.State = newState;
+            _context.SaveChanges();
+            return newState;
+        }
+
+        // --- roles
+        [HttpGet("{id}/ŕoles")]
+        public async Task<ActionResult<List<WorkRole>>> GetWorkRoles(int id)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var roles = _context.WorkRoles.Where(wr => wr.WorkId == work.Id).ToList();
+            return roles;
+        }
+
+        [HttpGet("{id}/ŕoles/{roleId}")]
+        public async Task<ActionResult<WorkRole>> GetWorkRole(int id, int workRoleId)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var role = _context.WorkRoles.Where(sr => (sr.WorkId == work.Id && sr.Id == workRoleId)).FirstOrDefault();
+            return role;
+        }
+
+        [HttpGet("{id}/ŕoles/{roleId}/assignments")]
+        public async Task<ActionResult<List<WorkRoleUser>>> GetWorkRoleAssignments(int id, int workRoleId)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var role = _context.SetRoles.Where(sr => (sr.SetId == work.SetId && sr.Id == workRoleId)).FirstOrDefault();
+            if (role == null)
+            {
+                return NotFound("role not found in this work");
+            }
+            var assigned = _context.WorkRoleUsers.Where(wru => wru.WorkRoleId == workRoleId).ToList();
+            return assigned;
+        }
+
+        // assignment
+        [HttpGet("assignment/{filename}")]
+        public async Task<FileStreamResult> DownloadAssignment(string filename)
+        {
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "Log", filename);
+            var memory = new MemoryStream();
+            using (var stream = new FileStream(path, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+            return File(memory, "text/plain", Path.GetFileName(path));
         }
     }
 

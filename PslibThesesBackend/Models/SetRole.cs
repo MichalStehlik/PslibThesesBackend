@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace PslibThesesBackend.Models
@@ -16,9 +17,11 @@ namespace PslibThesesBackend.Models
         public bool RequiredForPrint { get; set; } = false;
         public bool RequiredForAdvancement { get; set; } = false;
         public bool ShowsOnApplication { get; set; } = false;
+        [JsonIgnore]
         public Set Set { get; set; }
         [Required]
         public int SetId { get; set; }
+        [JsonIgnore]
         public ICollection<SetQuestion> Questions { get; set; }
     }
 }

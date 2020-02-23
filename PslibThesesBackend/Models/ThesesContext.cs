@@ -49,6 +49,11 @@ namespace PslibThesesBackend.Models
                 entity.HasMany(s => s.Terms).WithOne(t => t.Set).HasForeignKey(t => t.SetId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasMany(s => s.Roles).WithOne(r => r.Set).HasForeignKey(r => r.SetId).OnDelete(DeleteBehavior.Restrict);
             });
+            modelBuilder.Entity<WorkRoleUser>(entity =>
+            {
+                entity.HasOne(wru => wru.User).WithMany(u => u.WorkRoleUsers).HasForeignKey(u => u.UserId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(wru => wru.WorkRole).WithMany(wr => wr.WorkRoleUsers).HasForeignKey(wr => wr.WorkRoleId).OnDelete(DeleteBehavior.Restrict);
+            });
 
             #region IdeaTargetSeed
             modelBuilder.Entity<Target>().HasData(new Target { Id = 1, Text = "MP Lyceum", Color = Color.Yellow});

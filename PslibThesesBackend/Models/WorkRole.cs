@@ -16,15 +16,15 @@ namespace PslibThesesBackend.Models
         [ForeignKey("WorkId")]
         public Work Work { get; set; }
         [Required]
-        public int RoleId { get; set; }
+        public int SetRoleId { get; set; }
         [ForeignKey("RoleId")]
-        public WorkRole Role { get; set; }
+        public SetRole SetRole { get; set; }
         public int? Mark { get; set; }
         public bool Finalized { get; set; } = false;
         public string Review { get; set; }
         [Required]
         [Column(TypeName = "datetime2")]
         public DateTime Updated { get; set; }
-        ICollection<WorkRoleUser> WorkRoleUsers { get; set; }
+        public ICollection<WorkRoleUser> WorkRoleUsers { get; set; }
     }
 }
