@@ -17,9 +17,9 @@ namespace PslibThesesBackend.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ThesesContext _context;
-        private ILogger _logger;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(ThesesContext context, ILogger logger)
+        public UsersController(ThesesContext context, ILogger<UsersController> logger)
         {
             _context = context;
             _logger = logger;
