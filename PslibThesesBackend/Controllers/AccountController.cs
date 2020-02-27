@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +27,17 @@ namespace PslibThesesBackend.Controllers
             if (user == null)
                 return "";
             return user;
+        }
+
+        [HttpGet("Name2")]
+        public string GetNameClaim(int id)
+        {
+            var c = User.Claims.Where(c => c.Type == ClaimTypes.Name).FirstOrDefault();
+            if (c != null)
+            {
+                return c.Value;
+            }
+            return "--";
         }
     }
 

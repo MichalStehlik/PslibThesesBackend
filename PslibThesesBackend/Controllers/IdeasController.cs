@@ -11,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PslibThesesBackend.Models;
 using PslibThesesBackend.ViewModels;
+using PslibThesesBackend.Constants;
+using System.Security.Claims;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -219,7 +221,6 @@ namespace PslibThesesBackend.Controllers
             {
                 return BadRequest();
             }
-
             var idea = await _context.Ideas.FindAsync(id);
             _context.Entry(idea).State = EntityState.Modified;
             if (idea == null)
@@ -230,7 +231,16 @@ namespace PslibThesesBackend.Controllers
             var user = _context.Users.FindAsync(input.UserId).Result;
             if (user == null)
             {
-                return NotFound("User with Id equal to userId was not found"); // TODO Only owner can edit Idea
+                return NotFound("User with Id equal to userId was not found");
+            }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier,idea.Id.ToString()) 
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1") 
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can edit an idea");
             }
 
             idea.Name = input.Name;
@@ -284,6 +294,15 @@ namespace PslibThesesBackend.Controllers
                 return NotFound();
             }
 
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can change state of an idea");
+            }
+
             idea.Offered = offered;
 
             try
@@ -316,7 +335,7 @@ namespace PslibThesesBackend.Controllers
             var user = _context.Users.FindAsync(ideaIM.UserId).Result;
             if (user == null)
             {
-                return NotFound("User with Id equal to userId was not found");
+                return NotFound("user with Id equal to userId was not found");
             }
             var idea = new Idea {
                 Name = ideaIM.Name,
@@ -324,7 +343,7 @@ namespace PslibThesesBackend.Controllers
                 Resources = ideaIM.Resources,
                 Subject = ideaIM.Subject,
                 Participants = ideaIM.Participants,
-                UserId = ideaIM.UserId,
+                UserId = ideaIM.UserId, // TODO
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
                 Offered = ideaIM.Offered
@@ -348,6 +367,15 @@ namespace PslibThesesBackend.Controllers
             if (idea == null)
             {
                 return NotFound();
+            }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can delete an idea");
             }
 
             _context.Ideas.Remove(idea);

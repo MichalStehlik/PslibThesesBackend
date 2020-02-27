@@ -156,7 +156,7 @@ namespace PslibThesesBackend.Controllers
                 _logger.LogError("storing of updated user has failed", ex, user);
                 throw;
             }
-            _logger.LogInformation("¨new user data stored", user);
+            _logger.LogInformation("new user data stored", user);
             return NoContent();
         }
 
