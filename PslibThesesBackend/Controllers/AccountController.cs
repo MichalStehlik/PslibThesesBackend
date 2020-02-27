@@ -39,6 +39,17 @@ namespace PslibThesesBackend.Controllers
             }
             return "--";
         }
+
+        [HttpGet("Id")]
+        public string GetNameIdentidierClaim(int id)
+        {
+            var c = User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).FirstOrDefault();
+            if (c != null)
+            {
+                return c.Value;
+            }
+            return "--";
+        }
     }
 
     public class ClaimViewModel
