@@ -75,7 +75,11 @@ Seznam
 Data námětu
 
     GET /ideas/{id}
-    
+ 
+Kompletní data námětu
+
+    GET /ideas/{id}/full 
+ 
 Vytvoření námětu
 
     POST /ideas
@@ -124,6 +128,10 @@ Přidání cíle námětu
 
     POST /ideas/{id}/goals
 
+Náhrada cílů námětu
+
+    PUT /ideas/{id}/goals
+
 Změna textu cíle námětu
 
     PUT /ideas/{id}/goals/{position}
@@ -152,6 +160,10 @@ Přidání nového bodu osnovy námětu
 
     POST /ideas/{id}/outlines
 
+Náhrada osnovy námětu
+
+    PUT /ideas/{id}/outlines
+
 Změna textu bodu osnovy námětu
 
     PUT /ideas/{id}/outlines/{position}
@@ -177,3 +189,157 @@ Seznam
 Data námětu
 
     GET /sets/{id}
+
+Změna dat sady
+
+    PUT /sets/{id}
+    
+Vytvoření nové sady
+
+    POST /sets
+    
+Odstranění sady
+
+    DELETE /sets/{id}
+    
+Seznam termínů sady
+
+    GET /sets/{id}/terms
+    
+Data termínu sady
+
+    GET /sets/{id}/terms/{termId}
+    
+Změna termínu sady
+
+    PUT /sets/{id}/terms/{termId}
+    
+Přidání termínu sady
+
+    POST /sets/{id}/terms
+    
+Odstranění termínu sady
+
+    DELETE /sets/{id}/terms/{termId}
+    
+Seznam rolí sady
+
+    GET /sets/{id}/roles
+    
+Data role sady
+
+    GET /sets/{id}/roles/{roleId}
+    
+Změna role sady
+
+    PUT /sets/{id}/roles/{roleId}
+    
+Přidání role sadě
+
+    POST /sets/{id}/roles
+    
+Odstranění role sady
+
+    DELETE /sets/{id}/roles/{roleId}
+    
+## Práce
+
+Seznam
+
+    GET /works[search][name][subject][authorId][userId][firstname][lastname][set][setName][state][order][page][pagesize]
+    
+Data práce
+
+    GET /works/{id}
+    
+Kompletní data práce
+
+    GET /works/{id}/full    
+    
+Vytvoření práce (není kompletní, nevytváří záznamy pro role podle sady)
+
+    POST /works
+
+Změna práce
+
+    PUT /works/{id}
+    
+Smazání práce
+
+    DELETE /works/{id}
+
+Seznam cílů práce
+
+    GET /works/{id}/goals
+    
+Získání cíle práce
+
+    GET /works/{id}/goals/{position}
+
+Přidání cíle práci
+
+    POST /works/{id}/goals
+
+Náhrada cílů práce
+
+    PUT /works/{id}/goals
+
+Změna textu cíle práce
+
+    PUT /works/{id}/goals/{position}
+
+Změna pořadí cíle práce
+
+    PUT /works/{id}/goals/{oldPosition}/moveto/{newPosition}
+
+Vymazání všech cílů práce
+
+    DELETE /works/{id}/goals
+
+Smazání cíle práce
+
+    DELETE /works/{id}/goals/{position}
+
+Seznam bodů osnovy práce
+
+    GET /works/{id}/outlines
+    
+Získání určitého bodu osnovy práce
+
+    GET /works/{id}/outlines/{position}
+
+Přidání nového bodu osnovy práce
+
+    POST /works/{id}/outlines
+
+Náhrada osnovy práce
+
+    PUT /works/{id}/outlines
+
+Změna textu bodu osnovy práce
+
+    PUT /works/{id}/outlines/{position}
+
+Změna pořadí bodů osnovy práce
+
+    PUT /works/{id}/outlines/{oldPosition}/moveto/{newPosition}
+
+Vymazání celé osnovy práce
+
+    DELETE works/{id}/outlines
+
+Smazání bodu osnovy práce
+
+    DELETE /works/{id}/outlines/{position}
+    
+Stav práce
+
+    GET /works/{id}/state
+    
+Stavy práce, na které lze přejít
+
+    GET /works/{id}/nextstates
+    
+Změna stavu práce
+
+    PUT /works/{id}/state
