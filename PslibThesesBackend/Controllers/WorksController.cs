@@ -266,7 +266,7 @@ namespace PslibThesesBackend.Controllers
             };
             _context.Works.Add(work);
             await _context.SaveChangesAsync();
-            // -- TODO - Create roles and assign them
+            // -- TODO - Create roles and assign them to default users
             return CreatedAtAction("GetWork", new { id = work.Id }, work);
         }
 
@@ -978,8 +978,8 @@ namespace PslibThesesBackend.Controllers
             return _stateTransitions[work.State];
         }
 
-        [HttpPost("{id}/state")]
-        public async Task<ActionResult<WorkState>> PostWorkState(int id, WorkState newState)
+        [HttpPut("{id}/state")]
+        public async Task<ActionResult<WorkState>> PutWorkState(int id, WorkState newState)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
@@ -997,7 +997,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         // --- roles
-        [HttpGet("{id}/ŕoles")]
+        [HttpGet("{id}/roles")]
         public async Task<ActionResult<List<WorkRole>>> GetWorkRoles(int id)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1021,7 +1021,7 @@ namespace PslibThesesBackend.Controllers
             return role;
         }
 
-        [HttpGet("{id}/ŕoles/{roleId}/assignments")]
+        [HttpGet("{id}/roles/{roleId}/assignments")]
         public async Task<ActionResult<List<WorkRoleUser>>> GetWorkRoleAssignments(int id, int workRoleId)
         {
             var work = await _context.Works.FindAsync(id);

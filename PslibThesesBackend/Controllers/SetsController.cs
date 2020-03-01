@@ -145,6 +145,7 @@ namespace PslibThesesBackend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<Set>> DeleteSet(int id)
         {
+            // TODO kontrola, zda v sadě nejsou práce
             var @set = await _context.Sets.FindAsync(id);
             if (@set == null)
             {
@@ -262,6 +263,8 @@ namespace PslibThesesBackend.Controllers
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId, termId = newTerm.Id });
         }
+
+        // --- roles
 
         [HttpGet("{id}/roles")]
         public ActionResult<IEnumerable<SetTerm>> GetSetRoles(int id)
