@@ -186,7 +186,7 @@ Seznam
 
     GET /sets[search][name][year][active][order][page][pagesize]
     
-Data námětu
+Data sady
 
     GET /sets/{id}
 
