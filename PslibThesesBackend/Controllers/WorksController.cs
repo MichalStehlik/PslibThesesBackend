@@ -462,6 +462,42 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetWorkGoal", new { id = newGoal.WorkId, order = newGoal.Order }, new { WorkId = id, Order = maxGoalOrder + 1, Text = goalText.Text });
         }
 
+        // PUT: Works/5/goals
+        /// <summary>
+        /// Replaces all goals inside a work with a new ones
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="goalText">New collection of goals</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/goals")]
+        public async Task<ActionResult<List<IdeaGoal>>> PutWorkGoals(int id, [FromBody] List<WorkGoalInputModel> newGoalTexts)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var goals = _context.WorkGoals.Where(wg => wg.Work == work).AsNoTracking().ToList();
+            if (goals != null)
+            {
+                _context.WorkGoals.RemoveRange(goals);
+                work.Updated = DateTime.Now;
+                _context.SaveChanges();
+            }
+
+            int i = 1;
+            foreach (WorkGoalInputModel goal in newGoalTexts)
+            {
+                if (!String.IsNullOrEmpty(goal.Text))
+                {
+                    var newGoal = new WorkGoal { WorkId = id, Order = i++, Text = goal.Text };
+                    _context.WorkGoals.Add(newGoal);
+                }
+            }
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         // PUT: Works/5/goals/1
         /// <summary>
         /// Changes text of goal inside a work
@@ -716,6 +752,42 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetWorkOutline", new { id = newOutline.WorkId, order = newOutline.Order }, new { WorkId = id, Order = maxOrder + 1, Text = outlineText.Text });
         }
 
+        // PUT: Works/5/outlines
+        /// <summary>
+        /// Replaces all outlines inside a work with a new ones
+        /// </summary>
+        /// <param name="id">Work Id</param>
+        /// <param name="goalText">New collection of outlines</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/outlines")]
+        public async Task<ActionResult<List<IdeaGoal>>> PutWorkOutlines(int id, [FromBody] List<WorkOutlineInputModel> newOutlineTexts)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var outlines = _context.WorkOutlines.Where(wo => wo.Work == work).AsNoTracking().ToList();
+            if (outlines != null)
+            {
+                _context.WorkOutlines.RemoveRange(outlines);
+                work.Updated = DateTime.Now;
+                _context.SaveChanges();
+            }
+
+            int i = 1;
+            foreach (WorkOutlineInputModel outline in newOutlineTexts)
+            {
+                if (!String.IsNullOrEmpty(outline.Text))
+                {
+                    var newOutline = new WorkGoal { WorkId = id, Order = i++, Text = outline.Text };
+                    _context.WorkGoals.Add(newOutline);
+                }
+            }
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         // PUT: Works/5/outlines/1
         /// <summary>
         /// Changes text of outline inside a work
@@ -724,7 +796,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="order">Order of outline</param>
         /// <param name="goalText">New text of outline</param>
         /// <returns>HTTP 201, 404</returns>
-        [HttpPut("{id}/goals/{order}")]
+        [HttpPut("{id}/outlines/{order}")]
         public async Task<ActionResult<WorkOutline>> PutWorkOutlineOfOrder(int id, int order, [FromBody] WorkOutlineInputModel outlineText)
         {
             var work = await _context.Works.FindAsync(id);
@@ -937,7 +1009,7 @@ namespace PslibThesesBackend.Controllers
             return roles;
         }
 
-        [HttpGet("{id}/ŕoles/{roleId}")]
+        [HttpGet("{id}/roles/{roleId}")]
         public async Task<ActionResult<WorkRole>> GetWorkRole(int id, int workRoleId)
         {
             var work = await _context.Works.FindAsync(id);

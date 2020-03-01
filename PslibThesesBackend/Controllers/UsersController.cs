@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using PslibThesesBackend.Constants;
 using PslibThesesBackend.Models;
 
 namespace PslibThesesBackend.Controllers
@@ -126,11 +128,17 @@ namespace PslibThesesBackend.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(Guid id, User user)
         {
-            // TODO user roles
             if (id != user.Id)
             {
                 _logger.LogError("user not found, so cannot be updated", id);
                 return BadRequest();
+            }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, user.Id.ToString())
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only user himself or privileged user can edit user record");
             }
 
             _context.Entry(user).State = EntityState.Modified;
@@ -169,7 +177,12 @@ namespace PslibThesesBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser([FromBody] User user)
         {
-            // TODO User roles
+            if (!User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                var loggedUserId = User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).FirstOrDefault();
+                user.Id = Guid.Parse(loggedUserId.Value); // replace possibly forged Guid with Guid of current user, unless user is Admin
+            }
             var existingUser = await _context.Users.FindAsync(user.Id);
             if (existingUser == null)
             {
@@ -177,6 +190,7 @@ namespace PslibThesesBackend.Controllers
                 {
                     _context.Users.Add(user);
                     await _context.SaveChangesAsync();
+                    _logger.LogInformation("new user created", user);
                     return CreatedAtAction("GetUser", new { id = user.Id }, user);
                 }
                 catch (Exception ex)
@@ -187,7 +201,7 @@ namespace PslibThesesBackend.Controllers
             }
             else
             {
-                _logger.LogInformation("new user created", user);
+                _logger.LogInformation("existing user used", user);
                 return Ok(existingUser);
             }
         }

@@ -477,6 +477,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("target not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can change target audience for an idea");
+            }
+
             var ideaTarget = _context.IdeaTargets.Where(it => it.Idea == idea && it.Target == target).FirstOrDefault();
             if (ideaTarget == null)
             {
@@ -515,6 +525,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("target not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can delate target audience for an idea");
+            }
+
             var ideaTarget = _context.IdeaTargets.Where(it => (it.Idea == idea && it.Target == target)).FirstOrDefault();
             if (ideaTarget != null)
             {
@@ -595,6 +615,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can add new goal for an idea");
+            }
+
             if (String.IsNullOrEmpty(goalText.Text))
             {
                 return BadRequest("text of goal cannot be empty");
@@ -614,6 +644,52 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetIdeaGoal", new { id = newGoal.IdeaId, order = newGoal.Order }, new { IdeaId = id, Order = maxGoalOrder + 1, Text = goalText.Text });
         }
 
+        // PUT: Ideas/5/goals
+        /// <summary>
+        /// Replaces all goals inside an idea with a new ones
+         /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="goalText">New collection of goals</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/goals")]
+        public async Task<ActionResult<List<IdeaGoal>>> PutIdeaGoals(int id, [FromBody] List<IdeaGoalInputModel> newGoalTexts)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can replace goals of an idea");
+            }
+
+            var goals = _context.IdeaGoals.Where(ig => ig.Idea == idea).AsNoTracking().ToList();
+            if (goals != null)
+            {
+                _context.IdeaGoals.RemoveRange(goals);
+                idea.Updated = DateTime.Now;
+                _context.SaveChanges();
+            }
+
+            int i = 1;
+            foreach (IdeaGoalInputModel goal in newGoalTexts)
+            {
+                if (!String.IsNullOrEmpty(goal.Text))
+                {
+                    var newGoal = new IdeaGoal { IdeaId = id, Order = i++, Text = goal.Text };
+                    _context.IdeaGoals.Add(newGoal);
+                }
+            }
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         // PUT: Ideas/5/goals/1
         /// <summary>
         /// Changes text of goal inside an idea
@@ -623,13 +699,23 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">New text of goal</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/goals/{order}")]
-        public async Task<ActionResult<IdeaGoal>> PutIdeaGoalsOfOrder(int id, int order, [FromBody] IdeaGoalInputModel goalText)
+        public async Task<ActionResult> PutIdeaGoalsOfOrder(int id, int order, [FromBody] IdeaGoalInputModel goalText)
         {
             var idea = await _context.Ideas.FindAsync(id);
             if (idea == null)
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can replace goal of an idea");
+            }
+
             if (String.IsNullOrEmpty(goalText.Text))
             {
                 return BadRequest("text of goal cannot be empty");
@@ -663,6 +749,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can change order of goals inside an idea");
+            }
+
             var goal = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == order).FirstOrDefault();
             if (goal == null)
             {
@@ -723,6 +819,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can delete all goals of an idea");
+            }
+
             var goals = _context.IdeaGoals.Where(ig => ig.Idea == idea).AsNoTracking().ToList();
             if (goals != null)
             {
@@ -752,6 +858,15 @@ namespace PslibThesesBackend.Controllers
             if (goal == null)
             {
                 return NotFound("goal not found");
+            }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can delete goals inside an idea");
             }
 
             IdeaGoal removedGoal = new IdeaGoal { Id = goal.Id, IdeaId = id, Order = order, Text = goal.Text };
@@ -849,6 +964,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can add new outline inside an idea");
+            }
+
             if (String.IsNullOrEmpty(outlineText.Text))
             {
                 return BadRequest("text of outline cannot be empty");
@@ -868,6 +993,52 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetIdeaOutline", new { id = newOutline.IdeaId, order = newOutline.Order }, new { IdeaId = id, Order = maxOrder + 1, Text = outlineText.Text });
         }
 
+        // PUT: Ideas/5/outlines
+        /// <summary>
+        /// Replaces all outlines inside an idea with a new ones
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="goalText">New collection of outlines</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPut("{id}/outlines")]
+        public async Task<ActionResult<List<IdeaGoal>>> PutIdeaOutlines(int id, [FromBody] List<IdeaOutlineInputModel> newOutlineTexts)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can replace outlines of an idea");
+            }
+
+            var outlines = _context.IdeaOutlines.Where(ig => ig.Idea == idea).AsNoTracking().ToList();
+            if (outlines != null)
+            {
+                _context.IdeaOutlines.RemoveRange(outlines);
+                idea.Updated = DateTime.Now;
+                _context.SaveChanges();
+            }
+
+            int i = 1;
+            foreach (IdeaOutlineInputModel outline in newOutlineTexts)
+            {
+                if (!String.IsNullOrEmpty(outline.Text))
+                {
+                    var newOutline = new IdeaOutline { IdeaId = id, Order = i++, Text = outline.Text };
+                    _context.IdeaOutlines.Add(newOutline);
+                }
+            }
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
         // PUT: Ideas/5/outlines/1
         /// <summary>
         /// Changes text of outline inside na idea
@@ -876,7 +1047,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="order">Order of outline</param>
         /// <param name="goalText">New text of outline</param>
         /// <returns>HTTP 201, 404</returns>
-        [HttpPut("{id}/goals/{order}")]
+        [HttpPut("{id}/outlines/{order}")]
         public async Task<ActionResult<IdeaOutline>> PutIdeaOutlineOfOrder(int id, int order, [FromBody] IdeaOutlineInputModel outlineText)
         {
             var idea = await _context.Ideas.FindAsync(id);
@@ -884,6 +1055,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can change outline inside an idea");
+            }
+
             if (String.IsNullOrEmpty(outlineText.Text))
             {
                 return BadRequest("text of outline cannot be empty");
@@ -917,6 +1098,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can change order of outlines inside an idea");
+            }
+
             var outline = _context.IdeaOutlines.Where(ig => ig.Idea == idea && ig.Order == order).FirstOrDefault();
             if (outline == null)
             {
@@ -977,6 +1168,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can delete outlines of an idea");
+            }
+
             var outlines = _context.IdeaOutlines.Where(ig => ig.Idea == idea).AsNoTracking().ToList();
             if (outlines != null)
             {
@@ -1002,6 +1203,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("idea not found");
             }
+
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
+                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
+                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only owner or privileged user can delete outline inside an idea");
+            }
+
             var outline = _context.IdeaOutlines.Where(ig => ig.Idea == idea && ig.Order == order).AsNoTracking().FirstOrDefault();
             if (outline == null)
             {
