@@ -957,25 +957,32 @@ namespace PslibThesesBackend.Controllers
 
         // --- state
         [HttpGet("{id}/state")]
-        public async Task<ActionResult<WorkState>> GetWorkState(int id)
+        public async Task<ActionResult<StateDescription>> GetWorkState(int id)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound();
             }
-            return work.State;
+            return new StateDescription { Code = work.State, Description = work.State.ToString() };
         }
 
         [HttpGet("{id}/nextstates")]
-        public async Task<ActionResult<List<WorkState>>> GetWorkNextStates(int id)
+        public async Task<ActionResult<List<StateDescription>>> GetWorkNextStates(int id)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound("work not found");
             }
-            return _stateTransitions[work.State];
+            var transitions = _stateTransitions[work.State];
+            return transitions.Select(v => new StateDescription { Code = v, Description = v.ToString() }).ToList();
+        }
+
+        [HttpGet("allstates")]
+        public ActionResult<List<StateDescription>> GetWorkAllStates()
+        {
+            return Enum.GetValues(typeof(WorkState)).Cast<WorkState>().Select(v => new StateDescription { Code = v, Description = v.ToString()}).ToList();
         }
 
         [HttpPut("{id}/state")]
@@ -1086,5 +1093,11 @@ namespace PslibThesesBackend.Controllers
     public class WorkOutlineInputModel
     {
         public string Text { get; set; }
+    }
+
+    public class StateDescription
+    {
+        public WorkState Code { get; set; }
+        public string Description { get; set; }
     }
 }
