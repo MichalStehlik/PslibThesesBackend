@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace PslibThesesBackend.Models
@@ -15,6 +16,7 @@ namespace PslibThesesBackend.Models
         public string Name { get; set; }
         [Required]
         public int SetId { get; set; }
+        [JsonIgnore]
         public Set Set { get; set; }
         [Required]
         [Column(TypeName = "date")]

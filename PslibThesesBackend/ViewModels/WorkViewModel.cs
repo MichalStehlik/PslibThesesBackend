@@ -30,5 +30,6 @@ namespace PslibThesesBackend.ViewModels
         public int ServicesCostsProvidedBySchool { get; set; } = 0;
         public string DetailExpenditures { get; set; }
         public string ClassName { get; set; }
+        public string RepositoryURL { get; set; }
     }
 }

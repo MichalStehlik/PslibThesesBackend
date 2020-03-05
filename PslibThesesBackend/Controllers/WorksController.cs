@@ -11,6 +11,7 @@ using PslibThesesBackend.Models;
 using PslibThesesBackend.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using System.IO;
+using System.Text;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -171,7 +172,8 @@ namespace PslibThesesBackend.Controllers
                 ServicesCosts = work.ServicesCosts,
                 ServicesCostsProvidedBySchool = work.ServicesCostsProvidedBySchool,
                 AuthorId = work.AuthorId,
-                ManagerId = work.ManagerId
+                ManagerId = work.ManagerId,
+                RepositoryURL = work.RepositoryURL
             }
             );
         }
@@ -197,7 +199,8 @@ namespace PslibThesesBackend.Controllers
                     i.Outlines,
                     i.State,
                     i.Set,
-                    i.ClassName
+                    i.ClassName,
+                    i.RepositoryURL
                 })
                 .FirstOrDefaultAsync();
             if (work == null)
@@ -262,11 +265,24 @@ namespace PslibThesesBackend.Controllers
                 DetailExpenditures = input.DetailExpenditures,
                 Author = author,
                 Manager = manager,
-                ClassName = input.ClassName
+                ClassName = input.ClassName,
+                RepositoryURL = input.RepositoryURL
             };
             _context.Works.Add(work);
             await _context.SaveChangesAsync();
-            // -- TODO - Create roles and assign them to default users
+
+            foreach(var setRole in _context.SetRoles.Where(sr => sr.SetId == input.SetId))
+            {
+                var workRole = new WorkRole
+                {
+                    SetRoleId = setRole.Id,
+                    WorkId = work.Id,
+                    Updated = DateTime.Now
+                };
+                _context.WorkRoles.Add(workRole);
+            }
+            await _context.SaveChangesAsync();
+            // -- TODO - Assign roles to default users
             return CreatedAtAction("GetWork", new { id = work.Id }, work);
         }
 
@@ -336,6 +352,7 @@ namespace PslibThesesBackend.Controllers
             work.Manager = manager;
             work.Updated = DateTime.Now;
             work.ClassName = input.ClassName;
+            work.RepositoryURL = input.RepositoryURL;
 
             try
             {
@@ -1012,7 +1029,7 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("work not found");
             }
-            var roles = _context.WorkRoles.Where(wr => wr.WorkId == work.Id).ToList();
+            var roles = _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == work.Id).ToList();
             return roles;
         }
 
@@ -1024,7 +1041,7 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("work not found");
             }
-            var role = _context.WorkRoles.Where(sr => (sr.WorkId == work.Id && sr.Id == workRoleId)).FirstOrDefault();
+            var role = _context.WorkRoles.Include(wr => wr.SetRole).Where(sr => (sr.WorkId == work.Id && sr.Id == workRoleId)).FirstOrDefault();
             return role;
         }
 
@@ -1045,18 +1062,17 @@ namespace PslibThesesBackend.Controllers
             return assigned;
         }
 
-        // assignment
-        [HttpGet("assignment/{filename}")]
-        public async Task<FileStreamResult> DownloadAssignment(string filename)
+        // print version
+        [HttpGet("{id}/assignment")]
+        public async Task<ActionResult> DownloadAssignment(int id)
         {
-            var path = Path.Combine(Directory.GetCurrentDirectory(), "Log", filename);
-            var memory = new MemoryStream();
-            using (var stream = new FileStream(path, FileMode.Open))
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
             {
-                await stream.CopyToAsync(memory);
+                return NotFound("work not found");
             }
-            memory.Position = 0;
-            return File(memory, "text/plain", Path.GetFileName(path));
+            MemoryStream memory = new MemoryStream(Encoding.UTF8.GetBytes(work.Name ?? ""));
+            return File(memory, "text/plain", work.Name + ".html");
         }
     }
 
@@ -1083,6 +1099,7 @@ namespace PslibThesesBackend.Controllers
         public string DetailExpenditures { get; set; }
         public WorkState State { get; set; } = WorkState.InPreparation;
         public string ClassName { get; set; }
+        public string RepositoryURL { get; set; }
     }
 
     public class WorkGoalInputModel

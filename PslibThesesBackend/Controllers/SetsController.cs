@@ -98,8 +98,6 @@ namespace PslibThesesBackend.Controllers
         }
 
         // PUT: Sets/5
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see https://aka.ms/RazorPagesCRUD.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutSet(int id, Set @set)
         {
@@ -160,13 +158,13 @@ namespace PslibThesesBackend.Controllers
 
         private bool SetExists(int id)
         {
-            return _context.Sets.Any(e => e.Id == id);
+            return _context.Sets.Any(s => (s.Id == id));
         }
 
         [HttpGet("{id}/terms")]
         public ActionResult<IEnumerable<SetTerm>> GetSetTerms(int id)
         {
-            if (SetExists(id))
+            if (!SetExists(id))
             {
                 return NotFound("set not found");
             }
@@ -174,7 +172,7 @@ namespace PslibThesesBackend.Controllers
             var setTerms = _context.SetTerms
                 .Where(st => st.SetId == id)
                 .OrderBy(st => st.Date)
-                .Select(st => new { Name = st.Name, Date = st.Date, WarningDate = st.WarningDate, QuestionsCount = st.Questions.Count })
+                .Select(st => new { Id = st.Id, Name = st.Name, Date = st.Date, WarningDate = st.WarningDate, QuestionsCount = st.Questions.Count })
                 .AsNoTracking();
             return Ok(setTerms);
         }
@@ -261,15 +259,19 @@ namespace PslibThesesBackend.Controllers
             var newTerm = new SetTerm { SetId = id, Date = st.Date, WarningDate = st.WarningDate };
             _context.SetTerms.Add(newTerm);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId, termId = newTerm.Id });
+            return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId, termId = newTerm.Id }, newTerm);
         }
 
         // --- roles
-
+        /// <summary>
+        /// Gets list of roles for given set
+        /// </summary>
+        /// <param name="id">Set ID</param>
+        /// <returns></returns>
         [HttpGet("{id}/roles")]
         public ActionResult<IEnumerable<SetTerm>> GetSetRoles(int id)
         {
-            if (SetExists(id))
+            if (!SetExists(id))
             {
                 return NotFound("set not found");
             }
@@ -277,7 +279,7 @@ namespace PslibThesesBackend.Controllers
             var setTerms = _context.SetRoles
                 .Where(st => st.SetId == id)
                 .OrderBy(st => st.Name)
-                .Select(st => new { Name = st.Name, st.ClassTeacher, st.RequiredForAdvancement, st.RequiredForPrint, QuestionsCount = st.Questions.Count })
+                .Select(st => new { Id = st.Id, Name = st.Name, st.ClassTeacher, st.RequiredForAdvancement, st.RequiredForPrint, QuestionsCount = st.Questions.Count })
                 .AsNoTracking();
             return Ok(setTerms);
         }
@@ -334,6 +336,12 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetSetRole", new { id = role.SetId, roleId = role.Id });
         }
 
+        /// <summary>
+        /// Delete role from given set
+        /// </summary>
+        /// <param name="id">Set Id</param>
+        /// <param name="roleId">Role Id (must be in set)</param>
+        /// <returns>Deleted set</returns>
         [HttpDelete("{id}/roles/{roleId}")]
         public async Task<ActionResult<SetRole>> DeleteSetRoles(int id, int roleId)
         {
@@ -357,6 +365,12 @@ namespace PslibThesesBackend.Controllers
             return role;
         }
 
+        /// <summary>
+        /// Adds a new role into given set
+        /// </summary>
+        /// <param name="id">Set ID</param>
+        /// <param name="sr">Data of new role</param>
+        /// <returns>new role</returns>
         [HttpPost("{id}/roles")]
         public async Task<ActionResult<SetTerm>> PostSetRoles(int id, [FromBody] SetRoleIdInputModel sr)
         {
@@ -368,7 +382,7 @@ namespace PslibThesesBackend.Controllers
             var newRole = new SetRole { SetId = id, Name = sr.Name, ClassTeacher = sr.ClassTeacher, RequiredForAdvancement = sr.RequiredForAdvancement, RequiredForPrint = sr.RequiredForPrint};
             _context.SetRoles.Add(newRole);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetRole", new { id = newRole.SetId, roleId = newRole.Id });
+            return CreatedAtAction("GetSetRole", new { id = newRole.SetId, roleId = newRole.Id }, newRole);
         }
     }
 
