@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -84,6 +85,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         // GET: Sets/5
+        [Authorize(Policy = "Administrator")]
         [HttpGet("{id}")]
         public async Task<ActionResult<Set>> GetSet(int id)
         {
@@ -99,6 +101,7 @@ namespace PslibThesesBackend.Controllers
 
         // PUT: Sets/5
         [HttpPut("{id}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<IActionResult> PutSet(int id, Set @set)
         {
             if (id != @set.Id)
@@ -128,9 +131,8 @@ namespace PslibThesesBackend.Controllers
         }
 
         // POST: Sets
-        // To protect from overposting attacks, please enable the specific properties you want to bind to, for
-        // more details see https://aka.ms/RazorPagesCRUD.
         [HttpPost]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<Set>> PostSet(Set @set)
         {
             _context.Sets.Add(@set);
@@ -178,6 +180,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("{id}/terms/{termId}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> GetSetTerm(int id, int termId)
         {
             var @set = await _context.Sets.FindAsync(id);
@@ -199,6 +202,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpPut("{id}/terms/{termId}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> PutSetTerms(int id, int termId, [FromBody] SetTermIdInputModel st)
         {
             var set = await _context.Sets.FindAsync(id);
@@ -225,6 +229,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpDelete("{id}/terms/{termId}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> DeleteSetTerms(int id, int termId)
         {
             var set = await _context.Sets.FindAsync(id);
@@ -248,6 +253,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpPost("{id}/terms")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> PostSetTerms(int id, [FromBody] SetTermIdInputModel st)
         {
             var set = await _context.Sets.FindAsync(id);
@@ -285,6 +291,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("{id}/roles/{roleId}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetRole>> GetSetRole(int id, int roleId)
         {
             var @set = await _context.Sets.FindAsync(id);
@@ -306,6 +313,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpPut("{id}/roles/{roleId}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> PutSetRoles(int id, int roleId, [FromBody] SetRoleIdInputModel sr)
         {
             var set = await _context.Sets.FindAsync(id);
@@ -343,6 +351,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="roleId">Role Id (must be in set)</param>
         /// <returns>Deleted set</returns>
         [HttpDelete("{id}/roles/{roleId}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetRole>> DeleteSetRoles(int id, int roleId)
         {
             var set = await _context.Sets.FindAsync(id);
@@ -372,6 +381,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="sr">Data of new role</param>
         /// <returns>new role</returns>
         [HttpPost("{id}/roles")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> PostSetRoles(int id, [FromBody] SetRoleIdInputModel sr)
         {
             var set = await _context.Sets.FindAsync(id);
@@ -384,6 +394,9 @@ namespace PslibThesesBackend.Controllers
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetSetRole", new { id = newRole.SetId, roleId = newRole.Id }, newRole);
         }
+
+        // -- questions
+        // -- answers
     }
 
     class SetListViewModel

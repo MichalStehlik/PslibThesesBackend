@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using PslibThesesBackend.Models;
 using PslibThesesBackend.Constants;
 using Serilog;
+using PslibThesesBackend.Services;
 
 namespace PslibThesesBackend
 {
@@ -80,6 +81,9 @@ namespace PslibThesesBackend
                           .AllowAnyMethod();
                 });
             });
+            services.AddScoped<EmailSender>();
+            services.AddScoped<RazorViewToStringRenderer>();
+            services.AddRazorPages();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

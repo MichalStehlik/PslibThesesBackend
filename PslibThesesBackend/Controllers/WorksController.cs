@@ -12,6 +12,10 @@ using PslibThesesBackend.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using System.IO;
 using System.Text;
+using PslibThesesBackend.Services;
+using PslibThesesBackend.Prints.ViewModels;
+using System.Text.Encodings.Web;
+using Microsoft.Extensions.Configuration;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -20,6 +24,9 @@ namespace PslibThesesBackend.Controllers
     public class WorksController : ControllerBase
     {
         private readonly ThesesContext _context;
+        private RazorViewToStringRenderer _razorRenderer;
+        private IConfiguration _configuration;
+        private EmailSender _emailSender;
 
         private readonly Dictionary<WorkState, List<WorkState>> _stateTransitions = new Dictionary<WorkState, List<WorkState>>
         {
@@ -30,9 +37,12 @@ namespace PslibThesesBackend.Controllers
             { WorkState.Succesful, new List<WorkState> {} },
             { WorkState.Undefended, new List<WorkState> {} }
         };
-        public WorksController(ThesesContext context)
+        public WorksController(ThesesContext context, RazorViewToStringRenderer razorRenderer, IConfiguration configuration, EmailSender emailSender)
         {
             _context = context;
+            _razorRenderer = razorRenderer;
+            _configuration = configuration;
+            _emailSender = emailSender;
         }
         // GET: Work
         [HttpGet]
@@ -271,7 +281,7 @@ namespace PslibThesesBackend.Controllers
             _context.Works.Add(work);
             await _context.SaveChangesAsync();
 
-            foreach(var setRole in _context.SetRoles.Where(sr => sr.SetId == input.SetId))
+            foreach (var setRole in _context.SetRoles.Where(sr => sr.SetId == input.SetId))
             {
                 var workRole = new WorkRole
                 {
@@ -282,7 +292,12 @@ namespace PslibThesesBackend.Controllers
                 _context.WorkRoles.Add(workRole);
             }
             await _context.SaveChangesAsync();
-            // -- TODO - Assign roles to default users
+
+            foreach(var workRole in _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == work.Id))
+            {
+                // populating roles (there is no source for data yet)
+            }
+
             return CreatedAtAction("GetWork", new { id = work.Id }, work);
         }
 
@@ -743,7 +758,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">Object containing text</param>
         /// <returns>New goal, HTTP 404</returns>
         [HttpPost("{id}/outlines")]
-        public async Task<ActionResult<WorkGoal>> PostIdeaOutlines(int id, [FromBody] WorkOutlineInputModel outlineText)
+        public async Task<ActionResult<WorkGoal>> PostWorkOutlines(int id, [FromBody] WorkOutlineInputModel outlineText)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
@@ -1033,7 +1048,7 @@ namespace PslibThesesBackend.Controllers
             return roles;
         }
 
-        [HttpGet("{id}/roles/{roleId}")]
+        [HttpGet("{id}/roles/{workRoleId}")]
         public async Task<ActionResult<WorkRole>> GetWorkRole(int id, int workRoleId)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1041,38 +1056,127 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("work not found");
             }
-            var role = _context.WorkRoles.Include(wr => wr.SetRole).Where(sr => (sr.WorkId == work.Id && sr.Id == workRoleId)).FirstOrDefault();
+            var role = _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => (wr.WorkId == work.Id && wr.Id == workRoleId)).FirstOrDefault();
             return role;
         }
 
-        [HttpGet("{id}/roles/{roleId}/assignments")]
-        public async Task<ActionResult<List<WorkRoleUser>>> GetWorkRoleAssignments(int id, int workRoleId)
+        [HttpPost("{id}/roles")]
+        public async Task<ActionResult> PostWorkRoles(int id, [FromBody] WorkRole workRole)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound("work not found");
             }
-            var role = _context.SetRoles.Where(sr => (sr.SetId == work.SetId && sr.Id == workRoleId)).FirstOrDefault();
+            var set = await _context.Sets.FindAsync(workRole.SetRoleId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            if (work.SetId != set.Id)
+            {
+                return BadRequest("set referenced by work and new role does not match");
+            }
+            workRole.Updated = DateTime.Now;
+            _context.WorkRoles.Add(workRole);
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetWorkRole", new { id = workRole.WorkId }, workRole);
+        }
+
+        [HttpDelete("{id}/roles/{roleId}")]
+        public async Task<ActionResult<WorkRole>> DeleteWorkRole(int id, int roleId)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var workRole = await _context.WorkRoles.FindAsync(roleId);
+            if (workRole == null)
+            {
+                return NotFound("workRole not found");
+            }
+            if (workRole.WorkId != work.Id)
+            {
+                return BadRequest("work does not contain specified role");
+            }
+            _context.WorkRoles.Remove(workRole);
+            work.Updated = DateTime.Now;
+            _context.SaveChanges();
+            return Ok(workRole);
+        }
+
+        // users in roles
+        [HttpGet("{id}/roles/{workRoleId}/users")]
+        public async Task<ActionResult<List<User>>> GetWorkRoleAssignments(int id, int workRoleId)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var role = _context.WorkRoles.Where(wr => (wr.WorkId == work.Id && wr.Id == workRoleId)).FirstOrDefault();
             if (role == null)
             {
                 return NotFound("role not found in this work");
             }
-            var assigned = _context.WorkRoleUsers.Where(wru => wru.WorkRoleId == workRoleId).ToList();
+            var assigned = _context.WorkRoleUsers.Include(wru => wru.User).Where(wru => wru.WorkRoleId == workRoleId).Select(wru => wru.User).ToList();
             return assigned;
         }
 
         // print version
-        [HttpGet("{id}/assignment")]
-        public async Task<ActionResult> DownloadAssignment(int id)
+        [HttpGet("{id}/application")]
+        public async Task<ActionResult> DownloadApplication(int id)
         {
-            var work = await _context.Works.FindAsync(id);
+            var work = await _context.Works.Include(w => w.Author).Include(w => w.Goals).Include(w => w.Outlines).FirstOrDefaultAsync();
             if (work == null)
             {
                 return NotFound("work not found");
             }
-            MemoryStream memory = new MemoryStream(Encoding.UTF8.GetBytes(work.Name ?? ""));
-            return File(memory, "text/plain", work.Name + ".html");
+            var set = await _context.Sets.Where(s => s.Id == work.SetId).FirstOrDefaultAsync();
+            if (work == null)
+            {
+                return NotFound("set not found");
+            }
+            var roles = _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == id && wr.SetRole.ShowsOnApplication == true).Include(wr => wr.WorkRoleUsers).ToList();
+            string templateFileName = "";
+            string outputFileName = "";
+            switch (set.Template)
+            {
+                case ApplicationTemplate.SeminarWork:
+                    {
+                        break;
+                    }
+                default:
+                    {
+                        templateFileName = "/Prints/Pages/AssignmentGraduation.cshtml";
+                        outputFileName = "MP" + set.Year + "_";
+                        break;
+                    }
+            }
+            outputFileName += work.Name;
+            string documentBody = await _razorRenderer.RenderViewToStringAsync(templateFileName, new AssignmentViewModel
+            {
+                AuthorFirstName = work.Author.FirstName,
+                AuthorLastName = work.Author.LastName,
+                ClassName = work.ClassName,
+                Title = work.Name,
+                Subject = work.Subject,
+                Description = work.Description,
+                Resources = work.Resources,
+                MaterialCosts = work.MaterialCosts,
+                MaterialCostsProvidedBySchool = work.MaterialCostsProvidedBySchool,
+                ServicesCosts = work.ServicesCosts,
+                ServicesCostsProvidedBySchool = work.ServicesCostsProvidedBySchool,
+                SetName = set.Name,
+                AppUrl = HtmlEncoder.Default.Encode(Request.Scheme + "://" + Request.Host.Value),
+                Date = DateTime.Now,
+                Roles = roles,
+                Goals = work.Goals.OrderBy(g => g.Order).ToList(),
+                Outlines = work.Outlines.OrderBy(g => g.Order).ToList()
+            });
+            MemoryStream memory = new MemoryStream(Encoding.UTF8.GetBytes(documentBody));
+            return File(memory, "text/plain", outputFileName + ".html");
         }
     }
 
@@ -1116,5 +1220,10 @@ namespace PslibThesesBackend.Controllers
     {
         public WorkState Code { get; set; }
         public string Description { get; set; }
+    }
+
+    public class RoleUserInputModel
+    {
+        public Guid Id { get; set; }
     }
 }

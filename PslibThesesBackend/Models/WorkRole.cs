@@ -19,7 +19,7 @@ namespace PslibThesesBackend.Models
         public Work Work { get; set; }
         [Required]
         public int SetRoleId { get; set; }
-        [ForeignKey("RoleId")]
+        [ForeignKey("SetRoleId")]
         public SetRole SetRole { get; set; }
         public int? Mark { get; set; }
         public bool Finalized { get; set; } = false;

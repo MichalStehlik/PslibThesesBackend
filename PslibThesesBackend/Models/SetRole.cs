@@ -23,5 +23,7 @@ namespace PslibThesesBackend.Models
         public int SetId { get; set; }
         [JsonIgnore]
         public ICollection<SetQuestion> Questions { get; set; }
+        [JsonIgnore]
+        public ICollection<WorkRole> WorkRoles { get; set; }
     }
 }
