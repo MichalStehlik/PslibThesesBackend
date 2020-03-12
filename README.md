@@ -340,6 +340,34 @@ Stavy práce, na které lze přejít
 
     GET /works/{id}/nextstates
     
+Všechny stavy práce
+
+    GET /works/allstates
+    
 Změna stavu práce
 
     PUT /works/{id}/state
+
+Role
+
+    GET /works/{id}/roles
+
+Data role v práci
+
+    GET /works/{id}/roles/{roleId}
+    
+Přidání role specifické pro tuto práci
+ 
+    POST /works/{id}/roles
+
+Odstranění role specifické pro tuto práci
+ 
+    DELETE /works/{id}/roles/{roleId}
+    
+Uživatelé přiřazení této roli
+ 
+    GET /works/{id}/roles/{roleId}/users
+    
+Stažení přihlášky
+
+    GET /works/{id}/application
