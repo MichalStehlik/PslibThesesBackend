@@ -168,6 +168,7 @@ namespace PslibThesesBackend.Controllers
 
             return Ok(new WorkViewModel
             {
+                Id = work.Id,
                 Name = work.Name,
                 Description = work.Description,
                 Subject = work.Subject,
@@ -183,7 +184,8 @@ namespace PslibThesesBackend.Controllers
                 ServicesCostsProvidedBySchool = work.ServicesCostsProvidedBySchool,
                 AuthorId = work.AuthorId,
                 ManagerId = work.ManagerId,
-                RepositoryURL = work.RepositoryURL
+                RepositoryURL = work.RepositoryURL,
+                SetId = work.SetId
             }
             );
         }
@@ -840,14 +842,14 @@ namespace PslibThesesBackend.Controllers
             {
                 return BadRequest("text of outline cannot be empty");
             }
-            var goal = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == order).FirstOrDefault();
-            if (goal == null)
+            var outline = _context.WorkOutlines.Where(wo => wo.Work == work && wo.Order == order).FirstOrDefault();
+            if (outline == null)
             {
                 return NotFound("outline not found");
             }
 
             work.Updated = DateTime.Now;
-            goal.Text = outlineText.Text;
+            outline.Text = outlineText.Text;
 
             await _context.SaveChangesAsync();
             return NoContent();

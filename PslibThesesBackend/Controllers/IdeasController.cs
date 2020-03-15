@@ -1069,14 +1069,14 @@ namespace PslibThesesBackend.Controllers
             {
                 return BadRequest("text of outline cannot be empty");
             }
-            var goal = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == order).FirstOrDefault();
-            if (goal == null)
+            var outline = _context.IdeaOutlines.Where(io => io.Idea == idea && io.Order == order).FirstOrDefault();
+            if (outline == null)
             {
                 return NotFound("outline not found");
             }
 
             idea.Updated = DateTime.Now;
-            goal.Text = outlineText.Text;
+            outline.Text = outlineText.Text;
 
             await _context.SaveChangesAsync();
             return NoContent();
