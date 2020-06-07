@@ -26,7 +26,6 @@ namespace Authority
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             string connectionString = Configuration.GetConnectionString("DefaultConnection");
@@ -54,7 +53,6 @@ namespace Authority
                 options.ClaimsIdentity.RoleClaimType = "role";
                 options.User.RequireUniqueEmail = true;
             })
-                //.AddDefaultUI(UIFramework.Bootstrap4)
                 .AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();
 
             services.AddAuthorization(options =>
@@ -65,9 +63,13 @@ namespace Authority
                 });
                 options.AddPolicy("Admin", policy =>
                 {
-                    //policy.RequireClaim("admin");
                     policy.RequireRole("Administrátor");
-                    //policy.RequireAuthenticatedUser();
+                });
+                options.AddPolicy(Constants.LocalScopeName, policy =>
+                {
+                    policy.AddAuthenticationSchemes(IdentityServerConstants.LocalApi.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
+                    // custom requirements
                 });
             });
 
@@ -79,6 +81,10 @@ namespace Authority
                     options.ClientId = Configuration["Authentication:Microsoft:ClientId"];
                     options.ClientSecret = Configuration["Authentication:Microsoft:ClientSecret"];
                     options.SaveTokens = true;
+                })
+                .AddLocalApi(options => 
+                {
+                    options.ExpectedScope = Constants.LocalScopeName;
                 })
             ;
 
@@ -140,8 +146,7 @@ namespace Authority
 
             services.AddScoped<EmailSender>();
             services.AddScoped<RazorViewToStringRenderer>();
-            services.AddLocalApiAuthentication();
-            //services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+            //services.AddLocalApiAuthentication();
             services.AddControllersWithViews();
             services.AddRazorPages();
         }

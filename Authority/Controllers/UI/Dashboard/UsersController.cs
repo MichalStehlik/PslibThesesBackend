@@ -128,7 +128,7 @@ namespace Authority.Controllers.UI
                     FirstName = collection["FirstName"].ToString(),
                     MiddleName = collection["MiddleName"].ToString(),
                     LastName = collection["LastName"].ToString(),
-                    Gender = collection["Gender"] == "0" ? Gender.Male : Gender.Female,
+                    Gender = collection["Gender"] == "0" ? Gender.Male : (collection["Gender"] == "1" ? Gender.Female : Gender.Other),
                     UserName = collection["UserName"].ToString(),
                     Email = collection["Email"].ToString(),
                     EmailConfirmed = collection["EmailConfirmed"] == "true",

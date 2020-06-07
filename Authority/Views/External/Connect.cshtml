@@ -1,4 +1,5 @@
 ﻿@model RegisterExternalInputModel
+@using System.Security.Claims
 
     <div class="container">
         <h1>Propojení účtů</h1>
@@ -12,14 +13,37 @@
             <dt>Id u poskytovatele</dt>
             <dd>@Model.ProviderUserId</dd>
         </dl>
+        <h2>Claimy od poskytovatele</h2>
+        <dl>
+        @foreach (var claim in Model.Claims)
+        {
+            <dt>@claim.Type</dt>
+            <dd>@claim.Value</dd>
+        }
+        </dl>
         <partial name="_ValidationSummary" />
-        <form asp-route-provider="@Model.Provider" asp-route-providerUserId="@Model.ProviderUserId" method="post" asp-route="Connect">
+        <form method="post" asp-route="Connect">
             <div class="form-group">
                 <label asp-for="UserName"></label>
+                <input type="hidden" asp-for="Provider" />
+                <input type="hidden" asp-for="ProviderUserId" />
                 <input asp-for="UserName" class="form-control" />
                 <span asp-validation-for="UserName" class="text-danger"></span>
             </div>
+            @{
+                var firstname = Model.Claims.Where(c => c.Type == ClaimTypes.GivenName).FirstOrDefault();
+                var lastname = Model.Claims.Where(c => c.Type == ClaimTypes.Surname).FirstOrDefault();
+                var email = Model.Claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault();
+                var gender = Model.Claims.Where(c => c.Type == ClaimTypes.Gender).FirstOrDefault();
+            }
             <button type="submit" class="btn btn-primary" name="button" value="login">Propojit</button>
-            <a asp-action="Create" asp-route-provider="@Model.Provider" asp-route-providerUserId="@Model.ProviderUserId" class="btn btn-secondary">Vytvořit nový účet</a>
+            <a asp-action="Create" 
+               asp-route-provider="@Model.Provider" 
+               asp-route-providerUserId="@Model.ProviderUserId" 
+               asp-route-firstname="@(firstname == null ? "" : firstname.Value)" 
+               asp-route-lastname="@(lastname == null ? "" : lastname.Value)"
+               asp-route-gender="@(gender == null ? "" : gender.Value)"
+               asp-route-email="@(email == null ? "" : email.Value)"
+               class="btn btn-secondary">Vytvořit nový účet</a>
         </form>
     </div>

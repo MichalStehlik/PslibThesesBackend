@@ -18,7 +18,7 @@
                         @foreach (var provider in Model.VisibleExternalProviders)
                         {
                             <div>
-                                <a class="btn btn-secondary btn-lg btn-block @provider.DisplayName"
+                                <a class="btn btn-block btn-light @provider.DisplayName"
                                    asp-controller="External"
                                    asp-action="Challenge"
                                    asp-route-provider="@provider.AuthenticationScheme"

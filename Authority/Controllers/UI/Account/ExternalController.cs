@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
@@ -96,6 +98,8 @@ namespace Authority.Quickstart.UI
             {
                 throw new Exception("External authentication error");
             }
+            var tokens = result.Properties.GetTokens();
+            var accessToken = tokens.Where(t => t.Name == "access_token").FirstOrDefault();
 
             // lookup our user and external provider info
             var (user, provider, providerUserId, claims) = FindUserFromExternalProvider(result);
@@ -116,6 +120,22 @@ namespace Authority.Quickstart.UI
             ProcessLoginCallbackForOidc(result, additionalLocalClaims, localSignInProps);
             ProcessLoginCallbackForWsFed(result, additionalLocalClaims, localSignInProps);
             ProcessLoginCallbackForSaml2p(result, additionalLocalClaims, localSignInProps);
+
+            if (provider == "Microsoft" && accessToken != null)
+            {
+                HttpClient client = new HttpClient();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokens.First(t => t.Name == accessToken.Value).Value}");
+                var info = await client.GetAsync($"https://graph.microsoft.com/v1.0/me/people/?$filter=id eq '{providerUserId}'");
+                var content = await info.Content.ReadAsAsync<dynamic>();
+                string department = content.value[0].department;
+                additionalLocalClaims.Add(new Claim("department",department));
+            }
+
+            foreach (var claim in claims)
+            {
+                additionalLocalClaims.Add(claim);
+            }
 
             var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
@@ -169,10 +189,15 @@ namespace Authority.Quickstart.UI
                 throw new Exception("External authentication error");
             }
             var (user, provider, providerUserId, claims) = FindUserFromExternalProvider(result);
-            RegisterExternalInputModel model = new RegisterExternalInputModel { Provider = provider, ProviderUserId = providerUserId, Claims = claims };
+            RegisterExternalInputModel model = new RegisterExternalInputModel {
+                Provider = provider,
+                ProviderUserId = providerUserId,
+                Claims = claims,
+                UserName = claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault().Value
+            };
             return View(model);
         }
-
+        
         [HttpPost("Connect")]
         public async Task<IActionResult> Connect(RegisterExternalInputModel model)
         {
@@ -198,7 +223,20 @@ namespace Authority.Quickstart.UI
                     }
                     else
                     {
-                        return RedirectToAction("Create", new { Provider = model.Provider, ProviderUserId = model.ProviderUserId, Claims = model.Claims });
+                        // -- TODO --
+                        var firstname = model.Claims.Where(c => c.Type == ClaimTypes.GivenName).FirstOrDefault();
+                        var lastname = model.Claims.Where(c => c.Type == ClaimTypes.Surname).FirstOrDefault();
+                        var email = model.Claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault();
+                        var gender = model.Claims.Where(c => c.Type == ClaimTypes.Gender).FirstOrDefault();
+                        return RedirectToAction("Create", new { 
+                            Provider = model.Provider, 
+                            ProviderUserId = model.ProviderUserId, 
+                            Claims = model.Claims, 
+                            firstname = firstname != null ? firstname.Value : null,
+                            lastname = lastname != null ? lastname.Value : null,
+                            email = email != null ? email.Value : null,
+                            gender = gender != null ? gender.Value : null,
+                        });
                     }
                 }
             }
@@ -209,9 +247,13 @@ namespace Authority.Quickstart.UI
         }
 
         [HttpGet("Create")]
-        public IActionResult Create(string provider, string providerUserId, string userName, IEnumerable<Claim> claims)
+        public IActionResult Create(string provider, string providerUserId, string userName, IList<Claim> claims, string firstname = "", string lastname = "", string email = "", string gender = "")
         {
             var vm = new CreateExternalInputModel { UserName = userName, Provider = provider, ProviderUserId = providerUserId, Claims = claims };
+            if (!String.IsNullOrEmpty(firstname)) vm.FirstName = firstname;
+            if (!String.IsNullOrEmpty(lastname)) vm.LastName = lastname;
+            if (!String.IsNullOrEmpty(email)) vm.UserName = vm.Email = email;
+            if (!String.IsNullOrEmpty(gender)) vm.Gender = gender == "F" ? Gender.Female : Gender.Male;
             return View(vm);
         }
 

@@ -7,18 +7,6 @@ namespace Authority
 {
     public static class Config
     {
-        /*
-        public static IEnumerable<ApiResource> GetApis()
-        {
-            return new List<ApiResource>
-            {
-                new ApiResource("QuotesApi", "Test quotes API"),
-                new ApiResource("ThesesApi", "Theses API"),
-                new ApiResource(IdentityServerConstants.LocalApi.ScopeName),
-            };
-        }
-        */
-
         public static IEnumerable<Client> GetClients()
         {
             return new List<Client>

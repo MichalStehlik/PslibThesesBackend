@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Authority.Data;
 using AutoMapper.Configuration;
@@ -14,7 +15,7 @@ using static IdentityServer4.IdentityServerConstants;
 namespace Authority.Controllers.Api
 {
     [Route("api/Users")]
-    [Authorize(LocalApi.PolicyName)]
+    //[Authorize(Constants.LocalScopeName)]
     [ApiController]
     public class UsersController : ControllerBase
     {
@@ -56,20 +57,126 @@ namespace Authority.Controllers.Api
 
         // POST: api/Users
         [HttpPost]
-        public void Post([FromBody] ApplicationUser value)
+        public async Task<ActionResult> PostAsync([FromBody] ApplicationUser value)
         {
+            var result = await _userManager.CreateAsync(value);
+
+            if (result.Succeeded)
+            {
+                return Ok(value);
+            }
+            else
+            {
+                return BadRequest(result.Errors);
+            }
         }
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] ApplicationUser value)
+        public async Task<ActionResult> PutAsync(string id, [FromBody] ApplicationUser value)
         {
+            var user = _userManager.Users.SingleOrDefault(u => u.Id == id);
+            if (user != null)
+            {
+                value.Id = id;
+                await _userManager.UpdateAsync(value);
+                return Ok(user);
+            }
+            else
+            {
+                return NotFound();
+            }
         }
 
         // DELETE: api/ApiWithActions/5
         [HttpDelete("{id}")]
-        public void Delete(string id)
+        public async Task<ActionResult> Delete(string id)
         {
+            var user = _userManager.Users.SingleOrDefault(u => u.Id == id);
+            if (user != null)
+            {
+                var result = await _userManager.DeleteAsync(user);
+                if (result.Succeeded)
+                {
+                    return NoContent();
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
         }
+
+        [HttpGet("{id}/claims")]
+        public async Task<ActionResult> GetClaimsAsync(string id)
+        {
+            var user = _userManager.Users.SingleOrDefault(r => r.Id == id);
+            if (user != null)
+            {
+                var claims = await _userManager.GetClaimsAsync(user);
+                return Ok(claims);
+            }
+            else
+                return NotFound();
+        }
+
+        [HttpPost("{id}/claims")]
+        public async Task<ActionResult> OnPostClaimsAsync(string id, [FromBody] Claim value)
+        {
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (user != null)
+            {
+                var result = await _userManager.AddClaimAsync(user, new Claim(value.Type, value.Value));
+                if (result.Succeeded)
+                {
+                    return Ok(value);
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+
+            }
+            else
+                return NotFound();
+        }
+
+        [HttpDelete("{id}/claims/{type}/{value}")]
+        public async Task<ActionResult> OnDeleteClaimsAsync(string id, string type, string value)
+        {
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (user != null)
+            {
+                var result = await _userManager.RemoveClaimAsync(user, new Claim(type, value));
+                if (result.Succeeded)
+                {
+                    return NoContent();
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+            }
+            else
+                return NotFound();
+        }
+
+        [HttpGet("{id}/roles")]
+        public async Task<ActionResult> GetRolesAsync(string id)
+        {
+            var user = _userManager.Users.SingleOrDefault(r => r.Id == id);
+            if (user != null)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                return Ok(roles);
+            }
+            else
+                return NotFound();
+        }
+
     }
 }
