@@ -20,7 +20,7 @@ namespace Authority.Services
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(Configuration["EmailSender:FromName"], Configuration["EmailSender:From"]));
-            message.To.Add(new MailboxAddress(email));
+            message.To.Add(new MailboxAddress(email,email));
             message.Subject = subject;
 
             var bodyBuilder = new BodyBuilder();

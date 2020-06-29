@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Utf8Json;
 
 namespace Authority.Quickstart.UI
 {
@@ -125,11 +126,28 @@ namespace Authority.Quickstart.UI
             {
                 HttpClient client = new HttpClient();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {tokens.First(t => t.Name == accessToken.Value).Value}");
-                var info = await client.GetAsync($"https://graph.microsoft.com/v1.0/me/people/?$filter=id eq '{providerUserId}'");
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken.Value}");
+                var info = await client.GetAsync($"https://graph.microsoft.com/v1.0/users/{providerUserId}?$select=businessPhones,displayName,givenName,id,jobTitle,mail,mobilePhone,preferredLanguage,surname,userPrincipalName,department");
                 var content = await info.Content.ReadAsAsync<dynamic>();
-                string department = content.value[0].department;
-                additionalLocalClaims.Add(new Claim("department",department));
+                if (content != null)
+                {
+                    try
+                    {
+                        string jobTitle = content.jobTitle;
+                        additionalLocalClaims.Add(new Claim("jobTitle", jobTitle));
+                        if (jobTitle == "uèitel")
+                        {
+
+                        }
+                    }
+                    catch { }
+                    try
+                    {
+                        string department = content.department;
+                        additionalLocalClaims.Add(new Claim("department", department));
+                    }
+                    catch { }
+                }                
             }
 
             foreach (var claim in claims)
@@ -193,7 +211,11 @@ namespace Authority.Quickstart.UI
                 Provider = provider,
                 ProviderUserId = providerUserId,
                 Claims = claims,
-                UserName = claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault().Value
+                UserName = (claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault() != null ? claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault().Value : null),
+                FirstName = (claims.Where(c => c.Type == ClaimTypes.GivenName).FirstOrDefault() != null ? claims.Where(c => c.Type == ClaimTypes.GivenName).FirstOrDefault().Value : null),
+                LastName = (claims.Where(c => c.Type == ClaimTypes.Surname).FirstOrDefault() != null ? claims.Where(c => c.Type == ClaimTypes.Surname).FirstOrDefault().Value : ""),
+                Email = (claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault() != null ? claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault().Value : ""),
+                Gender = (claims.Where(c => c.Type == ClaimTypes.Gender).FirstOrDefault() != null ? claims.Where(c => c.Type == ClaimTypes.Gender).FirstOrDefault().Value : "")
             };
             return View(model);
         }
@@ -223,19 +245,20 @@ namespace Authority.Quickstart.UI
                     }
                     else
                     {
-                        // -- TODO --
-                        var firstname = model.Claims.Where(c => c.Type == ClaimTypes.GivenName).FirstOrDefault();
-                        var lastname = model.Claims.Where(c => c.Type == ClaimTypes.Surname).FirstOrDefault();
-                        var email = model.Claims.Where(c => c.Type == ClaimTypes.Email).FirstOrDefault();
-                        var gender = model.Claims.Where(c => c.Type == ClaimTypes.Gender).FirstOrDefault();
+                        var firstname = model.FirstName;
+                        var lastname = model.LastName;
+                        var username = model.UserName;
+                        var email = model.Email;
+                        var gender = model.Gender;
                         return RedirectToAction("Create", new { 
                             Provider = model.Provider, 
                             ProviderUserId = model.ProviderUserId, 
                             Claims = model.Claims, 
-                            firstname = firstname != null ? firstname.Value : null,
-                            lastname = lastname != null ? lastname.Value : null,
-                            email = email != null ? email.Value : null,
-                            gender = gender != null ? gender.Value : null,
+                            FirstName = firstname != null ? firstname : null,
+                            LastName = lastname != null ? lastname : null,
+                            Email = email != null ? email : null,
+                            UserName = username != null ? username : null,
+                            Gender = gender != null ? gender : null,
                         });
                     }
                 }
