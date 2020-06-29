@@ -29,9 +29,11 @@ namespace Authority.Data
                 MiddleName = "",
                 Gender = Gender.Unknown,
                 Email = "st@pslib.cloud",
+                NormalizedEmail = "ST@PSLIB.CLOUD",
                 EmailConfirmed = true,
                 LockoutEnabled = false,
-                UserName = "Admin",
+                UserName = "st@pslib.cloud",
+                NormalizedUserName = "ST@PSLIB.CLOUD",
                 PasswordHash = hasher.HashPassword(null,"Admin_1234"),
                 SecurityStamp = string.Empty
             });

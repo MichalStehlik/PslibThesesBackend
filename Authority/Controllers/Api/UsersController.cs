@@ -15,7 +15,7 @@ using static IdentityServer4.IdentityServerConstants;
 namespace Authority.Controllers.Api
 {
     [Route("api/Users")]
-    //[Authorize(Constants.LocalScopeName)]
+    [Authorize(Constants.LocalScopeName)]
     [ApiController]
     public class UsersController : ControllerBase
     {

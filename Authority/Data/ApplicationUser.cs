@@ -43,5 +43,7 @@ namespace Authority.Data
                 return FirstName + (MiddleName == "" ? "" : (MiddleName + " ")) + " " + LastName;
             }
         }
+
+        public byte[] IconImage { get; set; }
     }
 }

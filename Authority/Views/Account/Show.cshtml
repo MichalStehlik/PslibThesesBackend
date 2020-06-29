@@ -58,8 +58,12 @@
     <div>
         <a asp-controller="Account" asp-action="Edit" class="btn btn-primary">Editace</a>
         <a asp-controller="Account" asp-action="Password" class="btn btn-warning">Heslo</a>
-        <a asp-controller="Grants" asp-action="Index" class="btn btn-info">Přidělená oprávnění</a>
-        <a asp-controller="Diagnostics" asp-action="Index" class="btn btn-info">Přihlašovací údaje</a>
+        @if (Model.User.EmailConfirmed == false)
+        {
+            <a asp-controller="Account" asp-action="SendEmailConfirmation" class="btn btn-secondary">Potvrdit email</a>
+        }
+        <a asp-controller="Grants" asp-action="Index" class="btn btn-secondary">Přidělená oprávnění</a>
+        <a asp-controller="Diagnostics" asp-action="Index" class="btn btn-secondary">Přihlašovací údaje</a>
     </div>
     }
     else

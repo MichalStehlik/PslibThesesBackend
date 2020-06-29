@@ -137,7 +137,11 @@ namespace Authority.Quickstart.UI
                         additionalLocalClaims.Add(new Claim("jobTitle", jobTitle));
                         if (jobTitle == "uèitel")
                         {
-
+                            await _userManager.AddToRoleAsync(user,Constants.TeacherRole);
+                        }
+                        else
+                        {
+                            await _userManager.RemoveFromRoleAsync(user, Constants.TeacherRole);
                         }
                     }
                     catch { }
@@ -293,7 +297,7 @@ namespace Authority.Quickstart.UI
                     Gender = model.Gender,
                     UserName = model.UserName,
                     Email = model.Email,
-                    EmailConfirmed = model.EmailConfirmed,
+                    EmailConfirmed = false,
                 };
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)
