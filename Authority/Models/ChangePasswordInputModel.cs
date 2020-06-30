@@ -8,7 +8,6 @@ namespace Authority.Models
 {
     public class ChangePasswordInputModel
     {
-        [Required]
         [Display(Name = "Aktuální heslo")]
         [StringLength(100, ErrorMessage = "{0} musí být dlouhé mezi {2} a {1} znaky.", MinimumLength = 6)]
         [DataType(DataType.Password)]
@@ -24,5 +23,6 @@ namespace Authority.Models
         [Display(Name = "Potvrzení hesla")]
         [Compare("Password", ErrorMessage = "Heslo a jeho potvrzení musí být stejné.")]
         public string ConfirmPassword { get; set; }
+        public bool PasswordExists { get; set; } = true;
     }
 }

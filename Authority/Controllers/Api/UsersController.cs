@@ -88,7 +88,7 @@ namespace Authority.Controllers.Api
             }
         }
 
-        // DELETE: api/ApiWithActions/5
+        // DELETE: api/Users/5
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(string id)
         {
@@ -178,5 +178,44 @@ namespace Authority.Controllers.Api
                 return NotFound();
         }
 
+        [HttpPost("{id}/roles")]
+        public async Task<ActionResult> OnPostRolesAsync(string id, [FromBody] string value)
+        {
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (user != null)
+            {
+                var result = await _userManager.AddToRoleAsync(user, value);
+                if (result.Succeeded)
+                {
+                    return Ok(value);
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+            }
+            else
+                return NotFound();
+        }
+
+        [HttpDelete("{id}/roles/{value}")]
+        public async Task<ActionResult> OnDeleteRolesAsync(string id, string value)
+        {
+            var user = _userManager.FindByIdAsync(id).Result;
+            if (user != null)
+            {
+                var result = await _userManager.RemoveFromRoleAsync(user, value);
+                if (result.Succeeded)
+                {
+                    return NoContent();
+                }
+                else
+                {
+                    return BadRequest(result.Errors);
+                }
+            }
+            else
+                return NotFound();
+        }
     }
 }

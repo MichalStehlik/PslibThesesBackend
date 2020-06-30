@@ -10,8 +10,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Authority.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20200629212258_AddIconColumn")]
-    partial class AddIconColumn
+    [Migration("20200630192120_AddIconColumns")]
+    partial class AddIconColumns
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -51,31 +51,31 @@ namespace Authority.Migrations
                         new
                         {
                             Id = "ADMIN",
-                            ConcurrencyStamp = "44bc14ab-4a40-41f5-b319-8009afca291f",
+                            ConcurrencyStamp = "561fd2d2-7b13-4e25-8313-8125343da02c",
                             Name = "Administrátor"
                         },
                         new
                         {
                             Id = "MANAGER",
-                            ConcurrencyStamp = "e9c67070-7890-43c7-aa00-47df13e71d2e",
+                            ConcurrencyStamp = "7b971b56-c3d5-4990-bd24-f9191c47418c",
                             Name = "Manažer"
                         },
                         new
                         {
                             Id = "TEACHER",
-                            ConcurrencyStamp = "5069d59d-039d-4c79-bde9-c0ffc65f6a29",
+                            ConcurrencyStamp = "ab78e561-0b5a-4102-9e7c-688cbbde8c67",
                             Name = "Učitel"
                         },
                         new
                         {
                             Id = "STUDENT",
-                            ConcurrencyStamp = "ca556f7f-30ed-4bb0-badc-983655a8518f",
+                            ConcurrencyStamp = "bde6280b-f178-40d1-bf08-8380cc45b108",
                             Name = "Student"
                         },
                         new
                         {
                             Id = "EXT",
-                            ConcurrencyStamp = "a0aab0f7-54b8-4877-bfe3-a0bf17344cbc",
+                            ConcurrencyStamp = "5fcbbca6-1d89-4817-9da4-84c5dc1d58e1",
                             Name = "Externista"
                         });
                 });
@@ -109,6 +109,9 @@ namespace Authority.Migrations
 
                     b.Property<byte[]>("IconImage")
                         .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("IconImageType")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
                         .IsRequired()
@@ -167,7 +170,7 @@ namespace Authority.Migrations
                         {
                             Id = "ADMINUSER",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "c2f9594a-f703-4283-9cde-59d64d039588",
+                            ConcurrencyStamp = "350450ab-047d-4aac-8bc6-28fe17bea05a",
                             Email = "st@pslib.cloud",
                             EmailConfirmed = true,
                             FirstName = "Hlavní",
@@ -177,7 +180,7 @@ namespace Authority.Migrations
                             MiddleName = "",
                             NormalizedEmail = "ST@PSLIB.CLOUD",
                             NormalizedUserName = "ST@PSLIB.CLOUD",
-                            PasswordHash = "AQAAAAEAACcQAAAAEEWrdOPfW5dBQ16EXKSPhZ28eLNTWa9czz1l/erzooUNioBWKZuTR3ykNJzBCfxkCQ==",
+                            PasswordHash = "AQAAAAEAACcQAAAAEPpxEh2S83xGGQfSaHD15KSRAHcwuCxsaW4Q8LpWKY+7wL6cgtR+C+pSli6yDUcwDw==",
                             PhoneNumberConfirmed = false,
                             SecurityStamp = "",
                             TwoFactorEnabled = false,

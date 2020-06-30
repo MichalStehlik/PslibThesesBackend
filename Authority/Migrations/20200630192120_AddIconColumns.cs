@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Authority.Migrations
 {
-    public partial class AddIconColumn : Migration
+    public partial class AddIconColumns : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -12,53 +12,62 @@ namespace Authority.Migrations
                 table: "AspNetUsers",
                 nullable: true);
 
+            migrationBuilder.AddColumn<string>(
+                name: "IconImageType",
+                table: "AspNetUsers",
+                nullable: true);
+
             migrationBuilder.UpdateData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
                 keyValue: "ADMIN",
                 column: "ConcurrencyStamp",
-                value: "44bc14ab-4a40-41f5-b319-8009afca291f");
+                value: "561fd2d2-7b13-4e25-8313-8125343da02c");
 
             migrationBuilder.UpdateData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
                 keyValue: "EXT",
                 column: "ConcurrencyStamp",
-                value: "a0aab0f7-54b8-4877-bfe3-a0bf17344cbc");
+                value: "5fcbbca6-1d89-4817-9da4-84c5dc1d58e1");
 
             migrationBuilder.UpdateData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
                 keyValue: "MANAGER",
                 column: "ConcurrencyStamp",
-                value: "e9c67070-7890-43c7-aa00-47df13e71d2e");
+                value: "7b971b56-c3d5-4990-bd24-f9191c47418c");
 
             migrationBuilder.UpdateData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
                 keyValue: "STUDENT",
                 column: "ConcurrencyStamp",
-                value: "ca556f7f-30ed-4bb0-badc-983655a8518f");
+                value: "bde6280b-f178-40d1-bf08-8380cc45b108");
 
             migrationBuilder.UpdateData(
                 table: "AspNetRoles",
                 keyColumn: "Id",
                 keyValue: "TEACHER",
                 column: "ConcurrencyStamp",
-                value: "5069d59d-039d-4c79-bde9-c0ffc65f6a29");
+                value: "ab78e561-0b5a-4102-9e7c-688cbbde8c67");
 
             migrationBuilder.UpdateData(
                 table: "AspNetUsers",
                 keyColumn: "Id",
                 keyValue: "ADMINUSER",
                 columns: new[] { "ConcurrencyStamp", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "UserName" },
-                values: new object[] { "c2f9594a-f703-4283-9cde-59d64d039588", "ST@PSLIB.CLOUD", "ST@PSLIB.CLOUD", "AQAAAAEAACcQAAAAEEWrdOPfW5dBQ16EXKSPhZ28eLNTWa9czz1l/erzooUNioBWKZuTR3ykNJzBCfxkCQ==", "st@pslib.cloud" });
+                values: new object[] { "350450ab-047d-4aac-8bc6-28fe17bea05a", "ST@PSLIB.CLOUD", "ST@PSLIB.CLOUD", "AQAAAAEAACcQAAAAEPpxEh2S83xGGQfSaHD15KSRAHcwuCxsaW4Q8LpWKY+7wL6cgtR+C+pSli6yDUcwDw==", "st@pslib.cloud" });
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
                 name: "IconImage",
+                table: "AspNetUsers");
+
+            migrationBuilder.DropColumn(
+                name: "IconImageType",
                 table: "AspNetUsers");
 
             migrationBuilder.UpdateData(

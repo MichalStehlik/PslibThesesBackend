@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\20200629212258_AddIconColumn.cs" />
+    <Compile Remove="Migrations\20200629212258_AddIconColumn.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="Views\Account\RegistrationSucceeded.cshtml">
       <Generator>MSBuild:Compile</Generator>
     </EmbeddedResource>
