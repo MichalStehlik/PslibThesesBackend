@@ -1,0 +1,15 @@
+﻿@using Authority.Emails.ViewModels
+
+@model ExternalConnectionViewModel
+@{
+    ViewData["Title"] = "Vítejte";
+}
+@if (Model.User.Gender == Authority.Data.Gender.Female)
+{
+    <p>Milá uživatelko,</p>
+}
+else
+{
+    <p>Milý uživateli,</p>
+}
+<p>K Vašemu stávajícímu účtu v naší aplikaci je nyní připojen účet z jiné sociální sítě.</p>

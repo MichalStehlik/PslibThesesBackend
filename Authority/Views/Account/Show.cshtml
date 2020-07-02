@@ -16,7 +16,21 @@
                         <dt>Id</dt>
                         <dd>@Model.User.Id</dd>
                         <dt>Pohlaví</dt>
-                        <dd>@(Model.User.Gender == 0 ? "Muž" : "Žena")</dd>
+                        @switch (Model.User.Gender)
+                        {
+                            case Gender.Male:
+                                <dd>Muž</dd>
+                                break;
+                            case Gender.Female:
+                                <dd>Žena</dd>
+                                break;
+                            case Gender.Other:
+                                <dd>Jiné</dd>
+                                break;
+                            case Gender.Unknown:
+                                <dd>Neznámé</dd>
+                                break;
+                        }
                         <dt>Email</dt>
                         <dd>@Model.User.Email (@(Model.User.EmailConfirmed != false ? "Potvrzený" : "Nepotvrzený"))</dd>
                         <dt>Telefonní číslo</dt>
@@ -58,7 +72,14 @@
             <h1>Ikona</h1>
             <div class="row">
                 <div class="col col-12 col-md-6">
-
+                    @if (Model.User.IconImage != null)
+                    {
+                        <img src="/Icon" />
+                    }
+                    else
+                    {
+                        <p>Žádná ikona</p>
+                    }
                 </div>
                 <div class="col col-12 col-md-6">
                     <form asp-action="UploadImage" asp-controller="Account" method="post" enctype="multipart/form-data">

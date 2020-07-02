@@ -143,6 +143,23 @@ namespace Authority.Quickstart.UI
                         {
                             await _userManager.RemoveFromRoleAsync(user, Constants.TeacherRole);
                         }
+                        if (jobTitle == "student")
+                        {
+                            await _userManager.AddToRoleAsync(user, Constants.StudentRole);
+                        }
+                        else
+                        {
+                            await _userManager.RemoveFromRoleAsync(user, Constants.StudentRole);
+                        }
+                        if (jobTitle == "vedení školy")
+                        {
+                            await _userManager.AddToRoleAsync(user, Constants.ManagerRole);
+                            await _userManager.AddToRoleAsync(user, Constants.TeacherRole);
+                        }
+                        else
+                        {
+                            await _userManager.RemoveFromRoleAsync(user, Constants.ManagerRole);
+                        }
                     }
                     catch { }
                     try

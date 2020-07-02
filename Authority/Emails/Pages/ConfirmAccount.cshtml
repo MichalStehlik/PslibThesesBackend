@@ -4,13 +4,13 @@
 @{
     ViewData["Title"] = "Vítejte";
 }
-@if (Model.User.Gender == Authority.Data.Gender.Male)
+@if (Model.User.Gender == Authority.Data.Gender.Female)
 {
-    <p>Milý uživateli,</p>
+    <p>Milá uživatelko,</p>
 }
 else
 {
-    <p>Milá uživatelko,</p>
+    <p>Milý uživateli,</p>
 }
 <p>Váš účet v naší aplikaci je téměř připraven. Zbývá už jen jeden drobný krůček: potvrdit existenci a vlastnictví Vámi uvedené emailové adresy.</p>
 <p>Za registraci a potvrzení adresy předem děkujeme.</p>
