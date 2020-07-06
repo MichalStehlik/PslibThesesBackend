@@ -168,4 +168,30 @@
                 </table>
             </form>
         </section>
+        <section>
+            <h2>Ikona</h2>
+            <div class="row">
+                <div class="col col-12 col-md-6">
+                    @if (Model.User.IconImage != null)
+                    {
+                        <img src="/Users/Icon/@Model.User.Id" />
+                    }
+                    else
+                    {
+                        <p>Žádná ikona</p>
+                    }
+                </div>
+                <div class="col col-12 col-md-6">
+                    <form asp-action="UploadImage" asp-controller="Users" asp-route-id="@Model.User.Id" method="post" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="imageFile">Soubor s fotografií</label>
+                            <input type="file" id="imageFile" name="imageFile" class="form-control" />
+                        </div>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">Nahrát</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
 </div>

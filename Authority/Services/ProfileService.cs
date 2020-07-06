@@ -59,6 +59,10 @@ namespace Authority.Services
                             }
                             //context.IssuedClaims.Add(new Claim("roles", String.Join(",", roles)));
                             break;
+                        case "picture":
+                            context.IssuedClaims.Add(new Claim("picture", System.Convert.ToBase64String(user.IconImage)));
+                            context.IssuedClaims.Add(new Claim("picture_format", user.IconImageType));
+                            break;
                     }
                 }
                 

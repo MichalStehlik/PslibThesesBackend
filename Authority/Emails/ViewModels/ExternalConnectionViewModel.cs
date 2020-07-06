@@ -9,5 +9,7 @@ namespace Authority.Emails.ViewModels
     public class ExternalConnectionViewModel
     {
         public ApplicationUser User { get; set; }
+        public string Provider { get; set; }
+        public string ExternalUserId { get; set; }
     }
 }

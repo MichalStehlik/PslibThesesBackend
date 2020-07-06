@@ -2,7 +2,7 @@
 
 @model ExternalConnectionViewModel
 @{
-    ViewData["Title"] = "Vítejte";
+    ViewData["Title"] = "Připojení účtu";
 }
 @if (Model.User.Gender == Authority.Data.Gender.Female)
 {
@@ -12,4 +12,4 @@ else
 {
     <p>Milý uživateli,</p>
 }
-<p>K Vašemu stávajícímu účtu v naší aplikaci je nyní připojen účet z jiné sociální sítě.</p>
+<p>K Vašemu stávajícímu účtu v naší aplikaci je nyní připojen účet z sociální sítě <b>@Model.Provider</b>  <b>@Model.ExternalUserId</b>.</p>

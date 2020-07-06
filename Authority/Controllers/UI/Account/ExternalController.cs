@@ -7,7 +7,9 @@ using System.Security.Claims;
 using System.Security.Principal;
 using System.Threading.Tasks;
 using Authority.Data;
+using Authority.Emails.ViewModels;
 using Authority.Models;
+using Authority.Services;
 using IdentityModel;
 using IdentityServer4.Events;
 using IdentityServer4.Services;
@@ -33,6 +35,8 @@ namespace Authority.Quickstart.UI
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly EmailSender _emailSender;
+        private readonly RazorViewToStringRenderer _razorRenderer;
 
         public ExternalController(
             IIdentityServerInteractionService interaction,
@@ -40,7 +44,9 @@ namespace Authority.Quickstart.UI
             IEventService events,
             SignInManager<ApplicationUser> signInManager,
             UserManager<ApplicationUser> userManager,
-            RoleManager<ApplicationRole> roleManager)
+            RoleManager<ApplicationRole> roleManager,
+            EmailSender emailSender,
+            RazorViewToStringRenderer razorRenderer)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -48,6 +54,8 @@ namespace Authority.Quickstart.UI
             _clientStore = clientStore;
             _events = events;
             _signInManager = signInManager;
+            _emailSender = emailSender;
+            _razorRenderer = razorRenderer;
         }
 
         /// <summary>
@@ -260,6 +268,18 @@ namespace Authority.Quickstart.UI
                         var result = await _userManager.AddLoginAsync(user, new UserLoginInfo(provider,providerUserId,user.UserName));
                         if (result.Succeeded)
                         {
+                            string mailMessage = $"K vašemu úètu " + user.UserName + " byl pøidán úèet služby " + provider + ": " + providerUserId;
+
+                            string htmlBody = await _razorRenderer.RenderViewToStringAsync("/Emails/Pages/ExternalConnection.cshtml", new ExternalConnectionViewModel
+                            {
+                                User = user,
+                                Provider = provider,
+                                ExternalUserId = providerUserId
+                            });
+
+                            _emailSender.HtmlMessage = htmlBody;
+
+                            await _emailSender.SendEmailAsync(user.Email, "Externí poskytovatel pøidán", mailMessage);
                             return RedirectToAction("Callback");
                         }
                         return View("Connect", model);

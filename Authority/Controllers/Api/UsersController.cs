@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -10,6 +11,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Processing;
 using static IdentityServer4.IdentityServerConstants;
 
 namespace Authority.Controllers.Api
@@ -109,6 +113,73 @@ namespace Authority.Controllers.Api
             {
                 return NotFound();
             }
+        }
+
+        // GET: api/Users/xxxxx-xxxx-xxxx/Icon
+        [HttpGet("{id}/icon")]
+        public IActionResult Icon(string id)
+        {
+            var user = _userManager.Users.SingleOrDefault(r => r.Id == id);
+            if (user != null)
+            {
+                if (user.IconImage != null)
+                {
+                    return File(user.IconImage, user.IconImageType);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        // POST: api/Users/xxxxx-xxxx-xxxx/Icon
+        [HttpPost("{id}/icon")]
+        public async Task<IActionResult> UploadImage(string id)
+        {
+            var user = _userManager.Users.SingleOrDefault(r => r.Id == id);
+            if (user != null && Request.Form.Files.Count == 1)
+            {
+                var file = Request.Form.Files[0];
+                if (file != null && file.Length > 0)
+                {
+                    try
+                    {
+                        var size = file.Length;
+                        var type = file.ContentType;
+                        var filename = file.FileName;
+                        MemoryStream ims = new MemoryStream();
+                        MemoryStream oms = new MemoryStream();
+                        file.CopyTo(ims);
+                        IImageFormat format;
+                        using (Image image = Image.Load(ims.ToArray(), out format))
+                        {
+                            int largestSize = Math.Max(image.Height, image.Width);
+                            bool landscape = image.Width > image.Height;
+                            if (landscape)
+                                image.Mutate(x => x.Resize(0, 320));
+                            else
+                                image.Mutate(x => x.Resize(320, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - 320) / 2, (image.Height - 320) / 2, 320, 320)));
+                            image.Save(oms, format);
+                        }
+                        user.IconImage = oms.ToArray();
+                        user.IconImageType = type;
+                        var result = await _userManager.UpdateAsync(user);
+                        return Ok();
+                    }
+                    catch (Exception)
+                    {
+                        return BadRequest();
+                    }
+                }
+                return BadRequest();
+            }
+            return BadRequest();
         }
 
         [HttpGet("{id}/claims")]
