@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -10,6 +11,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PslibThesesBackend.Constants;
 using PslibThesesBackend.Models;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Processing;
+using SixLabors.Primitives;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -141,6 +146,11 @@ namespace PslibThesesBackend.Controllers
                 return Unauthorized("only user himself or privileged user can edit user record");
             }
 
+            if (user.LockedChange == true)
+            {
+                return BadRequest("record is locked for change");
+            }
+
             _context.Entry(user).State = EntityState.Modified;
 
             try
@@ -237,6 +247,148 @@ namespace PslibThesesBackend.Controllers
 
             return user;
         }
+
+        // GET: /Users/aaa/lockedChange
+        /// <summary>
+        /// Gets state of lock of user specified by his Id
+        /// </summary>
+        /// <param name="id">User Id</param>
+        /// <returns>User</returns>
+        [HttpGet("{id}")]
+        public async Task<ActionResult<bool>> GetUserLockedChange(Guid id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                _logger.LogError("user not found", id);
+                return NotFound();
+            }
+            return user.LockedChange;
+        }
+
+        // PUT: /Users/aaa/lockedChange
+        /// <summary>
+        /// Overwrites state of lock for user specified by his Id
+        /// </summary>
+        /// <param name="id">User Id</param>
+        /// <param name="state">New state - bool</param>
+        /// <returns>HTTP 204,400,404</returns>
+        [HttpPut("{id}/")]
+        public async Task<IActionResult> PutUserLockedChange(Guid id, bool state)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                _logger.LogError("user not found, so cannot be updated", id);
+                return BadRequest();
+            }
+
+            if (!User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            {
+                return Unauthorized("only privileged user can edit user record");
+            }
+
+            _context.Entry(user).State = EntityState.Modified;
+
+            try
+            {
+                user.LockedChange = state;
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!UserExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    _logger.LogError("storing of user lock has failed", user);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("storing of user lock has failed", ex, user);
+                throw;
+            }
+            _logger.LogInformation("state of user lock changed", user);
+            return NoContent();
+        }
+
+        // GET: /Users/aaa/icon
+        /// <summary>
+        /// Gets content of user icon as file
+        /// </summary>
+        /// <param name="id">User Id</param>
+        /// <returns>Stored file</returns>
+        [HttpGet("{id}/icon")]
+        public async Task<IActionResult> Icon(string id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user != null)
+            {
+                if (user.IconImage != null)
+                {
+                    return File(user.IconImage, user.IconImageType);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        // POST: api/Users/aaa/icon
+        [HttpPost("{id}/icon")]
+        public async Task<IActionResult> UploadImage(string id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user != null && Request.Form.Files.Count == 1)
+            {
+                var file = Request.Form.Files[0];
+                if (file != null && file.Length > 0)
+                {
+                    try
+                    {
+                        var size = file.Length;
+                        var type = file.ContentType;
+                        var filename = file.FileName;
+                        MemoryStream ims = new MemoryStream();
+                        MemoryStream oms = new MemoryStream();
+                        file.CopyTo(ims);
+                        IImageFormat format;
+                        using (Image image = Image.Load(ims.ToArray(), out format))
+                        {
+                            int largestSize = Math.Max(image.Height, image.Width);
+                            bool landscape = image.Width > image.Height;
+                            if (landscape)
+                                image.Mutate(x => x.Resize(0, 320));
+                            else
+                                image.Mutate(x => x.Resize(320, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - 320) / 2, (image.Height - 320) / 2, 320, 320)));
+                            image.Save(oms, format);
+                        }
+                        user.IconImage = oms.ToArray();
+                        user.IconImageType = type;
+                        await _context.SaveChangesAsync();
+                        return Ok();                        
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError("error saving icon", ex, user);
+                        return BadRequest(ex.Message);
+                    }
+                }
+                return BadRequest();
+            }
+            return BadRequest();
+        }
+
         /// <summary>
         /// Check if user with Id exists.
         /// </summary>

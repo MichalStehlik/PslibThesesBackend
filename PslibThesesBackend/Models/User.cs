@@ -15,6 +15,7 @@ namespace PslibThesesBackend.Models
         public Guid Id { get; set; }
         [Required]
         public string FirstName { get; set; }
+        public string MiddleName { get; set; }
         [Required]
         public string LastName { get; set; }
         [Required]
@@ -25,8 +26,11 @@ namespace PslibThesesBackend.Models
         public bool CanBeAuthor { get; set; } = false;
         [DefaultValue(false)]
         public bool CanBeEvaluator { get; set; } = false;
+        public byte[] IconImage { get; set; }
+        public string IconImageType { get; set; }
+        public bool LockedChange { get; set; } = false;
         [NotMapped]
-        public string Name { get { return FirstName + LastName; } }
+        public string Name { get { return FirstName + (String.IsNullOrEmpty(MiddleName) ? "" : (" " + MiddleName)) + " " + LastName; } }
         [JsonIgnore]
         public ICollection<Idea> OwnedIdeas { get; set; }
         [JsonIgnore]
