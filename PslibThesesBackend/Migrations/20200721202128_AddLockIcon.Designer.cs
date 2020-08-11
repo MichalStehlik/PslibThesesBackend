@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PslibThesesBackend.Models;
 
 namespace PslibThesesBackend.Migrations
 {
     [DbContext(typeof(ThesesContext))]
-    partial class ThesesContextModelSnapshot : ModelSnapshot
+    [Migration("20200721202128_AddLockIcon")]
+    partial class AddLockIcon
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,6 +38,9 @@ namespace PslibThesesBackend.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("Offered")
+                        .HasColumnType("bit");
+
                     b.Property<int>("Participants")
                         .HasColumnType("int");
 
@@ -56,14 +61,9 @@ namespace PslibThesesBackend.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<Guid?>("UserId1")
-                        .HasColumnType("uniqueidentifier");
-
                     b.HasKey("Id");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("UserId1");
 
                     b.ToTable("Ideas");
                 });
@@ -91,21 +91,6 @@ namespace PslibThesesBackend.Migrations
                         .IsUnique();
 
                     b.ToTable("IdeaGoals");
-                });
-
-            modelBuilder.Entity("PslibThesesBackend.Models.IdeaOffer", b =>
-                {
-                    b.Property<int>("IdeaId")
-                        .HasColumnType("int");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.HasKey("IdeaId", "UserId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("IdeaOffers");
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.IdeaOutline", b =>
@@ -602,12 +587,8 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.User", "User")
                         .WithMany("OwnedIdeas")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("PslibThesesBackend.Models.User", null)
-                        .WithMany("IdeaOffers")
-                        .HasForeignKey("UserId1");
                 });
 
             modelBuilder.Entity("PslibThesesBackend.Models.IdeaGoal", b =>
@@ -615,21 +596,6 @@ namespace PslibThesesBackend.Migrations
                     b.HasOne("PslibThesesBackend.Models.Idea", "Idea")
                         .WithMany("Goals")
                         .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("PslibThesesBackend.Models.IdeaOffer", b =>
-                {
-                    b.HasOne("PslibThesesBackend.Models.Idea", "Idea")
-                        .WithMany("IdeaOffers")
-                        .HasForeignKey("IdeaId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PslibThesesBackend.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

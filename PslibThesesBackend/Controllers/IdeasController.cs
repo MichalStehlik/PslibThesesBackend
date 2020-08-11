@@ -22,11 +22,13 @@ namespace PslibThesesBackend.Controllers
     {
         private readonly ThesesContext _context;
         private ILogger<IdeasController> _logger;
+        private readonly IAuthorizationService _authorizationService;
 
-        public IdeasController(ThesesContext context, ILogger<IdeasController> logger)
+        public IdeasController(ThesesContext context, ILogger<IdeasController> logger, IAuthorizationService authorizationService)
         {
             _context = context;
             _logger = logger;
+            _authorizationService = authorizationService;
         }
 
         // GET: Ideas
@@ -61,6 +63,7 @@ namespace PslibThesesBackend.Controllers
         {
             IQueryable<Idea> ideas = _context.Ideas
                 .Include(i => i.User)
+                .Include(i => i.IdeaOffers)
                 .Include(i => i.IdeaTargets)
                 .ThenInclude(it => it.Target);
             int total = ideas.CountAsync().Result;
@@ -77,9 +80,9 @@ namespace PslibThesesBackend.Controllers
             if (userId != null)
                 ideas = ideas.Where(i => (i.UserId == userId));
             if (offered != null)
-                ideas = ideas.Where(i => (i.Offered == offered));
+                if (offered == true) ideas = ideas.Where(i => (i.IdeaOffers.Count > 0 )); else ideas = ideas.Where(i => (i.IdeaOffers.Count == 0));
             if (target != null)
-                ideas = ideas.Where(i => (i.IdeaTargets.Where(it => it.TargetId == target).Count() > 0)); //evil
+                ideas = ideas.Where(i => (i.IdeaTargets.Where(it => it.TargetId == target).Count() > 0));
             int filtered = ideas.CountAsync().Result;
             switch (order)
             {
@@ -130,8 +133,8 @@ namespace PslibThesesBackend.Controllers
                 UserFirstName = i.User.FirstName,
                 UserLastName = i.User.LastName,
                 UserId = i.UserId,
-                UserEmail = i.User.Email,
-                Offered = i.Offered,
+                Created = i.Created,
+                Offered = (i.IdeaOffers.Count > 0),
                 Updated = i.Updated,
                 Targets = i.IdeaTargets.Select(it => it.Target)
             }).ToList();
@@ -157,6 +160,7 @@ namespace PslibThesesBackend.Controllers
 
             return Ok(new IdeaViewModel
             {
+                Id = idea.Id,
                 Name = idea.Name,
                 Description = idea.Description,
                 Subject = idea.Subject,
@@ -164,8 +168,7 @@ namespace PslibThesesBackend.Controllers
                 UserId = idea.UserId,
                 Participants = idea.Participants,
                 Updated = idea.Updated,
-                Created = idea.Created,
-                Offered = idea.Offered
+                Created = idea.Created
             }
             );
         }
@@ -192,7 +195,6 @@ namespace PslibThesesBackend.Controllers
                     i.Subject,
                     i.Updated, 
                     i.Created, 
-                    i.Offered, 
                     i.Goals, 
                     i.Outlines,
                     i.IdeaTargets
@@ -234,11 +236,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("User with Id equal to userId was not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier,idea.Id.ToString()) 
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1") 
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier,idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can edit an idea");
             }
@@ -250,7 +249,6 @@ namespace PslibThesesBackend.Controllers
             idea.Participants = input.Participants;
             idea.User = user;
             idea.Updated = DateTime.Now;
-            idea.Offered = input.Offered;
 
             try
             {
@@ -276,53 +274,6 @@ namespace PslibThesesBackend.Controllers
             return NoContent();
         }
 
-        // PUT: Ideas/5/offered
-        /// <summary>
-        /// Sets this idea to be offered to students or not
-        /// </summary>
-        /// <param name="id">Idea Id</param>
-        /// <param name="offered">New value (true/false) in body of request</param>
-        /// <returns>HTTP 201, 404</returns>
-        [HttpPut("{id}/offered")]
-        [Authorize]
-        public async Task<IActionResult> PutIdeaOffered(int id, [FromBody] bool offered)
-        {
-            var idea = await _context.Ideas.FindAsync(id);
-            _context.Entry(idea).State = EntityState.Modified;
-            if (idea == null)
-            {
-                return NotFound();
-            }
-
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
-            {
-                return Unauthorized("only owner or privileged user can change state of an idea");
-            }
-
-            idea.Offered = offered;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!IdeaExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
-        }
-
         // POST: Ideas
         /// <summary>
         /// Creates and stores a new idea
@@ -330,23 +281,18 @@ namespace PslibThesesBackend.Controllers
         /// <param name="ideaIM">Data of an idea</param>
         /// <returns>HTTP 201</returns>
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Idea>> PostIdea(IdeaInputModel ideaIM)
         {
-            var user = _context.Users.FindAsync(ideaIM.UserId).Result;
-            if (user == null)
-            {
-                return NotFound("user with Id equal to userId was not found");
-            }
             var idea = new Idea {
                 Name = ideaIM.Name,
                 Description = ideaIM.Description,
                 Resources = ideaIM.Resources,
                 Subject = ideaIM.Subject,
                 Participants = ideaIM.Participants,
-                UserId = ideaIM.UserId, // TODO
+                UserId = Guid.Parse(User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).FirstOrDefault().Value),
                 Created = DateTime.Now,
-                Updated = DateTime.Now,
-                Offered = ideaIM.Offered
+                Updated = DateTime.Now
             };
             _context.Ideas.Add(idea);
             await _context.SaveChangesAsync();
@@ -369,11 +315,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound();
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can delete an idea");
             }
@@ -420,6 +363,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">Idea Id</param>
         /// <returns>Array of targets</returns>
         [HttpGet("{id}/allTargets")]
+        [HttpGet("allTargets")]
         public ActionResult<IEnumerable<Target>> GetAllIdeaTargets()
         {
             var targets = _context.Targets
@@ -478,11 +422,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("target not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can change target audience for an idea");
             }
@@ -526,11 +467,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("target not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can delate target audience for an idea");
             }
@@ -616,11 +554,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can add new goal for an idea");
             }
@@ -660,11 +595,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can replace goals of an idea");
             }
@@ -707,11 +639,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can replace goal of an idea");
             }
@@ -750,11 +679,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can change order of goals inside an idea");
             }
@@ -820,11 +746,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can delete all goals of an idea");
             }
@@ -860,11 +783,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("goal not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can delete goals inside an idea");
             }
@@ -965,11 +885,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can add new outline inside an idea");
             }
@@ -1009,11 +926,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can replace outlines of an idea");
             }
@@ -1056,11 +970,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can change outline inside an idea");
             }
@@ -1099,11 +1010,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can change order of outlines inside an idea");
             }
@@ -1169,11 +1077,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can delete outlines of an idea");
             }
@@ -1204,11 +1109,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("idea not found");
             }
 
-            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.Id.ToString())
-                && !User.HasClaim(Security.THESES_MANAGER_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_EVALUATOR_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, idea.UserId.ToString()) && !isEvaluator.Succeeded)
             {
                 return Unauthorized("only owner or privileged user can delete outline inside an idea");
             }
@@ -1246,7 +1148,128 @@ namespace PslibThesesBackend.Controllers
 
             return Ok(new { removedOutline.Id, removedOutline.IdeaId, removedOutline.Order, removedOutline.Text });
         }
+
+        // Offers
+
+        // GET: Ideas/5/offers
+        /// <summary>
+        /// Gets data of one idea specified by his Id, returns data from immediately associated tables.
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <returns>Idea</returns>
+        [HttpGet("{id}/offers")]
+        public async Task<ActionResult<List<User>>> GetOfferedIdea(int id)
+        {
+            var users = await _context.IdeaOffers
+                .Include(io => io.User)
+                .Where(io => io.IdeaId == id)
+                .Select(io => new {
+                    io.User.Id,
+                    io.User.FirstName,
+                    io.User.MiddleName,
+                    io.User.LastName,
+                    io.User.Email
+                })
+                .ToListAsync();
+
+            return Ok(users);
+        }
+
+        // POST: Ideas/5/offers/xxx-xx-xx-xxxx
+        /// <summary>
+        /// Sets this idea to be offered to students by teacher
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="userid">UserId in body of request</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPost("{id}/offers")]
+        [Authorize(Policy = "Evaluator")]
+        public async Task<IActionResult> PostIdeaOffered(int id, [FromBody] IdeaOfferInputModel input)
+        {
+            var idea = await _context.Ideas.FindAsync(id);
+            var user = await _context.Users.FindAsync(input.Id);
+
+            _context.Entry(idea).State = EntityState.Modified;
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+            if (user == null)
+            {
+                return NotFound("user not found");
+            }
+
+            var ideaOffer = _context.IdeaOffers.Where(io => io.UserId == input.Id && io.IdeaId == id).FirstOrDefault();
+            if (ideaOffer == null)
+            {
+                await _context.IdeaOffers.AddAsync(new IdeaOffer { IdeaId = id, UserId = input.Id });
+                try
+                {
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!IdeaExists(id))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return NoContent();
+            }
+            else
+            {
+                return NoContent();
+            }
+        }
+
+        // DELETE: Ideas/5/offers/xxx-xxx-xxx-xxx
+        /// <summary>
+        /// Removes selected offer
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="userId">User Id</param>
+        /// <returns>Removed goal, HTTP 404</returns>
+        [HttpDelete("{id}/offers/{userId}")]
+        [Authorize(Policy = "Evaluator")]
+        public ActionResult<IdeaOffer> DeleteIdeaOffer(int id, Guid userId)
+        {
+            var ideaOffer = _context.IdeaOffers.Where(io => io.UserId == userId && io.IdeaId == id).FirstOrDefault();
+
+            if (ideaOffer == null)
+            {
+                return NotFound();
+            }
+
+            _context.IdeaOffers.Remove(ideaOffer);
+            _context.SaveChanges();
+           
+            return Ok(ideaOffer);
+        }
+
+        // DELETE: Ideas/5/offers
+        /// <summary>
+        /// Removes all offers for an specified idea
+        /// </summary>
+        /// <param name="id">Idea id</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpDelete("{id}/offers")]
+        [Authorize(Policy = "Administrator")]
+        public ActionResult<IdeaGoal> DeleteAllIdeaOffers(int id)
+        {
+            var offers = _context.IdeaOffers.Where(io => io.IdeaId == id).AsNoTracking().ToList();
+            if (offers != null)
+            {
+                _context.IdeaOffers.RemoveRange(offers);
+                _context.SaveChanges();
+            }
+            return NoContent();
+        }
     }
+
 
     // InputModels
     public class IdeaInputModel
@@ -1261,12 +1284,15 @@ namespace PslibThesesBackend.Controllers
         [Required]
         public Guid UserId { get; set; }
         public int Participants { get; set; } = 1;
-        public bool Offered { get; set; }
     }
 
     public class IdeaGoalInputModel
     {
         public string Text { get; set; }
+    }
+    public class IdeaOfferInputModel
+    {
+        public Guid Id { get; set; }
     }
 
     public class IdeaOutlineInputModel

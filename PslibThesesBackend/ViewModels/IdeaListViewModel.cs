@@ -20,10 +20,10 @@ namespace PslibThesesBackend.ViewModels
         public Guid UserId {get; set;}
         public string UserFirstName { get; set; }
         public string UserLastName { get; set; }
-        public string UserEmail { get; set; }
         public int Participants { get; set; } = 1;
         public bool Offered { get; set; }
         public IEnumerable<Target> Targets { get; set; } = new List<Target>();
         public DateTime Updated { get; set; }
+        public DateTime Created { get; set; }
     }
 }

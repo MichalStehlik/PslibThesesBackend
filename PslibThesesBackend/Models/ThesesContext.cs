@@ -19,6 +19,7 @@ namespace PslibThesesBackend.Models
         public DbSet<IdeaGoal> IdeaGoals { get; set; }
         public DbSet<IdeaOutline> IdeaOutlines { get; set; }
         public DbSet<IdeaTarget> IdeaTargets { get; set; }
+        public DbSet<IdeaOffer> IdeaOffers { get; set; }
         public DbSet<Set> Sets { get; set; }
         public DbSet<SetTerm> SetTerms { get; set; }
         public DbSet<SetRole> SetRoles { get; set; }
@@ -32,6 +33,11 @@ namespace PslibThesesBackend.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<Idea>(entity =>
+            {
+                entity.HasOne(i => i.User).WithMany(u => u.OwnedIdeas).HasForeignKey(i => i.UserId).OnDelete(DeleteBehavior.Restrict);
+            });
+            modelBuilder.Entity<IdeaOffer>().HasKey(io => new { io.IdeaId, io.UserId });
             modelBuilder.Entity<IdeaGoal>().HasIndex(ig => new { ig.IdeaId, ig.Order }).IsUnique();
             modelBuilder.Entity<IdeaOutline>().HasIndex(io => new { io.IdeaId, io.Order }).IsUnique();
             modelBuilder.Entity<IdeaTarget>().HasIndex(it => new { it.IdeaId, it.TargetId }).IsUnique();
@@ -46,8 +52,8 @@ namespace PslibThesesBackend.Models
             });
             modelBuilder.Entity<Set>(entity =>
             {
-                entity.HasMany(s => s.Terms).WithOne(t => t.Set).HasForeignKey(t => t.SetId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasMany(s => s.Roles).WithOne(r => r.Set).HasForeignKey(r => r.SetId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasMany(s => s.Terms).WithOne(t => t.Set).HasForeignKey(t => t.SetId).OnDelete(DeleteBehavior.Restrict); // ???
+                entity.HasMany(s => s.Roles).WithOne(r => r.Set).HasForeignKey(r => r.SetId).OnDelete(DeleteBehavior.Restrict); // ???
             });
             modelBuilder.Entity<WorkRoleUser>(entity =>
             {

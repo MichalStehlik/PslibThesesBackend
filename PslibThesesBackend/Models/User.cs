@@ -29,10 +29,13 @@ namespace PslibThesesBackend.Models
         public byte[] IconImage { get; set; }
         public string IconImageType { get; set; }
         public bool LockedChange { get; set; } = false;
+        public bool LockedIcon { get; set; } = false;
         [NotMapped]
         public string Name { get { return FirstName + (String.IsNullOrEmpty(MiddleName) ? "" : (" " + MiddleName)) + " " + LastName; } }
         [JsonIgnore]
         public ICollection<Idea> OwnedIdeas { get; set; }
+        [JsonIgnore]
+        public ICollection<Idea> IdeaOffers { get; set; }
         [JsonIgnore]
         public ICollection<Work> ManagedWorks { get; set; }
         [JsonIgnore]

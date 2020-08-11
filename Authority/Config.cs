@@ -157,7 +157,8 @@ namespace Authority
                 new IdentityResources.Profile(),
                 new IdentityResources.Email(),
                 new IdentityResources.Phone(),
-                new IdentityResource("roles", new List<string>{"role"})
+                new IdentityResource("roles", new List<string>{"role"}),
+                new IdentityResource("picture", new List<string>{ "picture" })
             };
         }
     }

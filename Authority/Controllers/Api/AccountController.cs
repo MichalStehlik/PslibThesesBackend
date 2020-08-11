@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Authority.Data;
@@ -10,20 +11,27 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats;
+using SixLabors.ImageSharp.Processing;
 using static IdentityServer4.IdentityServerConstants;
+using Microsoft.Extensions.Configuration;
 
 namespace Authority.Controllers.Api
 {
     [Route("api/[controller]")]
-    [Authorize(LocalApi.PolicyName)]
+    [Authorize]
     [ApiController]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
-
-        public AccountController(UserManager<ApplicationUser> userManager)
+        private int iconSize;
+        public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; protected set; }
+        public AccountController(UserManager<ApplicationUser> userManager, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _userManager = userManager;
+            Configuration = configuration;
+            iconSize = Convert.ToInt32(Configuration["Profile:IconSize"]);
         }
 
         [HttpGet]
@@ -47,7 +55,7 @@ namespace Authority.Controllers.Api
                     //TwoFactorEnabled = user.TwoFactorEnabled,
                     //LockoutEnabled = user.LockoutEnabled,
                     //LockoutEnd = user.LockoutEnd,
-                    AccessFailedCount = user.AccessFailedCount
+                    AccessFailedCount = user.AccessFailedCount,
                 });
             }
             else
@@ -136,6 +144,71 @@ namespace Authority.Controllers.Api
             }
             else
                 return NotFound();
+        }
+
+        [HttpGet("icon")]
+        public async Task<IActionResult> Icon()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user != null)
+            {
+                if (user.IconImage != null)
+                {
+                    return File(user.IconImage, user.IconImageType);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpPost("icon")]
+        public async Task<IActionResult> UploadImage()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user != null && Request.Form.Files.Count == 1)
+            {
+                var file = Request.Form.Files[0];
+                if (file != null && file.Length > 0)
+                {
+                    try
+                    {
+                        var size = file.Length;
+                        var type = file.ContentType;
+                        var filename = file.FileName;
+                        MemoryStream ims = new MemoryStream();
+                        MemoryStream oms = new MemoryStream();
+                        file.CopyTo(ims);
+                        IImageFormat format;
+                        using (Image image = Image.Load(ims.ToArray(), out format))
+                        {
+                            int largestSize = Math.Max(image.Height, image.Width);
+                            bool landscape = image.Width > image.Height;
+                            if (landscape)
+                                image.Mutate(x => x.Resize(0, iconSize));
+                            else
+                                image.Mutate(x => x.Resize(iconSize, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - iconSize) / 2, (image.Height - iconSize) / 2, iconSize, iconSize)));
+                            image.Save(oms, format);
+                        }
+                        user.IconImage = oms.ToArray();
+                        user.IconImageType = type;
+                        var result = await _userManager.UpdateAsync(user);
+                        return Ok();
+                    }
+                    catch (Exception)
+                    {
+                        return BadRequest();
+                    }
+                }
+                return BadRequest();
+            }
+            return BadRequest();
         }
     }
 }

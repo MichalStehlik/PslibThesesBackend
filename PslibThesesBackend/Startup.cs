@@ -46,9 +46,13 @@ namespace PslibThesesBackend
                 options.AddPolicy("Administrator", policy =>
                 {
                     //policy.RequireClaim("theses_admin", "1");
-                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == Security.THESES_ADMIN_CLAIM && c.Value == "1") && context.User.HasClaim(c => c.Type == Security.THESES_ROBOT_CLAIM && c.Value == "1")));
+                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == Security.THESES_ADMIN_CLAIM && c.Value == "1") || context.User.HasClaim(c => c.Type == Security.THESES_ROBOT_CLAIM && c.Value == "1")));
                     //policy.RequireRole("Administrátor");
                     //policy.RequireAuthenticatedUser();
+                });
+                options.AddPolicy("AdministratorOrManagerOrEvaluator", policy =>
+                {
+                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == Security.THESES_ADMIN_CLAIM && c.Value == "1") || context.User.HasClaim(c => c.Type == Security.THESES_MANAGER_CLAIM && c.Value == "1") || context.User.HasClaim(c => c.Type == Security.THESES_EVALUATOR_CLAIM && c.Value == "1")));
                 });
                 options.AddPolicy("Author", policy =>
                 {
@@ -57,6 +61,10 @@ namespace PslibThesesBackend
                 options.AddPolicy("Evaluator", policy =>
                 {
                     policy.RequireClaim(Security.THESES_EVALUATOR_CLAIM, "1");
+                });
+                options.AddPolicy("AuthorOrEvaluator", policy =>
+                {
+                    policy.RequireAssertion(context => (context.User.HasClaim(c => c.Type == Security.THESES_AUTHOR_CLAIM && c.Value == "1") || context.User.HasClaim(c => c.Type == Security.THESES_EVALUATOR_CLAIM && c.Value == "1")));
                 });
                 options.AddPolicy("Manager", policy =>
                 {

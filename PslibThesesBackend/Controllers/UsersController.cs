@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PslibThesesBackend.Constants;
 using PslibThesesBackend.Models;
+using PslibThesesBackend.ViewModels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
@@ -25,11 +26,13 @@ namespace PslibThesesBackend.Controllers
     {
         private readonly ThesesContext _context;
         private readonly ILogger<UsersController> _logger;
+        private readonly IAuthorizationService _authorizationService;
 
-        public UsersController(ThesesContext context, ILogger<UsersController> logger)
+        public UsersController(ThesesContext context, ILogger<UsersController> logger, IAuthorizationService authorizationService)
         {
             _context = context;
             _logger = logger;
+            _authorizationService = authorizationService;
         }
 
         // GET: /Users
@@ -56,7 +59,7 @@ namespace PslibThesesBackend.Controllers
         /// }
         /// </returns>
         [HttpGet]
-        public ActionResult<IEnumerable<User>> GetUsers(
+        public async Task<ActionResult<IEnumerable<User>>> GetUsers(
             string search = null, 
             string firstname = null, 
             string lastname = null, 
@@ -68,6 +71,7 @@ namespace PslibThesesBackend.Controllers
             int page = 0, 
             int pagesize = 0)
         {
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
             IQueryable<User> users = _context.Users;
             int total = users.CountAsync().Result;
             if (!String.IsNullOrEmpty(search))
@@ -96,6 +100,10 @@ namespace PslibThesesBackend.Controllers
                 "id_desc" => users.OrderByDescending(u => u.Id),
                 _ => users.OrderBy(u => u.Id),
             };
+            if (!isEvaluator.Succeeded)
+            {
+                users = users.Select(u => new User { Id = u.Id, FirstName = u.FirstName, LastName = u.LastName, MiddleName = u.MiddleName, CanBeAuthor = u.CanBeAuthor, CanBeEvaluator = u.CanBeEvaluator });
+            }
             if (pagesize != 0 )
             {
                 users = users.Skip(page * pagesize).Take(pagesize);
@@ -114,11 +122,16 @@ namespace PslibThesesBackend.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<User>> GetUser(Guid id)
         {
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
                 _logger.LogError("user not found",id);
                 return NotFound();
+            }
+            if (!isEvaluator.Succeeded)
+            {
+                user = new User { Id = user.Id, FirstName = user.FirstName, LastName = user.LastName, MiddleName = user.MiddleName, CanBeAuthor = user.CanBeAuthor, CanBeEvaluator = user.CanBeEvaluator };
             }
             return user;
         }
@@ -135,13 +148,13 @@ namespace PslibThesesBackend.Controllers
         {
             if (id != user.Id)
             {
-                _logger.LogError("user not found, so cannot be updated", id);
+                _logger.LogError("user record is not consistent, so cannot be updated", id);
                 return BadRequest();
             }
 
+            var isAdmin = await _authorizationService.AuthorizeAsync(User, "Administrator");
             if (!User.HasClaim(ClaimTypes.NameIdentifier, user.Id.ToString())
-                && !User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
+                && !isAdmin.Succeeded)
             {
                 return Unauthorized("only user himself or privileged user can edit user record");
             }
@@ -187,12 +200,6 @@ namespace PslibThesesBackend.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser([FromBody] User user)
         {
-            if (!User.HasClaim(Security.THESES_ROBOT_CLAIM, "1")
-                && !User.HasClaim(Security.THESES_ADMIN_CLAIM, "1"))
-            {
-                var loggedUserId = User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).FirstOrDefault();
-                user.Id = Guid.Parse(loggedUserId.Value); // replace possibly forged Guid with Guid of current user, unless user is Admin
-            }
             var existingUser = await _context.Users.FindAsync(user.Id);
             if (existingUser == null)
             {
@@ -226,7 +233,6 @@ namespace PslibThesesBackend.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<User>> DeleteUser(Guid id)
         {
-            // TODO User roles
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
@@ -254,7 +260,8 @@ namespace PslibThesesBackend.Controllers
         /// </summary>
         /// <param name="id">User Id</param>
         /// <returns>User</returns>
-        [HttpGet("{id}")]
+        [Authorize(Policy = "Administrator")]
+        [HttpGet("{id}/locked-change")]
         public async Task<ActionResult<bool>> GetUserLockedChange(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
@@ -273,7 +280,8 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">User Id</param>
         /// <param name="state">New state - bool</param>
         /// <returns>HTTP 204,400,404</returns>
-        [HttpPut("{id}/")]
+        [Authorize(Policy = "Administrator")]
+        [HttpPut("{id}/locked-change")]
         public async Task<IActionResult> PutUserLockedChange(Guid id, bool state)
         {
             var user = await _context.Users.FindAsync(id);
@@ -323,7 +331,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">User Id</param>
         /// <returns>Stored file</returns>
         [HttpGet("{id}/icon")]
-        public async Task<IActionResult> Icon(string id)
+        public async Task<IActionResult> Icon(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user != null)
@@ -345,7 +353,7 @@ namespace PslibThesesBackend.Controllers
 
         // POST: api/Users/aaa/icon
         [HttpPost("{id}/icon")]
-        public async Task<IActionResult> UploadImage(string id)
+        public async Task<IActionResult> UploadImage(Guid id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user != null && Request.Form.Files.Count == 1)
@@ -389,6 +397,110 @@ namespace PslibThesesBackend.Controllers
             return BadRequest();
         }
 
+        // Offers
+
+        // GET: Ideas/xxx/offers
+        /// <summary>
+        /// Gets data of one idea specified by his Id, returns data from immediately associated tables.
+        /// </summary>
+        /// <param name="id">User Id</param>
+        /// <returns>Idea</returns>
+        [HttpGet("{id}/offers")]
+        public async Task<ActionResult<List<IdeaViewModel>>> GetOfferedIdea(Guid id)
+        {
+            var ideas = await _context.IdeaOffers
+                .Include(io => io.Idea)
+                .Where(io => io.UserId == id)
+                .OrderBy(io => io.Idea.Name)
+                .Select(io => new {
+                    io.Idea.Id,
+                    io.Idea.Name
+                })
+                .ToListAsync();
+
+            return Ok(ideas);
+        }
+
+        // POST: Ideas/xxx/offers
+        /// <summary>
+        /// Offers an idea to students
+        /// </summary>
+        /// <param name="id">Idea Id</param>
+        /// <param name="userid">UserId in body of request</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpPost("{id}/offers")]
+        [Authorize(Policy = "Evaluator")]
+        public async Task<IActionResult> PostIdeaOffered(Guid id, [FromBody] UserOfferInputModel input)
+        {
+            var idea = await _context.Ideas.FindAsync(input.Id);
+            var user = await _context.Users.FindAsync(id);
+
+            _context.Entry(idea).State = EntityState.Modified;
+            if (idea == null)
+            {
+                return NotFound("idea not found");
+            }
+            if (user == null)
+            {
+                return NotFound("user not found");
+            }
+
+            var ideaOffer = _context.IdeaOffers.Where(io => io.UserId == id && io.IdeaId == input.Id).FirstOrDefault();
+            if (ideaOffer == null)
+            {
+                await _context.IdeaOffers.AddAsync(new IdeaOffer { IdeaId = input.Id, UserId = id });
+                await _context.SaveChangesAsync();
+                return NoContent();
+            }
+            else
+            {
+                return NoContent();
+            }
+        }
+
+        // DELETE: Ideas/xxx/offers/4
+        /// <summary>
+        /// Removes selected offer
+        /// </summary>
+        /// <param name="id">User Id</param>
+        /// <param name="ideaId">Idea Id</param>
+        /// <returns>Removed goal, HTTP 404</returns>
+        [HttpDelete("{id}/offers/{ideaId}")]
+        [Authorize(Policy = "Evaluator")]
+        public ActionResult<IdeaOffer> DeleteIdeaOffer(Guid id, int ideaId)
+        {
+            var ideaOffer = _context.IdeaOffers.Where(io => io.UserId == id && io.IdeaId == ideaId).FirstOrDefault();
+
+            if (ideaOffer == null)
+            {
+                return NotFound();
+            }
+
+            _context.IdeaOffers.Remove(ideaOffer);
+            _context.SaveChanges();
+
+            return Ok(ideaOffer);
+        }
+
+        // DELETE: Ideas/5/offers
+        /// <summary>
+        /// Removes all offers for an specified user clearing users list
+        /// </summary>
+        /// <param name="id">User id</param>
+        /// <returns>HTTP 201, 404</returns>
+        [HttpDelete("{id}/offers")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public ActionResult<IdeaGoal> DeleteAllIdeaOffers(Guid id)
+        {
+            var offers = _context.IdeaOffers.Where(io => io.UserId == id).AsNoTracking().ToList();
+            if (offers != null)
+            {
+                _context.IdeaOffers.RemoveRange(offers);
+                _context.SaveChanges();
+            }
+            return NoContent();
+        }
+
         /// <summary>
         /// Check if user with Id exists.
         /// </summary>
@@ -398,5 +510,9 @@ namespace PslibThesesBackend.Controllers
         {
             return _context.Users.Any(e => e.Id == id);
         }
+    }
+    public class UserOfferInputModel
+    {
+        public int Id { get; set; }
     }
 }

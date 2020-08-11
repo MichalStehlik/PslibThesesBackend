@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -118,12 +120,16 @@ namespace PslibThesesBackend.Controllers
         /// <returns>HTTP 204, 404, 400</returns>
         [HttpPut("{id}")]
         [Authorize(Policy = "Administrator")]
-        public async Task<IActionResult> PutTarget(int id, Target target)
+        public async Task<IActionResult> PutTarget(int id, TargetInputModel input)
         {
-            if (id != target.Id)
+            if (id != input.Id)
             {
                 return BadRequest();
             }
+
+            var target = _context.Targets.Find(id);
+            target.Text = input.Text;
+            target.Color = ColorTranslator.FromHtml(input.Color);
 
             _context.Entry(target).State = EntityState.Modified;
 
@@ -154,8 +160,12 @@ namespace PslibThesesBackend.Controllers
         /// <returns>HTTP 201</returns>
         [HttpPost]
         [Authorize(Policy = "Administrator")]
-        public async Task<ActionResult<Target>> PostTarget(Target target)
+        public async Task<ActionResult<Target>> PostTarget(TargetInputModel input)
         {
+            Target target = new Target {
+                Text = input.Text,
+                Color = ColorTranslator.FromHtml(input.Color),
+            };
             _context.Targets.Add(target);
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetTarget", new { id = target.Id }, target);
@@ -192,5 +202,16 @@ namespace PslibThesesBackend.Controllers
         {
             return _context.Targets.Any(e => e.Id == id);
         }
+    }
+
+    // InputModels
+    public class TargetInputModel
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string Text { get; set; }
+        [Required]
+        public string Color { get; set; }
     }
 }

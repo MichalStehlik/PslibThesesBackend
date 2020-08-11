@@ -24,10 +24,15 @@ namespace Authority.Controllers.Api
     public class UsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
+        private int iconSize;
 
-        public UsersController(UserManager<ApplicationUser> userManager)
+        public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; protected set; }
+
+        public UsersController(UserManager<ApplicationUser> userManager, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _userManager = userManager;
+            Configuration = configuration;
+            iconSize = Convert.ToInt32(Configuration["Profile:IconSize"]);
         }
 
         // GET: api/Users
@@ -161,10 +166,10 @@ namespace Authority.Controllers.Api
                             int largestSize = Math.Max(image.Height, image.Width);
                             bool landscape = image.Width > image.Height;
                             if (landscape)
-                                image.Mutate(x => x.Resize(0, 320));
+                                image.Mutate(x => x.Resize(0, iconSize));
                             else
-                                image.Mutate(x => x.Resize(320, 0));
-                            image.Mutate(x => x.Crop(new Rectangle((image.Width - 320) / 2, (image.Height - 320) / 2, 320, 320)));
+                                image.Mutate(x => x.Resize(iconSize, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - iconSize) / 2, (image.Height - iconSize) / 2, iconSize, iconSize)));
                             image.Save(oms, format);
                         }
                         user.IconImage = oms.ToArray();

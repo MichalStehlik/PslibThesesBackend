@@ -26,8 +26,10 @@ namespace Authority.Controllers.UI
         public UsersController(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
         {
             Genders = new List<SelectListItem> {
-                new SelectListItem { Value = "0", Text = "Muž" },
-                new SelectListItem { Value = "1", Text = "Žena" }
+                new SelectListItem { Value = "0", Text = "Neznámé" },
+                new SelectListItem { Value = "1", Text = "Muž" },
+                new SelectListItem { Value = "2", Text = "Žena" },
+                new SelectListItem { Value = "3", Text = "Jiné" }
             };
             _roleManager = roleManager;
             _userManager = userManager;

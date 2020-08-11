@@ -32,6 +32,7 @@ namespace Authority.Services
             if (user != null)
             {
                 var roles = await _userManager.GetRolesAsync(user);
+                string encodedImage = Convert.ToBase64String(user.IconImage);
                 foreach (var ir in context.RequestedResources.IdentityResources)
                 {
                     switch (ir.Name)
@@ -45,7 +46,7 @@ namespace Authority.Services
                             context.IssuedClaims.Add(new Claim("given_name", user.FirstName));
                             context.IssuedClaims.Add(new Claim("middle_name", user.MiddleName != null ? user.MiddleName : ""));
                             context.IssuedClaims.Add(new Claim("family_name", user.LastName));
-                            context.IssuedClaims.Add(new Claim("gender", user.Gender == Gender.Male ? "male" : "female"));
+                            context.IssuedClaims.Add(new Claim("gender", user.Gender.ToString())); ;
                             context.IssuedClaims.Add(new Claim("name", user.FullName));
                             break;
                         case "phone":
@@ -57,15 +58,14 @@ namespace Authority.Services
                             {
                                 context.IssuedClaims.Add(new Claim("role", role));
                             }
-                            //context.IssuedClaims.Add(new Claim("roles", String.Join(",", roles)));
                             break;
+                        // its unable to send or encode too long strings > 15k
                         case "picture":
-                            context.IssuedClaims.Add(new Claim("picture", System.Convert.ToBase64String(user.IconImage)));
+                            context.IssuedClaims.Add(new Claim("picture", encodedImage));
                             context.IssuedClaims.Add(new Claim("picture_format", user.IconImageType));
                             break;
                     }
                 }
-                
                 foreach (var role in roles)
                 {
                     var r = await _roleManager.FindByNameAsync(role);
@@ -81,6 +81,12 @@ namespace Authority.Services
                 {
                     context.IssuedClaims.Add(new Claim(uc.Type, uc.Value));
                 }
+                /*
+                foreach(var claim in context.IssuedClaims)
+                {
+                    Console.WriteLine(claim.Type + " = " + claim.Value);
+                }
+                */
             }
             //return Task.FromResult(0);
         }
