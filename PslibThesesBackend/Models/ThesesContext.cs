@@ -43,6 +43,7 @@ namespace PslibThesesBackend.Models
             modelBuilder.Entity<IdeaTarget>().HasIndex(it => new { it.IdeaId, it.TargetId }).IsUnique();
             modelBuilder.Entity<Work>(entity =>
             {
+                entity.HasOne(w => w.User).WithMany(u => u.OwnedWorks).HasForeignKey(w => w.UserId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(w => w.Manager).WithMany(u => u.ManagedWorks).HasForeignKey(w => w.ManagerId).OnDelete(DeleteBehavior.Restrict);
                 entity.HasOne(w => w.Author).WithMany(u => u.AuthoredWorks).HasForeignKey(w => w.AuthorId).OnDelete(DeleteBehavior.Restrict);
             });

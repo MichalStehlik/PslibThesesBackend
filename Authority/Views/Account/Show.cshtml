@@ -72,14 +72,39 @@
             <h1>Ikona</h1>
             <div class="row">
                 <div class="col col-12 col-md-6">
-                    @if (Model.User.IconImage != null)
-                    {
-                        <img src="/Icon" />
-                    }
-                    else
-                    {
-                        <p>Žádná ikona</p>
-                    }
+                    <div>
+                        <p>Malá ikona</p>
+                        @if (Model.User.IconImage != null)
+                        {
+                            <img src="/Icon" alt="Malá verze ikony" />
+                        }
+                        else
+                        {
+                            <p>Žádná ikona</p>
+                        }
+                    </div>
+                    <div>
+                        <p>Profilový obrázek</p>
+                        @if (Model.User.PictureImage != null)
+                        {
+                            <img src="/Picture" alt="Velká verze ikony" />
+                        }
+                        else
+                        {
+                            <p>Žádný obrázek</p>
+                        }
+                    </div>
+                    <div>
+                        <p>Archivovaný původní obrázek</p>
+                        @if (Model.User.OriginalImage != null)
+                        {
+                            <p><a class="btn btn-secondary" href="/Original">Zobrazit původní obrázek</a></p>
+                        }
+                        else
+                        {
+                            <p>Žádný originál obrázku neexistuje.</p>
+                        }
+                    </div>
                 </div>
                 <div class="col col-12 col-md-6">
                     <form asp-action="PostIcon" asp-controller="Account" method="post" enctype="multipart/form-data">

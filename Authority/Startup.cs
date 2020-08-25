@@ -14,6 +14,7 @@ using IdentityServer4;
 using System.Linq;
 using System.Collections.Generic;
 using IdentityServer4.Models;
+using System.Threading.Tasks;
 
 namespace Authority
 {
@@ -44,7 +45,7 @@ namespace Authority
             services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.Password.RequireDigit = false;
-                options.Password.RequiredLength = 12;
+                options.Password.RequiredLength = 8;
                 options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequireUppercase = false;
                 options.Password.RequireLowercase = false;
@@ -71,6 +72,13 @@ namespace Authority
                     policy.RequireAuthenticatedUser();
                     // custom requirements
                 });
+                options.AddPolicy("ApiAdmin", policy =>
+                {
+                    policy.AddAuthenticationSchemes(IdentityServerConstants.LocalApi.AuthenticationScheme);
+                    policy.RequireAuthenticatedUser();
+                    //policy.RequireRole("Administrátor");
+                    policy.RequireClaim("admin","1");
+                });
             });
 
             services.AddAuthentication()
@@ -81,18 +89,40 @@ namespace Authority
                     options.ClientId = Configuration["Authentication:Microsoft:ClientId"];
                     options.ClientSecret = Configuration["Authentication:Microsoft:ClientSecret"];
                     options.SaveTokens = true;
-                })
-                .AddLocalApi(options => 
+                });
+                /*.AddLocalApi(options => 
                 {
                     options.ExpectedScope = Constants.LocalScopeName;
-                })
-            ;
+                })*/
+            services.AddLocalApiAuthentication();
 
             services.ConfigureApplicationCookie(options =>
             {
                 options.LoginPath = $"/Login";
                 options.LogoutPath = $"/Logout";
                 options.AccessDeniedPath = $"/AccessDenied";
+                options.Events.OnRedirectToLogin = context =>
+                {
+                    if (context.Request.Path.StartsWithSegments("/api") && context.Response.StatusCode == StatusCodes.Status200OK)
+                    {
+                        context.Response.Clear();
+                        context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                        return Task.CompletedTask;
+                    }
+                    context.Response.Redirect(context.RedirectUri);
+                    return Task.CompletedTask;
+                };
+                options.Events.OnRedirectToAccessDenied = context =>
+                {
+                    if (context.Request.Path.StartsWithSegments("/api") && context.Response.StatusCode == StatusCodes.Status200OK)
+                    {
+                        context.Response.Clear();
+                        context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                        return Task.CompletedTask;
+                    }
+                    context.Response.Redirect(context.RedirectUri);
+                    return Task.CompletedTask;
+                };
             });
 
             services.AddCors(options =>
@@ -146,7 +176,6 @@ namespace Authority
 
             services.AddScoped<EmailSender>();
             services.AddScoped<RazorViewToStringRenderer>();
-            //services.AddLocalApiAuthentication();
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
@@ -181,7 +210,7 @@ namespace Authority
              //   endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapDefaultControllerRoute();
-                endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
+                endpoints.MapControllerRoute("default", "{area}","{controller=Home}/{action=Index}/{id?}");
             });
         }
     }

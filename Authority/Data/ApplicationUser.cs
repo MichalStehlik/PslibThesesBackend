@@ -46,5 +46,9 @@ namespace Authority.Data
 
         public byte[] IconImage { get; set; }
         public string IconImageType { get; set; }
+        public byte[] PictureImage { get; set; }
+        public string PictureImageType { get; set; }
+        public byte[] OriginalImage { get; set; }
+        public string OriginalImageType { get; set; }
     }
 }

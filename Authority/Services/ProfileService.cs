@@ -32,7 +32,9 @@ namespace Authority.Services
             if (user != null)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                string encodedImage = Convert.ToBase64String(user.IconImage);
+                string encodedImage = "";
+                if (user.IconImage != null)
+                    encodedImage = Convert.ToBase64String(user.IconImage);
                 foreach (var ir in context.RequestedResources.IdentityResources)
                 {
                     switch (ir.Name)
@@ -61,9 +63,10 @@ namespace Authority.Services
                             break;
                         // its unable to send or encode too long strings > 15k
                         case "picture":
-                            context.IssuedClaims.Add(new Claim("picture", encodedImage));
-                            context.IssuedClaims.Add(new Claim("picture_format", user.IconImageType));
+                            //context.IssuedClaims.Add(new Claim("picture", encodedImage));
+                            //context.IssuedClaims.Add(new Claim("picture_format", user.IconImageType));
                             break;
+                            
                     }
                 }
                 foreach (var role in roles)

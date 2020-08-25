@@ -15,15 +15,22 @@ using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
 using X.PagedList;
 
-namespace Authority.Controllers.UI
+namespace Authority.Areas.Dashboard.Controllers
 {
     [Authorize(Policy = "Admin")]
     public class UsersController : Controller
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<ApplicationRole> _roleManager;
+
+        private int iconSize;
+        private int pictureSize;
+
         private List<SelectListItem> Genders;
-        public UsersController(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
+
+        public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; protected set; }
+
+        public UsersController(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             Genders = new List<SelectListItem> {
                 new SelectListItem { Value = "0", Text = "Neznámé" },
@@ -33,6 +40,9 @@ namespace Authority.Controllers.UI
             };
             _roleManager = roleManager;
             _userManager = userManager;
+            Configuration = configuration;
+            iconSize = Convert.ToInt32(Configuration["Profile:IconSize"]);
+            pictureSize = Convert.ToInt32(Configuration["Profile:PictureSize"]);
         }
         // GET: Users
         [HttpGet("Users")]
@@ -135,8 +145,30 @@ namespace Authority.Controllers.UI
             }
         }
 
+        // GET: Users/Picture/5
+        [HttpGet("Users/Picture/{id}")]
+        public IActionResult Picture(string id)
+        {
+            var user = _userManager.Users.SingleOrDefault(r => r.Id == id);
+            if (user != null)
+            {
+                if (user.PictureImage != null)
+                {
+                    return File(user.PictureImage, user.PictureImageType);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
         [HttpPost("Users/UploadImage/{id}")]
-        public async Task<IActionResult> UploadImage(string id)
+        public async Task<IActionResult> UploadNewImage(string id)
         {
             var user = _userManager.Users.SingleOrDefault(r => r.Id == id);
             if (user != null && Request.Form.Files.Count == 1)
@@ -150,7 +182,8 @@ namespace Authority.Controllers.UI
                         var type = file.ContentType;
                         var filename = file.FileName;
                         MemoryStream ims = new MemoryStream();
-                        MemoryStream oms = new MemoryStream();
+                        MemoryStream oms1 = new MemoryStream();
+                        MemoryStream oms2 = new MemoryStream();
                         file.CopyTo(ims);
                         IImageFormat format;
                         using (Image image = Image.Load(ims.ToArray(), out format))
@@ -158,14 +191,29 @@ namespace Authority.Controllers.UI
                             int largestSize = Math.Max(image.Height, image.Width);
                             bool landscape = image.Width > image.Height;
                             if (landscape)
-                                image.Mutate(x => x.Resize(0, 320));
+                                image.Mutate(x => x.Resize(0, iconSize));
                             else
-                                image.Mutate(x => x.Resize(320, 0));
-                            image.Mutate(x => x.Crop(new Rectangle((image.Width - 320) / 2, (image.Height - 320) / 2, 320, 320)));
-                            image.Save(oms, format);
+                                image.Mutate(x => x.Resize(iconSize, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - iconSize) / 2, (image.Height - iconSize) / 2, iconSize, iconSize)));
+                            image.Save(oms1, format);
                         }
-                        user.IconImage = oms.ToArray();
+                        using (Image image = Image.Load(ims.ToArray(), out format))
+                        {
+                            int largestSize = Math.Max(image.Height, image.Width);
+                            bool landscape = image.Width > image.Height;
+                            if (landscape)
+                                image.Mutate(x => x.Resize(0, pictureSize));
+                            else
+                                image.Mutate(x => x.Resize(pictureSize, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - pictureSize) / 2, (image.Height - pictureSize) / 2, pictureSize, pictureSize)));
+                            image.Save(oms2, format);
+                        }
+                        user.OriginalImage = ims.ToArray();
+                        user.OriginalImageType = type;
+                        user.IconImage = oms1.ToArray();
                         user.IconImageType = type;
+                        user.PictureImage = oms2.ToArray();
+                        user.PictureImageType = type;
                         var result = await _userManager.UpdateAsync(user);
                     }
                     catch (Exception)

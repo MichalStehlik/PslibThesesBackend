@@ -27,6 +27,7 @@ namespace PslibThesesBackend.Controllers
         private readonly ThesesContext _context;
         private readonly ILogger<UsersController> _logger;
         private readonly IAuthorizationService _authorizationService;
+        private int iconSize = 64;
 
         public UsersController(ThesesContext context, ILogger<UsersController> logger, IAuthorizationService authorizationService)
         {
@@ -144,12 +145,19 @@ namespace PslibThesesBackend.Controllers
         /// <param name="user">New User data</param>
         /// <returns>HTTP 204,400,404</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(Guid id, User user)
+        public async Task<IActionResult> PutUser(Guid id, User newUser)
         {
-            if (id != user.Id)
+            if (id != newUser.Id)
             {
                 _logger.LogError("user record is not consistent, so cannot be updated", id);
                 return BadRequest();
+            }
+
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+            {
+                _logger.LogError("user not found", id);
+                return NotFound();
             }
 
             var isAdmin = await _authorizationService.AuthorizeAsync(User, "Administrator");
@@ -159,7 +167,7 @@ namespace PslibThesesBackend.Controllers
                 return Unauthorized("only user himself or privileged user can edit user record");
             }
 
-            if (user.LockedChange == true)
+            if (!isAdmin.Succeeded && user.LockedChange == true)
             {
                 return BadRequest("record is locked for change");
             }
@@ -167,7 +175,15 @@ namespace PslibThesesBackend.Controllers
             _context.Entry(user).State = EntityState.Modified;
 
             try
-            {       
+            {
+                user.FirstName = newUser.FirstName;
+                user.MiddleName = newUser.MiddleName;
+                user.LastName = newUser.LastName;
+                user.Gender = newUser.Gender;
+                user.LockedChange = newUser.LockedChange;
+                user.LockedIcon = newUser.LockedIcon;
+                user.CanBeAuthor = newUser.CanBeAuthor;
+                user.CanBeEvaluator = newUser.CanBeEvaluator;
                 await _context.SaveChangesAsync();
             }
             catch (DbUpdateConcurrencyException)
@@ -351,7 +367,7 @@ namespace PslibThesesBackend.Controllers
             }
         }
 
-        // POST: api/Users/aaa/icon
+        // POST: /Users/aaa/icon
         [HttpPost("{id}/icon")]
         public async Task<IActionResult> UploadImage(Guid id)
         {
@@ -366,35 +382,39 @@ namespace PslibThesesBackend.Controllers
                         var size = file.Length;
                         var type = file.ContentType;
                         var filename = file.FileName;
+                        Console.WriteLine("File:" + filename + " " + size + " " + type);
                         MemoryStream ims = new MemoryStream();
                         MemoryStream oms = new MemoryStream();
                         file.CopyTo(ims);
+                        
                         IImageFormat format;
                         using (Image image = Image.Load(ims.ToArray(), out format))
                         {
                             int largestSize = Math.Max(image.Height, image.Width);
                             bool landscape = image.Width > image.Height;
                             if (landscape)
-                                image.Mutate(x => x.Resize(0, 320));
+                                image.Mutate(x => x.Resize(0, iconSize));
                             else
-                                image.Mutate(x => x.Resize(320, 0));
-                            image.Mutate(x => x.Crop(new Rectangle((image.Width - 320) / 2, (image.Height - 320) / 2, 320, 320)));
+                                image.Mutate(x => x.Resize(iconSize, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - iconSize) / 2, (image.Height - iconSize) / 2, iconSize, iconSize)));
                             image.Save(oms, format);
                         }
-                        user.IconImage = oms.ToArray();
+                        
+                        user.IconImage = ims.ToArray();
                         user.IconImageType = type;
                         await _context.SaveChangesAsync();
                         return Ok();                        
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError("error saving icon", ex, user);
+                        _logger.LogError("error saving icon", ex, ex.Message, user);
+                        Console.WriteLine(ex.Message);
                         return BadRequest(ex.Message);
                     }
                 }
-                return BadRequest();
+                return BadRequest("file is empty or there is multiple files");
             }
-            return BadRequest();
+            return BadRequest("there is no file in formData");
         }
 
         // Offers

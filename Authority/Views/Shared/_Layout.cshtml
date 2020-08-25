@@ -52,12 +52,12 @@
                             Administrace
                         </a>
                         <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <a class="dropdown-item" asp-controller="Users" asp-action="Index">Uživatelé</a>
-                            <a class="dropdown-item" asp-controller="Roles" asp-action="Index">Role</a>
+                            <a class="dropdown-item" asp-area="Dashboard" asp-controller="Users" asp-action="Index">Uživatelé</a>
+                            <a class="dropdown-item" asp-area="Dashboard" asp-controller="Roles" asp-action="Index">Role</a>
                             <div class="dropdown-divider"></div>
                             @*<a class="dropdown-item" asp-controller="IdentityResources" asp-action="Index">Zdroje pro identitu</a>*@
                             @*<a class="dropdown-item disabled" asp-controller="Resources" asp-action="Index">Zdroje API</a>*@
-                            <a class="dropdown-item" asp-controller="Clients" asp-action="Index">Klienti</a>
+                            <a class="dropdown-item" asp-area="Dashboard" asp-controller="Clients" asp-action="Index">Klienti</a>
                         </div>
                             </li>
                             }

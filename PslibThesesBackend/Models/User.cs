@@ -37,6 +37,8 @@ namespace PslibThesesBackend.Models
         [JsonIgnore]
         public ICollection<Idea> IdeaOffers { get; set; }
         [JsonIgnore]
+        public ICollection<Work> OwnedWorks { get; set; }
+        [JsonIgnore]
         public ICollection<Work> ManagedWorks { get; set; }
         [JsonIgnore]
         public ICollection<Work> AuthoredWorks { get; set; }

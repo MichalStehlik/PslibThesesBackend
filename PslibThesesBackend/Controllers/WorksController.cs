@@ -51,10 +51,13 @@ namespace PslibThesesBackend.Controllers
             string name = null,
             string subject = null,
             Guid? authorId = null,
+            Guid? managerId = null,
             Guid? userId = null,
-            string firstname = null,
-            string lastname = null,
+            string authorfirstname = null,
+            string authorlastname = null,
             int? setId = null,
+            int? year = null,
+            string classname = null,
             string setName = null,
             WorkState? state = null,
             string order = "name",
@@ -62,7 +65,9 @@ namespace PslibThesesBackend.Controllers
             int pagesize = 0)
         {
             IQueryable<Work> works = _context.Works
-                .Include(i => i.User);
+                .Include(i => i.Author)
+                .Include(i => i.Manager)
+                .Include(i => i.Set);
             int total = works.CountAsync().Result;
             if (!String.IsNullOrEmpty(search))
                 works = works.Where(i => (i.Name.Contains(search)));
@@ -70,18 +75,24 @@ namespace PslibThesesBackend.Controllers
                 works = works.Where(i => (i.Name.Contains(name)));
             if (!String.IsNullOrEmpty(subject))
                 works = works.Where(i => (i.Subject.Contains(subject)));
-            if (!String.IsNullOrEmpty(firstname))
-                works = works.Where(i => (i.Author.FirstName.Contains(firstname)));
-            if (!String.IsNullOrEmpty(lastname))
-                works = works.Where(i => (i.Author.LastName.Contains(lastname)));
+            if (!String.IsNullOrEmpty(authorfirstname))
+                works = works.Where(i => (i.Author.FirstName.Contains(authorfirstname)));
+            if (!String.IsNullOrEmpty(authorlastname))
+                works = works.Where(i => (i.Author.LastName.Contains(authorlastname)));
+            if (!String.IsNullOrEmpty(classname))
+                works = works.Where(i => (i.ClassName.Contains(classname)));
             if (userId != null)
                 works = works.Where(i => (i.UserId == userId));
             if (authorId != null)
                 works = works.Where(i => (i.AuthorId == authorId));
+            if (managerId != null)
+                works = works.Where(i => (i.ManagerId == managerId));
             if (setId != null)
                 works = works.Where(i => (i.SetId == setId));
             if (!String.IsNullOrEmpty(setName))
                 works = works.Where(i => (i.Set.Name.Contains(setName)));
+            if (year != null)
+                works = works.Where(i => (i.Set.Year == year));
             if (state != null)
                 works = works.Where(i => (i.State == state));
             int filtered = works.CountAsync().Result;
@@ -93,23 +104,35 @@ namespace PslibThesesBackend.Controllers
                 case "id_desc":
                     works = works.OrderByDescending(t => t.Id);
                     break;
-                case "firstname":
-                    works = works.OrderBy(t => t.User.FirstName);
+                case "authorfirstname":
+                    works = works.OrderBy(t => t.Author.FirstName);
                     break;
-                case "firstname_desc":
-                    works = works.OrderByDescending(t => t.User.FirstName);
+                case "authorfirstname_desc":
+                    works = works.OrderByDescending(t => t.Author.FirstName);
                     break;
-                case "lastname":
-                    works = works.OrderBy(t => t.User.LastName);
+                case "authorlastname":
+                    works = works.OrderBy(t => t.Author.LastName);
                     break;
-                case "lastname_desc":
-                    works = works.OrderByDescending(t => t.User.LastName);
+                case "authorlastname_desc":
+                    works = works.OrderByDescending(t => t.Author.LastName);
                     break;
                 case "state":
                     works = works.OrderBy(t => t.State);
                     break;
                 case "state_desc":
                     works = works.OrderByDescending(t => t.State);
+                    break;
+                case "year":
+                    works = works.OrderBy(t => t.Set.Year);
+                    break;
+                case "year_desc":
+                    works = works.OrderByDescending(t => t.Set.Year);
+                    break;
+                case "classname":
+                    works = works.OrderBy(t => t.ClassName);
+                    break;
+                case "classname_desc":
+                    works = works.OrderByDescending(t => t.ClassName);
                     break;
                 case "updated":
                     works = works.OrderBy(t => t.Updated);
@@ -144,7 +167,8 @@ namespace PslibThesesBackend.Controllers
                 SetId = i.SetId,
                 SetName = i.Set.Name,
                 State = i.State,
-                ClassName = i.ClassName
+                ClassName = i.ClassName,
+                Year = i.Set.Year
             }).ToList();
             int count = worksVM.Count();
             return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = worksVM });
@@ -367,6 +391,81 @@ namespace PslibThesesBackend.Controllers
             work.User = user;
             work.Author = author;
             work.Manager = manager;
+            work.Updated = DateTime.Now;
+            work.ClassName = input.ClassName;
+            work.RepositoryURL = input.RepositoryURL;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!WorkExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
+        }
+
+        // PUT: Works/5/base
+        [HttpPut("{id}/base")]
+        public async Task<IActionResult> PutBase(int id, [FromBody] WorkBaseInputModel input)
+        {
+            if (id != input.Id)
+            {
+                return BadRequest();
+            }
+
+            var work = await _context.Works.FindAsync(id);
+            _context.Entry(work).State = EntityState.Modified;
+            if (work == null)
+            {
+                return NotFound();
+            }
+
+            var author = _context.Users.FindAsync(input.AuthorId).Result;
+            if (author == null)
+            {
+                return NotFound("User with Id equal to authorId was not found");
+            }
+
+            var manager = _context.Users.FindAsync(input.ManagerId).Result;
+            if (manager == null)
+            {
+                return NotFound("User with Id equal to managerId was not found");
+            }
+
+            var set = _context.Sets.FindAsync(input.SetId).Result;
+            if (set == null)
+            {
+                return NotFound("Set not found");
+            }
+
+            if (work.ManagerId != input.ManagerId && manager.CanBeEvaluator == false)
+            {
+                return BadRequest("User with ManagerId cannot be assigned as manager.");
+            }
+
+            if (work.AuthorId != input.AuthorId && author.CanBeAuthor == false)
+            {
+                return BadRequest("User with AuthorId cannot be assigned as author.");
+            }
+
+            // only Admin can edit in other than InPreparation state
+
+            work.Name = input.Name;
+            work.Description = input.Description;
+            work.Resources = input.Resources;
+            work.Subject = input.Subject;
+            work.AuthorId = input.AuthorId;
+            work.ManagerId = input.ManagerId;
+            work.Set = set;
             work.Updated = DateTime.Now;
             work.ClassName = input.ClassName;
             work.RepositoryURL = input.RepositoryURL;
@@ -1206,6 +1305,36 @@ namespace PslibThesesBackend.Controllers
         public WorkState State { get; set; } = WorkState.InPreparation;
         public string ClassName { get; set; }
         public string RepositoryURL { get; set; }
+    }
+
+    public class WorkBaseInputModel
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public string Resources { get; set; }
+        public string Subject { get; set; }
+        [Required]
+        public Guid UserId { get; set; }
+        public Guid AuthorId { get; set; }
+        public Guid ManagerId { get; set; }
+        [Required]
+        public int SetId { get; set; }
+        public string ClassName { get; set; }
+        public string RepositoryURL { get; set; }
+    }
+
+    public class WorkExpendituresInputModel
+    {
+        [Required]
+        public int Id { get; set; }
+        public int MaterialCosts { get; set; } = 0;
+        public int MaterialCostsProvidedBySchool { get; set; } = 0;
+        public int ServicesCosts { get; set; } = 0;
+        public int ServicesCostsProvidedBySchool { get; set; } = 0;
+        public string DetailExpenditures { get; set; }
     }
 
     public class WorkGoalInputModel

@@ -1,197 +1,206 @@
 ﻿@using Authority.Data
+@using Authority.Models
 @model ExtendedUserViewModel
 
 @{
     ViewData["Title"] = "Details";
 }
 
-    <h1>Podrobnosti</h1>
+<h1>Podrobnosti</h1>
 
-    <div>
-        <section>
-            <h4>Uživatel</h4>
-            <hr />
-            <dl class="row">
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.EmailConfirmed)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.EmailConfirmed)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.PhoneNumberConfirmed)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.PhoneNumberConfirmed)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.AccessFailedCount)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.AccessFailedCount)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.FirstName)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.FirstName)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.MiddleName)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.MiddleName)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.LastName)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.LastName)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.UserName)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.UserName)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.Email)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.Email)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.PhoneNumber)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.PhoneNumber)
-                </dd>
-                <dt class="col-sm-2">
-                    @Html.DisplayNameFor(model => model.User.Gender)
-                </dt>
-                <dd class="col-sm-10">
-                    @Html.DisplayFor(model => model.User.Gender)
-                </dd>
-            </dl>
-            <div>
-                <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.User.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
-            </div>
-        </section>
-        <section>
-            <h2>Externí poskytovatelé</h2>
-            <form asp-action="CreateExternal" asp-route-user="@Model.User.Id" method="post">
-                <input type="hidden" asp-for="User.Id" />
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Poskytovatel</th>
-                            <th>Identifikátor</th>
-                            <th>Id</th>
-                            <th>Akce</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var ex in Model.External)
-                        {
-                            <tr>
-                                <td>@ex.LoginProvider</td>
-                                <td>@ex.ProviderDisplayName</td>
-                                <td>@ex.ProviderKey</td>
-                                <td>
-                                    <a asp-action="RemoveExternal" asp-route-user="@Model.User.Id" asp-route-provider="@ex.LoginProvider" asp-route-key="@ex.ProviderKey" class="btn btn-danger btn-sm">Odebrat</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td><input name="provider" class="form-control" value="Microsoft" /></td>
-                            <td><input name="name" class="form-control" /></td>
-                            <td><input name="key" class="form-control" /></td>
-                            <td><button type="submit" class="btn btn-success btn-sm">Přidat</button></td>
-                        </tr>
-                    </tfoot>
-                </table>
-            </form>
-        </section>
-        <section>
-            <h2>Role</h2>
+<div>
+    <section>
+        <h4>Uživatel</h4>
+        <hr />
+        <dl class="row">
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.EmailConfirmed)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.EmailConfirmed)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.PhoneNumberConfirmed)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.PhoneNumberConfirmed)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.AccessFailedCount)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.AccessFailedCount)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.FirstName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.FirstName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.MiddleName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.MiddleName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.LastName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.LastName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.UserName)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.UserName)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.Email)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.Email)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.PhoneNumber)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.PhoneNumber)
+            </dd>
+            <dt class="col-sm-2">
+                @Html.DisplayNameFor(model => model.User.Gender)
+            </dt>
+            <dd class="col-sm-10">
+                @Html.DisplayFor(model => model.User.Gender)
+            </dd>
+        </dl>
+        <div>
+            <a class="btn btn-secondary" asp-action="Edit" asp-route-id="@Model.User.Id">Editovat</a> <a class="btn btn-secondary" asp-action="Index">Zpět</a>
+        </div>
+    </section>
+    <section>
+        <h2>Externí poskytovatelé</h2>
+        <form asp-action="CreateExternal" asp-route-user="@Model.User.Id" method="post">
+            <input type="hidden" asp-for="User.Id" />
             <table class="table table-striped">
-                @foreach (var r in Model.AllRoles)
-                {
+                <thead>
                     <tr>
-                        <td>@r.Name</td>
-                        <td>
-                            <a asp-controller="Roles" asp-action="Details" asp-route-id="@r.Id" class="btn btn-info btn-sm">Podrobnosti</a>
-                            @if (Model.Roles.Contains(r.Name))
-                            {
-                                <a asp-action="RemoveRole" asp-route-user="@Model.User.Id" asp-route-role="@r.Name" class="btn btn-danger btn-sm">Odebrat</a>
-                            }
-                            else
-                            {
-                                <a asp-action="AddRole" asp-route-user="@Model.User.Id" asp-route-role="@r.Name" class="btn btn-success btn-sm">Přidat</a>
-                            }
-                        </td>
+                        <th>Poskytovatel</th>
+                        <th>Identifikátor</th>
+                        <th>Id</th>
+                        <th>Akce</th>
                     </tr>
-                }
+                </thead>
+                <tbody>
+                    @foreach (var ex in Model.External)
+                    {
+                        <tr>
+                            <td>@ex.LoginProvider</td>
+                            <td>@ex.ProviderDisplayName</td>
+                            <td>@ex.ProviderKey</td>
+                            <td>
+                                <a asp-action="RemoveExternal" asp-route-user="@Model.User.Id" asp-route-provider="@ex.LoginProvider" asp-route-key="@ex.ProviderKey" class="btn btn-danger btn-sm">Odebrat</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td><input name="provider" class="form-control" value="Microsoft" /></td>
+                        <td><input name="name" class="form-control" /></td>
+                        <td><input name="key" class="form-control" /></td>
+                        <td><button type="submit" class="btn btn-success btn-sm">Přidat</button></td>
+                    </tr>
+                </tfoot>
             </table>
-        </section>
-        <section>
-            <h2>Claimy</h2>
-            <form asp-action="CreateClaim" asp-route-user="@Model.User.Id" method="post">
-                <input type="hidden" asp-for="User.Id" />
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <td>Typ</td>
-                            <td>Hodnota</td>
-                            <td>Akce</td>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var claim in Model.Claims)
+        </form>
+    </section>
+    <section>
+        <h2>Role</h2>
+        <table class="table table-striped">
+            @foreach (var r in Model.AllRoles)
+            {
+                <tr>
+                    <td>@r.Name</td>
+                    <td>
+                        <a asp-controller="Roles" asp-action="Details" asp-route-id="@r.Id" class="btn btn-info btn-sm">Podrobnosti</a>
+                        @if (Model.Roles.Contains(r.Name))
                         {
-                            <tr>
-                                <th>@claim.Type</th>
-                                <td>@claim.Value</td>
-                                <td><a asp-action="RemoveClaim" asp-route-user="@Model.User.Id" asp-route-type="@claim.Type" asp-route-value="@claim.Value" class="btn btn-danger btn-sm">Zrušit</a></td>
-                            </tr>
+                            <a asp-action="RemoveRole" asp-route-user="@Model.User.Id" asp-route-role="@r.Name" class="btn btn-danger btn-sm">Odebrat</a>
                         }
-                    </tbody>
-                    <tfoot>
+                        else
+                        {
+                            <a asp-action="AddRole" asp-route-user="@Model.User.Id" asp-route-role="@r.Name" class="btn btn-success btn-sm">Přidat</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </table>
+    </section>
+    <section>
+        <h2>Claimy</h2>
+        <form asp-action="CreateClaim" asp-route-user="@Model.User.Id" method="post">
+            <input type="hidden" asp-for="User.Id" />
+            <table class="table">
+                <thead>
+                    <tr>
+                        <td>Typ</td>
+                        <td>Hodnota</td>
+                        <td>Akce</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var claim in Model.Claims)
+                    {
                         <tr>
-                            <td><input name="type" class="form-control" /></td>
-                            <td><input name="value" class="form-control" /></td>
-                            <td><button type="submit" class="btn btn-success btn-sm">Přidat</button></td>
+                            <th>@claim.Type</th>
+                            <td>@claim.Value</td>
+                            <td><a asp-action="RemoveClaim" asp-route-user="@Model.User.Id" asp-route-type="@claim.Type" asp-route-value="@claim.Value" class="btn btn-danger btn-sm">Zrušit</a></td>
                         </tr>
-                    </tfoot>
-                </table>
-            </form>
-        </section>
-        <section>
-            <h2>Ikona</h2>
-            <div class="row">
-                <div class="col col-12 col-md-6">
-                    @if (Model.User.IconImage != null)
-                    {
-                        <img src="/Users/Icon/@Model.User.Id" />
                     }
-                    else
-                    {
-                        <p>Žádná ikona</p>
-                    }
-                </div>
-                <div class="col col-12 col-md-6">
-                    <form asp-action="UploadImage" asp-controller="Users" asp-route-id="@Model.User.Id" method="post" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="imageFile">Soubor s fotografií</label>
-                            <input type="file" id="imageFile" name="imageFile" class="form-control" />
-                        </div>
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">Nahrát</button>
-                        </div>
-                    </form>
-                </div>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td><input name="type" class="form-control" /></td>
+                        <td><input name="value" class="form-control" /></td>
+                        <td><button type="submit" class="btn btn-success btn-sm">Přidat</button></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </form>
+    </section>
+    <section>
+        <h2>Ikona</h2>
+        <div class="row">
+            <div class="col col-12 col-md-6">
+                @if (Model.User.IconImage != null)
+                {
+                    <img src="/Users/Icon/@Model.User.Id" />
+                }
+                else
+                {
+                    <p>Žádná ikona</p>
+                }
+                @if (Model.User.PictureImage != null)
+                {
+                    <img src="/Users/Picture/@Model.User.Id" />
+                }
+                else
+                {
+                    <p>Žádný obrázek</p>
+                }
             </div>
-        </section>
+            <div class="col col-12 col-md-6">
+                <form asp-action="UploadNewImage" asp-area="" asp-controller="Users" asp-route-id="@Model.User.Id" method="post" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="imageFile">Soubor s fotografií</label>
+                        <input type="file" id="imageFile" name="imageFile" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Nahrát</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
 </div>

@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using X.PagedList;
 
-namespace Authority.Controllers.UI.Dashboard
+namespace Authority.Areas.Dashboard.Controllers
 {
     [Authorize(Policy = "Admin")]
     public class ClientsController : Controller

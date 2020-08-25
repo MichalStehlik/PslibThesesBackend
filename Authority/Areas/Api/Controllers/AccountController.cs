@@ -17,21 +17,23 @@ using SixLabors.ImageSharp.Processing;
 using static IdentityServer4.IdentityServerConstants;
 using Microsoft.Extensions.Configuration;
 
-namespace Authority.Controllers.Api
+namespace Authority.Areas.Api.Controllers
 {
-    [Route("api/[controller]")]
-    [Authorize]
+    [Route("api/account")]
+    [Authorize(LocalApi.PolicyName)]
     [ApiController]
     public class AccountController : ControllerBase
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private int iconSize;
+        private int pictureSize;
         public Microsoft.Extensions.Configuration.IConfiguration Configuration { get; protected set; }
         public AccountController(UserManager<ApplicationUser> userManager, Microsoft.Extensions.Configuration.IConfiguration configuration)
         {
             _userManager = userManager;
             Configuration = configuration;
             iconSize = Convert.ToInt32(Configuration["Profile:IconSize"]);
+            pictureSize = Convert.ToInt32(Configuration["Profile:PictureSize"]);
         }
 
         [HttpGet]
@@ -167,7 +169,49 @@ namespace Authority.Controllers.Api
             }
         }
 
-        [HttpPost("icon")]
+        [HttpGet("picture")]
+        public async Task<IActionResult> Picture()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user != null)
+            {
+                if (user.PictureImage != null)
+                {
+                    return File(user.PictureImage, user.PictureImageType);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("original")]
+        public async Task<IActionResult> Original()
+        {
+            var user = await _userManager.GetUserAsync(HttpContext.User);
+            if (user != null)
+            {
+                if (user.OriginalImage != null)
+                {
+                    return File(user.OriginalImage, user.OriginalImageType);
+                }
+                else
+                {
+                    return NoContent();
+                }
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpPost("image")]
         public async Task<IActionResult> UploadImage()
         {
             var user = await _userManager.GetUserAsync(HttpContext.User);
@@ -182,7 +226,8 @@ namespace Authority.Controllers.Api
                         var type = file.ContentType;
                         var filename = file.FileName;
                         MemoryStream ims = new MemoryStream();
-                        MemoryStream oms = new MemoryStream();
+                        MemoryStream oms1 = new MemoryStream();
+                        MemoryStream oms2 = new MemoryStream();
                         file.CopyTo(ims);
                         IImageFormat format;
                         using (Image image = Image.Load(ims.ToArray(), out format))
@@ -194,10 +239,25 @@ namespace Authority.Controllers.Api
                             else
                                 image.Mutate(x => x.Resize(iconSize, 0));
                             image.Mutate(x => x.Crop(new Rectangle((image.Width - iconSize) / 2, (image.Height - iconSize) / 2, iconSize, iconSize)));
-                            image.Save(oms, format);
+                            image.Save(oms1, format);
                         }
-                        user.IconImage = oms.ToArray();
+                        using (Image image = Image.Load(ims.ToArray(), out format))
+                        {
+                            int largestSize = Math.Max(image.Height, image.Width);
+                            bool landscape = image.Width > image.Height;
+                            if (landscape)
+                                image.Mutate(x => x.Resize(0, pictureSize));
+                            else
+                                image.Mutate(x => x.Resize(pictureSize, 0));
+                            image.Mutate(x => x.Crop(new Rectangle((image.Width - pictureSize) / 2, (image.Height - pictureSize) / 2, pictureSize, pictureSize)));
+                            image.Save(oms2, format);
+                        }
+                        user.OriginalImage = ims.ToArray();
+                        user.OriginalImageType = type;
+                        user.IconImage = oms1.ToArray();
                         user.IconImageType = type;
+                        user.PictureImage = oms2.ToArray();
+                        user.PictureImageType = type;
                         var result = await _userManager.UpdateAsync(user);
                         return Ok();
                     }

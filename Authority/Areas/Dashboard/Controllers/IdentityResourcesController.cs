@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using X.PagedList;
 
-namespace Authority.Controllers.UI.Dashboard
+namespace Authority.Areas.Dashboard.Controllers
 {
     [Authorize(Policy = "Admin")]
     public class IdentityResourcesController : Controller

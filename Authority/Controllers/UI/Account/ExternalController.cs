@@ -334,7 +334,7 @@ namespace Authority.Quickstart.UI
                     Gender = model.Gender,
                     UserName = model.UserName,
                     Email = model.Email,
-                    EmailConfirmed = false,
+                    EmailConfirmed = true,
                 };
                 var result = await _userManager.CreateAsync(user);
                 if (result.Succeeded)

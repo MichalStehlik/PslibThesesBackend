@@ -21,7 +21,7 @@
                 <li><a asp-action="Index" asp-controller="Grants">Aktuálně schválená oprávnění</a></li>
                 @if (/*User.HasClaim(c => { return (c.Type == "admin"); })*/ User.IsInRole("Administrátor"))
                 {
-                    <li><a href="~/Roles">Správa rolí</a></li>
+                    <li><a asp-controller="Roles" asp-area="Dashboard" asp-action="Index">Správa rolí</a></li>
                     <li><a href="~/Users">Správa uživatelů</a></li>
                     <li><a href="~/Clients">Správa klientů</a></li>
                 }

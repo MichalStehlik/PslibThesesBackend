@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using X.PagedList;
 
-namespace Authority.Controllers.UI
+namespace Authority.Areas.Dashboard.Controllers
 {
     [Authorize(Policy = "Admin")]
     public class RolesController : Controller

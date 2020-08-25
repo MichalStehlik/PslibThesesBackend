@@ -11,10 +11,10 @@ using Authority.Data;
 using Microsoft.AspNetCore.Authorization;
 using static IdentityServer4.IdentityServerConstants;
 
-namespace Authority.Controllers.Api
+namespace Authority.Areas.Api.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Constants.LocalScopeName)]
+    [Authorize(Policy = "ApiAdmin")]
     [ApiController]
     public class RolesController : ControllerBase
     {
