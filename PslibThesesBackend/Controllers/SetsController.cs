@@ -143,6 +143,7 @@ namespace PslibThesesBackend.Controllers
 
         // DELETE: Sets/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<Set>> DeleteSet(int id)
         {
             // TODO kontrola, zda v sadě nejsou práce
@@ -180,7 +181,6 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("{id}/terms/{termId}")]
-        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> GetSetTerm(int id, int termId)
         {
             var @set = await _context.Sets.FindAsync(id);
@@ -291,7 +291,6 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("{id}/roles/{roleId}")]
-        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetRole>> GetSetRole(int id, int roleId)
         {
             var @set = await _context.Sets.FindAsync(id);

@@ -16,6 +16,7 @@ using PslibThesesBackend.Services;
 using PslibThesesBackend.Prints.ViewModels;
 using System.Text.Encodings.Web;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -27,6 +28,7 @@ namespace PslibThesesBackend.Controllers
         private RazorViewToStringRenderer _razorRenderer;
         private IConfiguration _configuration;
         private EmailSender _emailSender;
+        private readonly IAuthorizationService _authorizationService;
 
         private readonly Dictionary<WorkState, List<WorkState>> _stateTransitions = new Dictionary<WorkState, List<WorkState>>
         {
@@ -37,12 +39,13 @@ namespace PslibThesesBackend.Controllers
             { WorkState.Succesful, new List<WorkState> {} },
             { WorkState.Undefended, new List<WorkState> {} }
         };
-        public WorksController(ThesesContext context, RazorViewToStringRenderer razorRenderer, IConfiguration configuration, EmailSender emailSender)
+        public WorksController(ThesesContext context, RazorViewToStringRenderer razorRenderer, IConfiguration configuration, EmailSender emailSender, IAuthorizationService authorizationService)
         {
             _context = context;
             _razorRenderer = razorRenderer;
             _configuration = configuration;
             _emailSender = emailSender;
+            _authorizationService = authorizationService;
         }
         // GET: Work
         [HttpGet]
@@ -249,6 +252,7 @@ namespace PslibThesesBackend.Controllers
 
         // POST: Works
         [HttpPost]
+        [Authorize(Policy="AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<Idea>> Post([FromBody] WorkInputModel input)
         {
             var user = _context.Users.FindAsync(input.UserId).Result;
@@ -276,12 +280,12 @@ namespace PslibThesesBackend.Controllers
 
             if (manager.CanBeEvaluator == false)
             {
-                return BadRequest("User with ManagerId cannot be assigned as manager.");
+                return BadRequest("User with this ManagerId cannot be assigned as manager.");
             }
 
             if (author.CanBeAuthor == false)
             {
-                return BadRequest("User with AuthorId cannot be assigned as author.");
+                return BadRequest("User with this AuthorId cannot be assigned as author.");
             }
             var work = new Work
             {
@@ -329,6 +333,7 @@ namespace PslibThesesBackend.Controllers
 
         // PUT: Works/5
         [HttpPut("{id}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<IActionResult> Put(int id, [FromBody] WorkInputModel input)
         {
             if (id != input.Id)
@@ -415,6 +420,7 @@ namespace PslibThesesBackend.Controllers
 
         // PUT: Works/5/base
         [HttpPut("{id}/base")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<IActionResult> PutBase(int id, [FromBody] WorkBaseInputModel input)
         {
             if (id != input.Id)
@@ -449,15 +455,19 @@ namespace PslibThesesBackend.Controllers
 
             if (work.ManagerId != input.ManagerId && manager.CanBeEvaluator == false)
             {
-                return BadRequest("User with ManagerId cannot be assigned as manager.");
+                return BadRequest("User with this ManagerId cannot be assigned as manager.");
             }
 
             if (work.AuthorId != input.AuthorId && author.CanBeAuthor == false)
             {
-                return BadRequest("User with AuthorId cannot be assigned as author.");
+                return BadRequest("User with this AuthorId cannot be assigned as author.");
             }
 
-            // only Admin can edit in other than InPreparation state
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can edit work in this state");
+            }
 
             work.Name = input.Name;
             work.Description = input.Description;
@@ -488,14 +498,68 @@ namespace PslibThesesBackend.Controllers
             return NoContent();
         }
 
+        // PUT: Works/5/expenditures
+        [HttpPut("{id}/expenditures")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<IActionResult> PutExpenditures(int id, [FromBody] WorkExpendituresInputModel input)
+        {
+            if (id != input.Id)
+            {
+                return BadRequest();
+            }
+
+            var work = await _context.Works.FindAsync(id);
+            _context.Entry(work).State = EntityState.Modified;
+            if (work == null)
+            {
+                return NotFound();
+            }
+
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can edit work in this state");
+            }
+
+            work.MaterialCosts = input.MaterialCosts;
+            work.MaterialCostsProvidedBySchool = input.MaterialCostsProvidedBySchool;
+            work.ServicesCosts = input.ServicesCosts;
+            work.ServicesCostsProvidedBySchool = input.ServicesCostsProvidedBySchool;
+            work.DetailExpenditures = input.DetailExpenditures;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!WorkExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            return NoContent();
+        }
+
         // DELETE: Works/5
         [HttpDelete("{id}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<Idea>> Delete(int id)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound();
+            }
+
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can delete work in this state");
             }
 
             _context.Works.Remove(work);
@@ -569,13 +633,21 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">Object containing text</param>
         /// <returns>New goal, HTTP 404</returns>
         [HttpPost("{id}/goals")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> PostWorkGoals(int id, [FromBody] WorkGoalInputModel goalText)
         {
-            var work = await _context.Ideas.FindAsync(id);
+            var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound("work not found");
             }
+
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
+            }
+
             if (String.IsNullOrEmpty(goalText.Text))
             {
                 return BadRequest("text of goal cannot be empty");
@@ -603,6 +675,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">New collection of goals</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/goals")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<List<IdeaGoal>>> PutWorkGoals(int id, [FromBody] List<WorkGoalInputModel> newGoalTexts)
         {
             var work = await _context.Works.FindAsync(id);
@@ -610,6 +683,13 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("work not found");
             }
+
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
+            }
+
             var goals = _context.WorkGoals.Where(wg => wg.Work == work).AsNoTracking().ToList();
             if (goals != null)
             {
@@ -640,6 +720,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">New text of goal</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/goals/{order}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> PutWorkGoalsOfOrder(int id, int order, [FromBody] WorkGoalInputModel goalText)
         {
             var work = await _context.Works.FindAsync(id);
@@ -650,6 +731,11 @@ namespace PslibThesesBackend.Controllers
             if (String.IsNullOrEmpty(goalText.Text))
             {
                 return BadRequest("text of goal cannot be empty");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
             var goal = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == order).FirstOrDefault();
             if (goal == null)
@@ -673,6 +759,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="newOrder">New position</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/goals/{order}/moveto/{newOrder}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> PutWorkGoalsMove(int id, int order, int newOrder)
         {
             var work = await _context.Works.FindAsync(id);
@@ -684,6 +771,11 @@ namespace PslibThesesBackend.Controllers
             if (goal == null)
             {
                 return NotFound("goal not found");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
 
             int maxOrder;
@@ -733,12 +825,18 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">Work id</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpDelete("{id}/goals")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<IdeaGoal>> DeleteAllWorkGoals(int id)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound("work not found");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
             var goals = _context.WorkGoals.Where(ig => ig.Work == work).AsNoTracking().ToList();
             if (goals != null)
@@ -758,12 +856,18 @@ namespace PslibThesesBackend.Controllers
         /// <param name="order">Order of removed goal</param>
         /// <returns>Removed goal, HTTP 404</returns>
         [HttpDelete("{id}/goals/{order}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> DeleteWorkGoal(int id, int order)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound("work not found");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
             var goal = _context.WorkGoals.Where(ig => ig.Work == work && ig.Order == order).AsNoTracking().FirstOrDefault();
             if (goal == null)
@@ -859,6 +963,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">Object containing text</param>
         /// <returns>New goal, HTTP 404</returns>
         [HttpPost("{id}/outlines")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> PostWorkOutlines(int id, [FromBody] WorkOutlineInputModel outlineText)
         {
             var work = await _context.Works.FindAsync(id);
@@ -869,6 +974,11 @@ namespace PslibThesesBackend.Controllers
             if (String.IsNullOrEmpty(outlineText.Text))
             {
                 return BadRequest("text of outline cannot be empty");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
             int maxOrder;
             try
@@ -893,12 +1003,18 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">New collection of outlines</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/outlines")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<List<IdeaGoal>>> PutWorkOutlines(int id, [FromBody] List<WorkOutlineInputModel> newOutlineTexts)
         {
             var work = await _context.Works.FindAsync(id);
             if (work == null)
             {
                 return NotFound("work not found");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
             var outlines = _context.WorkOutlines.Where(wo => wo.Work == work).AsNoTracking().ToList();
             if (outlines != null)
@@ -930,6 +1046,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="goalText">New text of outline</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/outlines/{order}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkOutline>> PutWorkOutlineOfOrder(int id, int order, [FromBody] WorkOutlineInputModel outlineText)
         {
             var work = await _context.Works.FindAsync(id);
@@ -940,6 +1057,11 @@ namespace PslibThesesBackend.Controllers
             if (String.IsNullOrEmpty(outlineText.Text))
             {
                 return BadRequest("text of outline cannot be empty");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
             var outline = _context.WorkOutlines.Where(wo => wo.Work == work && wo.Order == order).FirstOrDefault();
             if (outline == null)
@@ -963,6 +1085,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="newOrder">New position</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpPut("{id}/outlines/{order}/moveto/{newOrder}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> PutWorkOutlinesMove(int id, int order, int newOrder)
         {
             var work = await _context.Works.FindAsync(id);
@@ -975,11 +1098,16 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("outline not found");
             }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
+            }
 
             int maxOrder;
             try
             {
-                maxOrder = _context.IdeaOutlines.Where(wg => wg.IdeaId == id).Max(wg => wg.Order);
+                maxOrder = _context.WorkOutlines.Where(wg => wg.WorkId == id).Max(wg => wg.Order);
             }
             catch
             {
@@ -1023,6 +1151,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">Idea id</param>
         /// <returns>HTTP 201, 404</returns>
         [HttpDelete("{id}/outlines")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkGoal>> DeleteAllWorkOulines(int id)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1031,6 +1160,11 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("work not found");
             }
             var outlines = _context.WorkOutlines.Where(wg => wg.Work == work).AsNoTracking().ToList();
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
+            }
             if (outlines != null)
             {
                 _context.WorkOutlines.RemoveRange(outlines);
@@ -1048,6 +1182,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="order">Order of removed goal</param>
         /// <returns>Removed goal, HTTP 404</returns>
         [HttpDelete("{id}/outlines/{order}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<IdeaGoal>> DeleteWorkOutline(int id, int order)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1059,6 +1194,11 @@ namespace PslibThesesBackend.Controllers
             if (outline == null)
             {
                 return NotFound("outline not found");
+            }
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
             }
 
             WorkOutline removedOutline = new WorkOutline { Id = outline.Id, WorkId = id, Order = order, Text = outline.Text };
@@ -1090,6 +1230,7 @@ namespace PslibThesesBackend.Controllers
 
         // --- state
         [HttpGet("{id}/state")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<StateDescription>> GetWorkState(int id)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1101,6 +1242,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("{id}/nextstates")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<List<StateDescription>>> GetWorkNextStates(int id)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1113,12 +1255,14 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpGet("allstates")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public ActionResult<List<StateDescription>> GetWorkAllStates()
         {
             return Enum.GetValues(typeof(WorkState)).Cast<WorkState>().Select(v => new StateDescription { Code = v, Description = v.ToString()}).ToList();
         }
 
         [HttpPut("{id}/state")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkState>> PutWorkState(int id, WorkState newState)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1162,6 +1306,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpPost("{id}/roles")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult> PostWorkRoles(int id, [FromBody] WorkRole workRole)
         {
             var work = await _context.Works.FindAsync(id);
@@ -1185,6 +1330,7 @@ namespace PslibThesesBackend.Controllers
         }
 
         [HttpDelete("{id}/roles/{roleId}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkRole>> DeleteWorkRole(int id, int roleId)
         {
             var work = await _context.Works.FindAsync(id);
