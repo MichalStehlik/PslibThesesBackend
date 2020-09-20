@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -12,9 +13,11 @@ namespace PslibThesesBackend.Models
         [Key]
         public int Id { get; set; }
         [Required]
-        public string Name { get; set; }
+        public string Name { get; set; }    
+        [ForeignKey("ScaleId")]
+        public Scale Scale { get; set; }
         [Required]
-        public int MaxGrade { get; set; } = 5;
+        public int ScaleId { get; set; }
         [Required]
         public bool Active { get; set; } = true;
         [Required]

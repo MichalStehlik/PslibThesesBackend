@@ -35,5 +35,6 @@ namespace PslibThesesBackend.Models
         public WorkState State { get; set; } = WorkState.InPreparation;
         public ICollection<WorkGoal> Goals { get; } = new List<WorkGoal>();
         public ICollection<WorkOutline> Outlines { get; } = new List<WorkOutline>();
+        public ICollection<WorkRole> Roles { get; } = new List<WorkRole>();
     }
 }

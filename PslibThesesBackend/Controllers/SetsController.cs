@@ -39,8 +39,7 @@ namespace PslibThesesBackend.Controllers
                     Name = s.Name,
                     Active = s.Active,
                     Template = s.Template,
-                    Year = s.Year,
-                    MaxGrade = s.MaxGrade
+                    Year = s.Year
                 }
             );
             int total = sets.CountAsync().Result;
@@ -405,7 +404,6 @@ namespace PslibThesesBackend.Controllers
         public int Year { get; set; }
         public bool Active { get; set; }
         public ApplicationTemplate Template { get; set; }
-        public int MaxGrade { get; set; }
     }
 
     public class SetTermIdInputModel
