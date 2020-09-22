@@ -14,9 +14,9 @@ namespace PslibThesesBackend.Models
         [Required]
         public string Name { get; set; }
         public bool ClassTeacher { get; set; } = false;
-        public bool RequiredForPrint { get; set; } = false;
-        public bool RequiredForAdvancement { get; set; } = false;
-        public bool ShowsOnApplication { get; set; } = false;
+        public bool Manager { get; set; } = false;
+        public bool PrintedInApplication { get; set; } = false;
+        public bool PrintedInReview { get; set; } = false;
         [JsonIgnore]
         public Set Set { get; set; }
         [Required]

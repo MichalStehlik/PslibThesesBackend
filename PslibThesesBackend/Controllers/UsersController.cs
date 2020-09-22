@@ -15,7 +15,6 @@ using PslibThesesBackend.ViewModels;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Formats;
 using SixLabors.ImageSharp.Processing;
-using SixLabors.Primitives;
 
 namespace PslibThesesBackend.Controllers
 {

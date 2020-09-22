@@ -1385,7 +1385,7 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("set not found");
             }
-            var roles = _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == id && wr.SetRole.ShowsOnApplication == true).Include(wr => wr.WorkRoleUsers).ToList();
+            var roles = _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == id && wr.SetRole.PrintedInApplication == true).Include(wr => wr.WorkRoleUsers).ToList();
             string templateFileName = "";
             string outputFileName = "";
             switch (set.Template)

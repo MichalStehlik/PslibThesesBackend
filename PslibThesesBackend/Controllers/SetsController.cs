@@ -261,7 +261,7 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("set not found");
             }
             if (st.WarningDate == null) st.WarningDate = st.Date.AddDays(-2);
-            var newTerm = new SetTerm { SetId = id, Date = st.Date, WarningDate = st.WarningDate };
+            var newTerm = new SetTerm { SetId = id, Name = st.Name, Date = st.Date, WarningDate = st.WarningDate };
             _context.SetTerms.Add(newTerm);
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetSetTerm", new { id = newTerm.SetId, termId = newTerm.Id }, newTerm);
@@ -284,7 +284,7 @@ namespace PslibThesesBackend.Controllers
             var setTerms = _context.SetRoles
                 .Where(st => st.SetId == id)
                 .OrderBy(st => st.Name)
-                .Select(st => new { Id = st.Id, Name = st.Name, st.ClassTeacher, st.RequiredForAdvancement, st.RequiredForPrint, QuestionsCount = st.Questions.Count })
+                .Select(st => new { Id = st.Id, Name = st.Name, st.ClassTeacher, st.Manager, st.PrintedInApplication, st.PrintedInReview, QuestionsCount = st.Questions.Count })
                 .AsNoTracking();
             return Ok(setTerms);
         }
@@ -336,8 +336,9 @@ namespace PslibThesesBackend.Controllers
             }
             role.Name = sr.Name;
             role.ClassTeacher = sr.ClassTeacher;
-            role.RequiredForAdvancement = sr.RequiredForAdvancement;
-            role.RequiredForPrint = sr.RequiredForPrint;
+            role.Manager = sr.Manager;
+            role.PrintedInApplication = sr.PrintedInApplication;
+            role.PrintedInReview = sr.PrintedInReview;
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetSetRole", new { id = role.SetId, roleId = role.Id });
         }
@@ -387,7 +388,13 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("set not found");
             }
-            var newRole = new SetRole { SetId = id, Name = sr.Name, ClassTeacher = sr.ClassTeacher, RequiredForAdvancement = sr.RequiredForAdvancement, RequiredForPrint = sr.RequiredForPrint};
+            var newRole = new SetRole { 
+                SetId = id, 
+                Name = sr.Name, 
+                ClassTeacher = sr.ClassTeacher, Manager = sr.Manager, 
+                PrintedInApplication = sr.PrintedInApplication,
+                PrintedInReview = sr.PrintedInReview,
+            };
             _context.SetRoles.Add(newRole);
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetSetRole", new { id = newRole.SetId, roleId = newRole.Id }, newRole);
@@ -417,7 +424,8 @@ namespace PslibThesesBackend.Controllers
     {
         public string Name { get; set; }
         public bool ClassTeacher { get; set; }
-        public bool RequiredForAdvancement { get; set; }
-        public bool RequiredForPrint { get; set; }
+        public bool Manager { get; set; }
+        public bool PrintedInApplication { get; set; }
+        public bool PrintedInReview { get; set; }
     }
 }

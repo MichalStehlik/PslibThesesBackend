@@ -58,8 +58,8 @@ namespace PslibThesesBackend.Models
             modelBuilder.Entity<Set>(entity =>
             {
                 entity.HasMany(s => s.Works).WithOne(w => w.Set).HasForeignKey(w => w.SetId).OnDelete(DeleteBehavior.Restrict);
-                entity.HasMany(s => s.Terms).WithOne(t => t.Set).HasForeignKey(t => t.SetId).OnDelete(DeleteBehavior.Restrict); // ???
-                entity.HasMany(s => s.Roles).WithOne(r => r.Set).HasForeignKey(r => r.SetId).OnDelete(DeleteBehavior.Restrict); // ???
+                entity.HasMany(s => s.Terms).WithOne(t => t.Set).HasForeignKey(t => t.SetId).OnDelete(DeleteBehavior.NoAction);
+                entity.HasMany(s => s.Roles).WithOne(r => r.Set).HasForeignKey(r => r.SetId).OnDelete(DeleteBehavior.NoAction); // ???
             });
             modelBuilder.Entity<WorkRoleUser>(entity =>
             {

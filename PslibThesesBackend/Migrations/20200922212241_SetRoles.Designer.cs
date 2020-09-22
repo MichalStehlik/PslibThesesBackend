@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PslibThesesBackend.Models;
 
 namespace PslibThesesBackend.Migrations
 {
     [DbContext(typeof(ThesesContext))]
-    partial class ThesesContextModelSnapshot : ModelSnapshot
+    [Migration("20200922212241_SetRoles")]
+    partial class SetRoles
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
