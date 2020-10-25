@@ -214,17 +214,23 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("term not found");
             }
-            var setTerm = _context.SetTerms.Where(st => (st.SetId == id && st.Id == termId)).FirstOrDefault();
-            if (@setTerm == null)
+            if (term.SetId != set.Id)
             {
-                return NotFound("term is not in this set");
+                return BadRequest("term is not in this set");
             }
+            /*
+            var works = _context.Works.Where(w => (w.SetId == id)).Count();
+            if (works != 0)
+            {
+                return BadRequest("it is not possible to edit any terms after set already contains at least one work");
+            } 
+            */
             if (st.WarningDate == null) st.WarningDate = st.Date.AddDays(-2);
             term.Name = st.Name;
             term.Date = st.Date;
             term.WarningDate = st.WarningDate;
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetTerm", new { id = term.SetId, termId = term.Id });
+            return CreatedAtAction("GetSetTerm", new { id = term.SetId, termId = term.Id }, id);
         }
 
         [HttpDelete("{id}/terms/{termId}")]
@@ -324,15 +330,14 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("role not found");
             }
-            var setRole = _context.SetRoles.Where(st => (st.SetId == id && st.Id == roleId)).FirstOrDefault();
-            if (@setRole == null)
+            if (role.SetId == set.Id)
             {
-                return NotFound("role is not in this set");
+                return BadRequest("role is not in this set");
             }
             var works = _context.Works.Where(w => (w.SetId == id)).Count();
             if (works != 0)
             {
-                return BadRequest("it is not possible to add any roles after set already contains at least one work");
+                return BadRequest("it is not possible to edit any roles after set already contains at least one work");
             }
             role.Name = sr.Name;
             role.ClassTeacher = sr.ClassTeacher;
@@ -340,7 +345,7 @@ namespace PslibThesesBackend.Controllers
             role.PrintedInApplication = sr.PrintedInApplication;
             role.PrintedInReview = sr.PrintedInReview;
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetRole", new { id = role.SetId, roleId = role.Id });
+            return CreatedAtAction("GetSetRole", new { id = role.SetId, roleId = role.Id }, id);
         }
 
         /// <summary>
@@ -401,6 +406,122 @@ namespace PslibThesesBackend.Controllers
         }
 
         // -- questions
+
+        [HttpGet("{setId}/questions/{termId}/{roleId}")]
+        public ActionResult<IEnumerable<SetQuestion>> GetSetQuestions(int setId, int termId, int roleId)
+        {
+            var setQuestions = _context.SetQuestions
+                .Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId)
+                .OrderBy(sq => sq.Order)
+                .AsNoTracking();
+            return Ok(setQuestions);
+        }
+
+        [HttpGet("{setId}/questions/{id}")]
+        public async Task<ActionResult<SetRole>> GetSetQuestion(int id)
+        {
+            var @question = await _context.SetQuestions.FindAsync(id);
+            if (@question == null)
+            {
+                return NotFound("question not found");
+            }
+            return Ok(question);
+        }
+
+        [HttpPost("{setId}/questions/{termId}/{roleId}")]
+        [Authorize(Policy = "Administrator")]
+        public async Task<ActionResult<SetQuestion>> PostSetQuestion(int setId, int termId, int roleId, [FromBody] SetQuestionInputModel item)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @role = await _context.SetRoles.FindAsync(roleId);
+            if (@role == null)
+            {
+                return NotFound("role not found");
+            }
+            var @term = await _context.SetTerms.FindAsync(termId);
+            if (@term == null)
+            {
+                return NotFound("term not found");
+            }
+
+            if (term.SetId != set.Id && role.SetId != set.Id)
+            {
+                return BadRequest("role or term is outside this set");
+            }
+
+            int maxQuestionOrder;
+            try
+            {
+                maxQuestionOrder = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId).Max(sq => sq.Order);
+            }
+            catch
+            {
+                maxQuestionOrder = 0;
+            }
+
+            var newQuestion = new SetQuestion
+            {
+                SetTermId = termId,
+                SetRoleId = roleId,
+                Text = item.Text,
+                Description = item.Description,
+                Points = item.Points,
+                Order = maxQuestionOrder
+            };
+            _context.SetQuestions.Add(newQuestion);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetSetQuestion", new { setId =  setId, id = newQuestion.Id}, newQuestion);
+        }
+
+        [HttpDelete("{setId}/questions/{id}")]
+        public async Task<ActionResult<IdeaGoal>> DeleteSetQuestion(int id)
+        {
+            var question = await _context.SetQuestions.FindAsync(id);
+            if (question == null)
+            {
+                return NotFound("question not found");
+            }
+
+            int maxQuestionOrder;
+            try
+            {
+                maxQuestionOrder = _context.SetQuestions.Where(sq => 
+                    sq.SetRoleId == question.SetRoleId 
+                    &&
+                    sq.SetTermId == question.SetTermId
+                ).Max(sq => sq.Order);
+            }
+            catch
+            {
+                maxQuestionOrder = 0;
+            }
+
+            _context.SetQuestions.Remove(question);
+            _context.SaveChanges();
+
+            for (int i = question.Order; i <= maxQuestionOrder; i++)
+            {
+                var row = _context.SetQuestions.Where(sq => 
+                    sq.SetRoleId == question.SetRoleId
+                    &&
+                    sq.SetTermId == question.SetTermId
+                    &&
+                    sq.Order == i).FirstOrDefault();
+                if (row != null)
+                {
+                    row.Order = i - 1;
+                    _context.SaveChanges();
+                }
+            }
+
+            return Ok(question);
+        }
+
         // -- answers
     }
 
@@ -427,5 +548,13 @@ namespace PslibThesesBackend.Controllers
         public bool Manager { get; set; }
         public bool PrintedInApplication { get; set; }
         public bool PrintedInReview { get; set; }
+    }
+
+    public class SetQuestionInputModel
+    {
+        public int Id { get; set; }
+        public string Text { get; set; }
+        public string Description { get; set; }
+        public int Points { get; set; }
     }
 }
