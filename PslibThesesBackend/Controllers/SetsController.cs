@@ -295,6 +295,12 @@ namespace PslibThesesBackend.Controllers
             return Ok(setTerms);
         }
 
+        /// <summary>
+        /// Fetch role data
+        /// </summary>
+        /// <param name="id">set id</param>
+        /// <param name="roleId">id of role</param>
+        /// <returns>role</returns>
         [HttpGet("{id}/roles/{roleId}")]
         public async Task<ActionResult<SetRole>> GetSetRole(int id, int roleId)
         {
@@ -316,6 +322,13 @@ namespace PslibThesesBackend.Controllers
             return @role;
         }
 
+        /// <summary>
+        /// Updates definition of role
+        /// </summary>
+        /// <param name="id">id of set</param>
+        /// <param name="roleId">id of role</param>
+        /// <param name="sr">role data</param>
+        /// <returns>modified role</returns>
         [HttpPut("{id}/roles/{roleId}")]
         [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetTerm>> PutSetRoles(int id, int roleId, [FromBody] SetRoleIdInputModel sr)
@@ -407,6 +420,13 @@ namespace PslibThesesBackend.Controllers
 
         // -- questions
 
+        /// <summary>
+        /// Gets collection of question in specific term and role (both should be in same set)
+        /// </summary>
+        /// <param name="setId">id of set (not used)</param>
+        /// <param name="termId">id of term in set</param>
+        /// <param name="roleId">id of role in set</param>
+        /// <returns>question</returns>
         [HttpGet("{setId}/questions/{termId}/{roleId}")]
         public ActionResult<IEnumerable<SetQuestion>> GetSetQuestions(int setId, int termId, int roleId)
         {
@@ -417,6 +437,11 @@ namespace PslibThesesBackend.Controllers
             return Ok(setQuestions);
         }
 
+        /// <summary>
+        /// Gets one question by its id
+        /// </summary>
+        /// <param name="id">question internal id</param>
+        /// <returns>question</returns>
         [HttpGet("{setId}/questions/{id}")]
         public async Task<ActionResult<SetRole>> GetSetQuestion(int id)
         {
@@ -428,6 +453,32 @@ namespace PslibThesesBackend.Controllers
             return Ok(question);
         }
 
+        /// <summary>
+        /// Gets one question from term, role and order in term+role combination
+        /// </summary>
+        /// <param name="termId">id of term</param>
+        /// <param name="roleId">id of role</param>
+        /// <param name="order">order</param>
+        /// <returns></returns>
+        [HttpGet("{setId}/questions/{termId}/{roleId}/{order}")]
+        public async Task<ActionResult<SetRole>> GetSetQuestionOrder(int termId, int roleId, int order)
+        {
+            var question = await _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId && sq.Order == order).FirstOrDefaultAsync();
+            if (@question == null)
+            {
+                return NotFound("question not found");
+            }
+            return Ok(question);
+        }
+
+        /// <summary>
+        /// Creates a new question in role and term
+        /// </summary>
+        /// <param name="setId">id of set (not actually needed, just verified)</param>
+        /// <param name="termId">id of term</param>
+        /// <param name="roleId">id of role</param>
+        /// <param name="item">question data</param>
+        /// <returns>created question</returns>
         [HttpPost("{setId}/questions/{termId}/{roleId}")]
         [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetQuestion>> PostSetQuestion(int setId, int termId, int roleId, [FromBody] SetQuestionInputModel item)
@@ -456,7 +507,7 @@ namespace PslibThesesBackend.Controllers
             int maxQuestionOrder;
             try
             {
-                maxQuestionOrder = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId).Max(sq => sq.Order);
+                maxQuestionOrder = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId).Max(sq => sq.Order) + 1;
             }
             catch
             {
@@ -478,8 +529,13 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetSetQuestion", new { setId =  setId, id = newQuestion.Id}, newQuestion);
         }
 
+        /// <summary>
+        /// deletes question given by its internal id and reorganizes all remaining to maintain same order
+        /// </summary>
+        /// <param name="id">id of setquestion</param>
+        /// <returns>deleted question</returns>
         [HttpDelete("{setId}/questions/{id}")]
-        public async Task<ActionResult<IdeaGoal>> DeleteSetQuestion(int id)
+        public async Task<ActionResult<SetQuestion>> DeleteSetQuestion(int id)
         {
             var question = await _context.SetQuestions.FindAsync(id);
             if (question == null)
@@ -520,6 +576,99 @@ namespace PslibThesesBackend.Controllers
             }
 
             return Ok(question);
+        }
+
+        /// <summary>
+        /// updates question by its id
+        /// </summary>
+        /// <param name="setId">id of set</param>
+        /// <param name="questionId">id of question</param>
+        /// <param name="item">question data</param>
+        /// <returns>updated question</returns>
+        [HttpPut("{setId}/questions/{questionId}")]
+        [Authorize(Policy = "Administrator")]
+        public async Task<ActionResult<SetQuestion>> PutSetQuestion(int setId, int questionId, [FromBody] SetQuestionInputModel item)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @question = await _context.SetQuestions.FindAsync(questionId);
+            if (@question == null)
+            {
+                return NotFound("question not found");
+            }
+            if (questionId != item.Id)
+            {
+                return BadRequest("inconsistent data");
+            }
+            question.Text = item.Text;
+            question.Description = item.Description;
+            question.Points = item.Points;
+            await _context.SaveChangesAsync();
+            return CreatedAtAction("GetSetQuestion", new { setId = setId, id = question.Id }, question);
+        }
+
+        /// <summary>
+        /// changes order of specific question and reorders questions to maintain order
+        /// </summary>
+        /// <param name="setId">id of set</param>
+        /// <param name="termId">id of term</param>
+        /// <param name="roleId">id of role</param>
+        /// <param name="order">current order of question</param>
+        /// <param name="newOrder">new order of question</param>
+        /// <returns></returns>
+        [HttpPut("{setId}/questions/{termId}/{roleId}/{order}/moveto/{newOrder}")]
+        [Authorize(Policy = "Administrator")]
+        public async Task<ActionResult<SetQuestion>> PutSetQuestionMove(int setId, int termId, int roleId, int order, int newOrder)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+
+            var question = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId && sq.Order == order).FirstOrDefault();
+            if (question == null)
+            {
+                return NotFound("question not found");
+            }
+
+            int maxOrder;
+            try
+            {
+                maxOrder = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId).Max(sq => sq.Order);
+            }
+            catch
+            {
+                maxOrder = 0;
+            }
+
+            if (newOrder > maxOrder) newOrder = maxOrder;
+
+            if (order > newOrder) // moving down
+            {
+                for (int i = order - 1; i >= newOrder; i--)
+                {
+                    var item = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId && sq.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order + 1;
+                    _context.SaveChanges();
+                }
+            }
+            else if (order < newOrder) // moving up
+            {
+                for (int i = order + 1; i <= newOrder; i++)
+                {
+                    var item = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId && sq.Order == i).FirstOrDefault();
+                    if (item != null) item.Order = item.Order - 1;
+                    _context.SaveChanges();
+                }
+            }
+
+            question.Order = newOrder;
+            _context.SaveChanges();
+            return NoContent();
         }
 
         // -- answers
