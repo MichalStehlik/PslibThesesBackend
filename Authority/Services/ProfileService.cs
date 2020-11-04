@@ -35,9 +35,9 @@ namespace Authority.Services
                 string encodedImage = "";
                 if (user.IconImage != null)
                     encodedImage = Convert.ToBase64String(user.IconImage);
-                foreach (var ir in context.RequestedResources.IdentityResources)
+                foreach (var ct in context.RequestedClaimTypes)
                 {
-                    switch (ir.Name)
+                    switch (ct)
                     {
                         case "email":
                             context.IssuedClaims.Add(new Claim("email", user.Email));

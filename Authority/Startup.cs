@@ -141,6 +141,11 @@ namespace Authority
             {
                 ApiResources.Add(new ApiResource(ar.GetValue<string>("Name"), ar.GetValue<string>("DisplayName")));
             };
+            List<ApiScope> ApiScopes = new List<ApiScope>();
+            foreach (var ar in Configuration.GetSection("ApiResources").GetChildren())
+            {
+                ApiScopes.Add(new ApiScope(ar.GetValue<string>("Name"), ar.GetValue<string>("DisplayName")));
+            };
 
             var builder = services.AddIdentityServer(options =>
             {
@@ -171,6 +176,7 @@ namespace Authority
                 .AddInMemoryApiResources(ApiResources)
                 .AddAspNetIdentity<ApplicationUser>()
                 .AddProfileService<ProfileService<ApplicationUser>>()
+                .AddInMemoryApiScopes(ApiScopes)
                 //.AddInMemoryClients(Config.GetClients())
                 ;
 
@@ -210,6 +216,26 @@ namespace Authority
              //   endpoints.MapRazorPages();
                 endpoints.MapControllers();
                 endpoints.MapDefaultControllerRoute();
+                endpoints.MapControllerRoute(name: "login",
+                    pattern: "Login",
+                    defaults: new { controller = "Account", action = "Login" }
+                );
+                endpoints.MapControllerRoute(name: "logout",
+                    pattern: "Logout",
+                    defaults: new { controller = "Account", action = "Logout" }
+                );
+                endpoints.MapControllerRoute(name: "accessdenied",
+                    pattern: "AccessDenied",
+                    defaults: new { controller = "Home", action = "AccessDenied" }
+                );
+                endpoints.MapControllerRoute(name: "error",
+                    pattern: "Error",
+                    defaults: new { controller = "Home", action = "Error" }
+                );
+                endpoints.MapControllerRoute(name: "register",
+                    pattern: "Register",
+                    defaults: new { controller = "Account", action = "Register" }
+                );
                 endpoints.MapControllerRoute("default", "{area}","{controller=Home}/{action=Index}/{id?}");
             });
         }
