@@ -15,6 +15,7 @@ using System.Linq;
 using System.Collections.Generic;
 using IdentityServer4.Models;
 using System.Threading.Tasks;
+using IdentityModel;
 
 namespace Authority
 {
@@ -139,7 +140,12 @@ namespace Authority
             List<ApiResource> ApiResources = new List<ApiResource>();
             foreach (var ar in Configuration.GetSection("ApiResources").GetChildren())
             {
-                ApiResources.Add(new ApiResource(ar.GetValue<string>("Name"), ar.GetValue<string>("DisplayName")));
+                ApiResources.Add(new ApiResource(ar.GetValue<string>("Name"), ar.GetValue<string>("DisplayName")) 
+                { 
+                    UserClaims = { JwtClaimTypes.Audience},
+                    Scopes = new List<string> { ar.GetValue<string>("Name") }
+                }
+                );
             };
             List<ApiScope> ApiScopes = new List<ApiScope>();
             foreach (var ar in Configuration.GetSection("ApiResources").GetChildren())
