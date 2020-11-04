@@ -672,6 +672,26 @@ namespace PslibThesesBackend.Controllers
         }
 
         // -- answers
+
+        [HttpGet("{setId}/questions/{questionId}/answers")]
+        public async Task<ActionResult<IEnumerable<SetQuestion>>> GetSetAnwers(int setId, int questionId)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var question = await _context.SetQuestions.FindAsync(questionId);
+            if (question == null)
+            {
+                return NotFound("question not found");
+            }
+            var setAnswers = _context.SetAnswers
+                .Where(sa => sa.SetQuestionId == questionId)
+                .OrderByDescending(sa => sa.Rating)
+                .AsNoTracking();
+            return Ok(setAnswers);
+        }
     }
 
     class SetListViewModel
