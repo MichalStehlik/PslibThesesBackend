@@ -15,6 +15,7 @@ namespace PslibThesesBackend.Models
         [Required]
         public int WorkRoleId { get; set; }
         [ForeignKey("WorkRoleId")]
+        [JsonIgnore]
         public WorkRole WorkRole { get; set; }
         [Required]
         [JsonIgnore]

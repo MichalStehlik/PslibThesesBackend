@@ -520,6 +520,14 @@ namespace PslibThesesBackend.Controllers
             return NoContent();
         }
 
+        // -- works
+        [HttpGet("{id}/works")]
+        public async Task<ActionResult<List<IdeaViewModel>>> GetWorks(Guid id)
+        {
+            var works = await _context.Works.Where(w => w.AuthorId == id).ToListAsync();
+            return Ok(works);
+        }
+
         /// <summary>
         /// Check if user with Id exists.
         /// </summary>

@@ -53,26 +53,14 @@ namespace PslibThesesBackend.Controllers
                 sets = sets.Where(t => (t.Year == year));
             int filtered = sets.CountAsync().Result;
 
-            switch (order)
+            sets = order switch
             {
-                case "name":
-                    sets = sets.OrderBy(t => t.Name);
-                    break;
-                case "name_desc":
-                    sets = sets.OrderByDescending(s => s.Name);
-                    break;
-                case "id":
-                    sets = sets.OrderBy(s => s.Id);
-                    break;
-                case "year_desc":
-                    sets = sets.OrderByDescending(s => s.Year);
-                    break;
-                case "year":
-                default:
-                    sets = sets.OrderBy(s => s.Year);
-                    break;
-            }
-
+                "name" => sets.OrderBy(t => t.Name),
+                "name_desc" => sets.OrderByDescending(s => s.Name),
+                "id" => sets.OrderBy(s => s.Id),
+                "year_desc" => sets.OrderByDescending(s => s.Year),
+                _ => sets.OrderBy(s => s.Year),
+            };
             if (pagesize != 0)
             {
                 sets = sets.Skip(page * pagesize).Take(pagesize);
@@ -80,7 +68,7 @@ namespace PslibThesesBackend.Controllers
             var result = sets.ToList();
             int count = result.Count();
 
-            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = result });
+            return Ok(new { total, filtered, count, page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = result });
         }
 
         // GET: Sets/5
@@ -174,7 +162,7 @@ namespace PslibThesesBackend.Controllers
             var setTerms = _context.SetTerms
                 .Where(st => st.SetId == id)
                 .OrderBy(st => st.Date)
-                .Select(st => new { Id = st.Id, Name = st.Name, Date = st.Date, WarningDate = st.WarningDate, QuestionsCount = st.Questions.Count })
+                .Select(st => new { st.Id, st.Name, st.Date, st.WarningDate, QuestionsCount = st.Questions.Count })
                 .AsNoTracking();
             return Ok(setTerms);
         }
@@ -218,13 +206,6 @@ namespace PslibThesesBackend.Controllers
             {
                 return BadRequest("term is not in this set");
             }
-            /*
-            var works = _context.Works.Where(w => (w.SetId == id)).Count();
-            if (works != 0)
-            {
-                return BadRequest("it is not possible to edit any terms after set already contains at least one work");
-            } 
-            */
             if (st.WarningDate == null) st.WarningDate = st.Date.AddDays(-2);
             term.Name = st.Name;
             term.Date = st.Date;
@@ -290,7 +271,7 @@ namespace PslibThesesBackend.Controllers
             var setTerms = _context.SetRoles
                 .Where(st => st.SetId == id)
                 .OrderBy(st => st.Name)
-                .Select(st => new { Id = st.Id, Name = st.Name, st.ClassTeacher, st.Manager, st.PrintedInApplication, st.PrintedInReview, QuestionsCount = st.Questions.Count })
+                .Select(st => new { st.Id, st.Name, st.ClassTeacher, st.Manager, st.PrintedInApplication, st.PrintedInReview, QuestionsCount = st.Questions.Count })
                 .AsNoTracking();
             return Ok(setTerms);
         }
@@ -343,14 +324,9 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("role not found");
             }
-            if (role.SetId == set.Id)
+            if (role.SetId != set.Id)
             {
                 return BadRequest("role is not in this set");
-            }
-            var works = _context.Works.Where(w => (w.SetId == id)).Count();
-            if (works != 0)
-            {
-                return BadRequest("it is not possible to edit any roles after set already contains at least one work");
             }
             role.Name = sr.Name;
             role.ClassTeacher = sr.ClassTeacher;
@@ -358,7 +334,7 @@ namespace PslibThesesBackend.Controllers
             role.PrintedInApplication = sr.PrintedInApplication;
             role.PrintedInReview = sr.PrintedInReview;
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetRole", new { id = role.SetId, roleId = role.Id }, id);
+            return Ok(role);
         }
 
         /// <summary>
@@ -386,6 +362,11 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("role is not in this set");
             }
+            var works = _context.Works.Where(w => (w.SetId == id)).Count();
+            if (works != 0)
+            {
+                return BadRequest("it is not possible to change number of roles after set already contains at least one work");
+            }
             _context.SetRoles.Remove(role);
             await _context.SaveChangesAsync();
             return role;
@@ -406,6 +387,11 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("set not found");
             }
+            var works = _context.Works.Where(w => (w.SetId == id)).Count();
+            if (works != 0)
+            {
+                return BadRequest("it is not possible to change number of roles after set already contains at least one work");
+            }
             var newRole = new SetRole { 
                 SetId = id, 
                 Name = sr.Name, 
@@ -415,7 +401,63 @@ namespace PslibThesesBackend.Controllers
             };
             _context.SetRoles.Add(newRole);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetRole", new { id = newRole.SetId, roleId = newRole.Id }, newRole);
+            return Ok(newRole);
+        }
+
+        // -- stats
+
+        [HttpGet("{setId}/summary/{termId}/{roleId}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<IEnumerable<SetQuestion>>> GetSetSummary(int setId, int termId, int roleId)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var @role = await _context.SetRoles.FindAsync(roleId);
+            if (@role == null)
+            {
+                return NotFound("role not found");
+            }
+            var @term = await _context.SetTerms.FindAsync(termId);
+            if (@term == null)
+            {
+                return NotFound("term not found");
+            }
+            var questionsSummary = _context.SetQuestions
+                .Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId)
+                .GroupBy(g => 1)
+                .Select(sq => new { questions = sq.Count(), points = sq.Sum(sq => sq.Points) });
+            return Ok(questionsSummary.FirstOrDefault());
+        }
+
+        // -- works
+
+        [HttpGet("{setId}/works")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<IEnumerable<Work>>> GetSetWorks(int setId)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var works = await _context.Works.Where(w => w.SetId == setId).OrderBy(w => w.Name).ToListAsync();           
+            return Ok(works);
+        }
+
+        [HttpGet("{setId}/works/count")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<int>> GetSetWorksCount(int setId)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+            var works = _context.Works.Where(w => w.SetId == setId).OrderBy(w => w.Name).Count();
+            return Ok(works);
         }
 
         // -- questions
@@ -442,7 +484,7 @@ namespace PslibThesesBackend.Controllers
         /// </summary>
         /// <param name="id">question internal id</param>
         /// <returns>question</returns>
-        [HttpGet("{setId}/questions/{id}")]
+        [HttpGet("{setId}/questions/{id}", Name = "GetSetQuestion")]
         public async Task<ActionResult<SetRole>> GetSetQuestion(int id)
         {
             var @question = await _context.SetQuestions.FindAsync(id);
@@ -526,7 +568,7 @@ namespace PslibThesesBackend.Controllers
             _context.SetQuestions.Add(newQuestion);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSetQuestion", new { setId =  setId, id = newQuestion.Id}, newQuestion);
+            return Ok(newQuestion);
         }
 
         /// <summary>
@@ -535,6 +577,7 @@ namespace PslibThesesBackend.Controllers
         /// <param name="id">id of setquestion</param>
         /// <returns>deleted question</returns>
         [HttpDelete("{setId}/questions/{id}")]
+        [Authorize(Policy = "Administrator")]
         public async Task<ActionResult<SetQuestion>> DeleteSetQuestion(int id)
         {
             var question = await _context.SetQuestions.FindAsync(id);
@@ -574,7 +617,6 @@ namespace PslibThesesBackend.Controllers
                     _context.SaveChanges();
                 }
             }
-
             return Ok(question);
         }
 
@@ -607,7 +649,7 @@ namespace PslibThesesBackend.Controllers
             question.Description = item.Description;
             question.Points = item.Points;
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetSetQuestion", new { setId = setId, id = question.Id }, question);
+            return Ok(question);
         }
 
         /// <summary>
@@ -652,7 +694,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order - 1; i >= newOrder; i--)
                 {
                     var item = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId && sq.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order + 1;
+                    if (item != null) item.Order += 1;
                     _context.SaveChanges();
                 }
             }
@@ -661,7 +703,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order + 1; i <= newOrder; i++)
                 {
                     var item = _context.SetQuestions.Where(sq => sq.SetRoleId == roleId && sq.SetTermId == termId && sq.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order - 1;
+                    if (item != null) item.Order -= 1;
                     _context.SaveChanges();
                 }
             }
@@ -674,13 +716,9 @@ namespace PslibThesesBackend.Controllers
         // -- answers
 
         [HttpGet("{setId}/questions/{questionId}/answers")]
-        public async Task<ActionResult<IEnumerable<SetQuestion>>> GetSetAnwers(int setId, int questionId)
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<IEnumerable<SetQuestion>>> GetSetAnswers(int questionId)
         {
-            var set = await _context.Sets.FindAsync(setId);
-            if (set == null)
-            {
-                return NotFound("set not found");
-            }
             var question = await _context.SetQuestions.FindAsync(questionId);
             if (question == null)
             {
@@ -689,8 +727,96 @@ namespace PslibThesesBackend.Controllers
             var setAnswers = _context.SetAnswers
                 .Where(sa => sa.SetQuestionId == questionId)
                 .OrderByDescending(sa => sa.Rating)
-                .AsNoTracking();
+                .ToList();
             return Ok(setAnswers);
+        }
+
+        [HttpGet("{setId}/questions/{questionId}/answers/{rating}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<IEnumerable<SetQuestion>>> GetSetAnswerInQuestion(int questionId, double rating)
+        {
+            var question = await _context.SetQuestions.FindAsync(questionId);
+            if (question == null)
+            {
+                return NotFound("question not found");
+            }
+            var setAnswer = _context.SetAnswers
+                .Where(sa => sa.SetQuestionId == questionId && sa.Rating == rating)
+                .OrderByDescending(sa => sa.Rating)
+                .SingleOrDefaultAsync();
+            return Ok(setAnswer);
+        }
+
+        [HttpGet("{setId}/answers/{id}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<SetAnswer>> GetSetAnswer(int id)
+        {
+            var answer = await _context.SetAnswers.FindAsync(id);
+            if (answer == null)
+            {
+                return NotFound("answer not found");
+            }
+            return Ok(answer);
+        }
+
+        [HttpPost("{setId}/questions/{questionId}/answers")]
+        [Authorize(Policy = "Administrator")]
+        public async Task<ActionResult<SetQuestion>> PostSetAnswer(int setId, int questionId, [FromBody] SetAnswerInputModel item)
+        {
+            var set = await _context.Sets.FindAsync(setId);
+            if (set == null)
+            {
+                return NotFound("set not found");
+            }
+
+            var @question = await _context.SetQuestions.FindAsync(questionId);
+            if (@question == null)
+            {
+                return NotFound("question not found");
+            }
+
+            var newAnswer = new SetAnswer
+            {
+                SetQuestionId = questionId,
+                Text = item.Text,
+                Description = item.Description,
+                Rating = item.Rating,
+                Critical = item.Critical
+            };
+            _context.SetAnswers.Add(newAnswer);
+            await _context.SaveChangesAsync();
+            return Ok(newAnswer);
+        }
+
+        [HttpPut("{setId}/answers/{id}")]
+        [Authorize(Policy = "Administrator")]
+        public async Task<ActionResult<SetTerm>> PutSetAnswer(int setId, int id, [FromBody] SetAnswer sa)
+        {
+            var @answer = await _context.SetAnswers.FindAsync(id);
+            if (@answer == null)
+            {
+                return NotFound("answer not found");
+            }
+            answer.Text = sa.Text;
+            answer.Description = sa.Description;
+            answer.Critical = sa.Critical;
+            answer.Rating = sa.Rating;
+            await _context.SaveChangesAsync();
+            return Ok(answer);
+        }
+
+        [HttpDelete("{setId}/answers/{id}")]
+        [Authorize(Policy = "Administrator")]
+        public async Task<ActionResult<IEnumerable<SetQuestion>>> DeleteSetAnswer(int id)
+        {
+            var answer = await _context.SetAnswers.FindAsync(id);
+            if (answer != null)
+            {
+                _context.SetAnswers.Remove(answer);
+                await _context.SaveChangesAsync();
+                return Ok(answer);
+            }
+            return NotFound("answer not found");
         }
     }
 
@@ -725,5 +851,32 @@ namespace PslibThesesBackend.Controllers
         public string Text { get; set; }
         public string Description { get; set; }
         public int Points { get; set; }
+    }
+
+    public class SetAnswerInputModel
+    {
+        public int Id { get; set; }
+        public string Text { get; set; }
+        public string Description { get; set; }
+        public int Rating { get; set; }
+        public bool Critical { get; set; }
+    }
+
+    internal class NewClass
+    {
+        public int SetId { get; }
+        public int Id { get; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is NewClass other &&
+                   SetId == other.SetId &&
+                   Id == other.Id;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(SetId, Id);
+        }
     }
 }

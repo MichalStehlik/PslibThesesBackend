@@ -17,6 +17,7 @@ using PslibThesesBackend.Prints.ViewModels;
 using System.Text.Encodings.Web;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace PslibThesesBackend.Controllers
 {
@@ -99,58 +100,25 @@ namespace PslibThesesBackend.Controllers
             if (state != null)
                 works = works.Where(i => (i.State == state));
             int filtered = works.CountAsync().Result;
-            switch (order)
+            works = order switch
             {
-                case "id":
-                    works = works.OrderBy(t => t.Id);
-                    break;
-                case "id_desc":
-                    works = works.OrderByDescending(t => t.Id);
-                    break;
-                case "authorfirstname":
-                    works = works.OrderBy(t => t.Author.FirstName);
-                    break;
-                case "authorfirstname_desc":
-                    works = works.OrderByDescending(t => t.Author.FirstName);
-                    break;
-                case "authorlastname":
-                    works = works.OrderBy(t => t.Author.LastName);
-                    break;
-                case "authorlastname_desc":
-                    works = works.OrderByDescending(t => t.Author.LastName);
-                    break;
-                case "state":
-                    works = works.OrderBy(t => t.State);
-                    break;
-                case "state_desc":
-                    works = works.OrderByDescending(t => t.State);
-                    break;
-                case "year":
-                    works = works.OrderBy(t => t.Set.Year);
-                    break;
-                case "year_desc":
-                    works = works.OrderByDescending(t => t.Set.Year);
-                    break;
-                case "classname":
-                    works = works.OrderBy(t => t.ClassName);
-                    break;
-                case "classname_desc":
-                    works = works.OrderByDescending(t => t.ClassName);
-                    break;
-                case "updated":
-                    works = works.OrderBy(t => t.Updated);
-                    break;
-                case "updated_desc":
-                    works = works.OrderByDescending(t => t.Updated);
-                    break;
-                case "name_desc":
-                    works = works.OrderByDescending(t => t.Name);
-                    break;
-                case "name":
-                default:
-                    works = works.OrderBy(t => t.Name);
-                    break;
-            }
+                "id" => works.OrderBy(t => t.Id),
+                "id_desc" => works.OrderByDescending(t => t.Id),
+                "authorfirstname" => works.OrderBy(t => t.Author.FirstName),
+                "authorfirstname_desc" => works.OrderByDescending(t => t.Author.FirstName),
+                "authorlastname" => works.OrderBy(t => t.Author.LastName),
+                "authorlastname_desc" => works.OrderByDescending(t => t.Author.LastName),
+                "state" => works.OrderBy(t => t.State),
+                "state_desc" => works.OrderByDescending(t => t.State),
+                "year" => works.OrderBy(t => t.Set.Year),
+                "year_desc" => works.OrderByDescending(t => t.Set.Year),
+                "classname" => works.OrderBy(t => t.ClassName),
+                "classname_desc" => works.OrderByDescending(t => t.ClassName),
+                "updated" => works.OrderBy(t => t.Updated),
+                "updated_desc" => works.OrderByDescending(t => t.Updated),
+                "name_desc" => works.OrderByDescending(t => t.Name),
+                _ => works.OrderBy(t => t.Name),
+            };
             if (pagesize != 0)
             {
                 works = works.Skip(page * pagesize).Take(pagesize);
@@ -255,11 +223,7 @@ namespace PslibThesesBackend.Controllers
         [Authorize(Policy="AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<Idea>> Post([FromBody] WorkInputModel input)
         {
-            var user = _context.Users.FindAsync(input.UserId).Result;
-            if (user == null)
-            {
-                return NotFound("User with Id equal to userId was not found");
-            }
+            var userId = Guid.Parse(User.Claims.Where(c => c.Type == ClaimTypes.NameIdentifier).FirstOrDefault().Value);
             var author = _context.Users.FindAsync(input.AuthorId).Result;
             if (author == null)
             {
@@ -294,7 +258,7 @@ namespace PslibThesesBackend.Controllers
                 Resources = input.Resources,
                 Subject = input.Subject,
                 Set = set,
-                User = user,
+                UserId = userId,
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
                 MaterialCosts = input.MaterialCosts,
@@ -311,21 +275,25 @@ namespace PslibThesesBackend.Controllers
             _context.Works.Add(work);
             await _context.SaveChangesAsync();
 
-            foreach (var setRole in _context.SetRoles.Where(sr => sr.SetId == input.SetId))
+            foreach (var setRole in _context.SetRoles.Where(sr => sr.SetId == input.SetId).ToList())
             {
                 var workRole = new WorkRole
                 {
                     SetRoleId = setRole.Id,
                     WorkId = work.Id,
-                    Updated = DateTime.Now
+                    Updated = DateTime.Now,
                 };
                 _context.WorkRoles.Add(workRole);
             }
             await _context.SaveChangesAsync();
 
-            foreach(var workRole in _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == work.Id))
+            foreach(var workRole in _context.WorkRoles.Include(wr => wr.SetRole).Include(wr => wr.WorkRoleUsers).Where(wr => wr.WorkId == work.Id).ToList())
             {
-                // populating roles (there is no source for data yet)
+                if (workRole.SetRole.Manager == true)
+                {
+                    workRole.WorkRoleUsers.Add(new WorkRoleUser { User = manager, WorkRole = workRole});
+                    await _context.SaveChangesAsync();
+                }
             }
 
             return CreatedAtAction("GetWork", new { id = work.Id }, work);

@@ -84,40 +84,19 @@ namespace PslibThesesBackend.Controllers
             if (target != null)
                 ideas = ideas.Where(i => (i.IdeaTargets.Where(it => it.TargetId == target).Count() > 0));
             int filtered = ideas.CountAsync().Result;
-            switch (order)
+            ideas = order switch
             {
-                case "id":
-                    ideas = ideas.OrderBy(t => t.Id);
-                    break;
-                case "id_desc":
-                    ideas = ideas.OrderByDescending(t => t.Id);
-                    break;
-                case "firstname":
-                    ideas = ideas.OrderBy(t => t.User.FirstName);
-                    break;
-                case "firstname_desc":
-                    ideas = ideas.OrderByDescending(t => t.User.FirstName);
-                    break;
-                case "lastname":
-                    ideas = ideas.OrderBy(t => t.User.LastName);
-                    break;
-                case "lastname_desc":
-                    ideas = ideas.OrderByDescending(t => t.User.LastName);
-                    break;
-                case "updated":
-                    ideas = ideas.OrderBy(t => t.Updated);
-                    break;
-                case "updated_desc":
-                    ideas = ideas.OrderByDescending(t => t.Updated);
-                    break;
-                case "name_desc":
-                    ideas = ideas.OrderByDescending(t => t.Name);
-                    break;
-                case "name":
-                default:
-                    ideas = ideas.OrderBy(t => t.Name);
-                    break;
-            }
+                "id" => ideas.OrderBy(t => t.Id),
+                "id_desc" => ideas.OrderByDescending(t => t.Id),
+                "firstname" => ideas.OrderBy(t => t.User.FirstName),
+                "firstname_desc" => ideas.OrderByDescending(t => t.User.FirstName),
+                "lastname" => ideas.OrderBy(t => t.User.LastName),
+                "lastname_desc" => ideas.OrderByDescending(t => t.User.LastName),
+                "updated" => ideas.OrderBy(t => t.Updated),
+                "updated_desc" => ideas.OrderByDescending(t => t.Updated),
+                "name_desc" => ideas.OrderByDescending(t => t.Name),
+                _ => ideas.OrderBy(t => t.Name),
+            };
             if (pagesize != 0)
             {
                 ideas = ideas.Skip(page * pagesize).Take(pagesize);
@@ -712,7 +691,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order - 1; i >= newOrder; i--)
                 {
                     var item = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order + 1;
+                    if (item != null) item.Order += 1;
                     _context.SaveChanges();
                 }
             }
@@ -721,7 +700,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order + 1; i <= newOrder; i++)
                 {
                     var item = _context.IdeaGoals.Where(ig => ig.Idea == idea && ig.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order - 1;
+                    if (item != null) item.Order -= 1;
                     _context.SaveChanges();
                 }
             }
@@ -1043,7 +1022,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order - 1; i >= newOrder; i--)
                 {
                     var item = _context.IdeaOutlines.Where(ig => ig.Idea == idea && ig.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order + 1;
+                    if (item != null) item.Order += 1;
                     _context.SaveChanges();
                 }
             }
