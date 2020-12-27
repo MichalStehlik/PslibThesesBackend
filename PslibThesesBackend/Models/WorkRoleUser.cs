@@ -18,8 +18,8 @@ namespace PslibThesesBackend.Models
         [JsonIgnore]
         public WorkRole WorkRole { get; set; }
         [Required]
-        [JsonIgnore]
         public Guid UserId { get; set; }
+        [JsonIgnore]
         [ForeignKey("UserId")]
         public User User { get; set; }
         [Required]

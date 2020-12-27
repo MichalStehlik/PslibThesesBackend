@@ -26,9 +26,9 @@ namespace PslibThesesBackend.Controllers
     public class WorksController : ControllerBase
     {
         private readonly ThesesContext _context;
-        private RazorViewToStringRenderer _razorRenderer;
-        private IConfiguration _configuration;
-        private EmailSender _emailSender;
+        private readonly RazorViewToStringRenderer _razorRenderer;
+        private readonly IConfiguration _configuration;
+        private readonly EmailSender _emailSender;
         private readonly IAuthorizationService _authorizationService;
 
         private readonly Dictionary<WorkState, List<WorkState>> _stateTransitions = new Dictionary<WorkState, List<WorkState>>
@@ -142,7 +142,7 @@ namespace PslibThesesBackend.Controllers
                 Year = i.Set.Year
             }).ToList();
             int count = worksVM.Count();
-            return Ok(new { total = total, filtered = filtered, count = count, page = page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = worksVM });
+            return Ok(new { total, filtered, count, page, pages = ((pagesize == 0) ? 0 : Math.Ceiling((double)filtered / pagesize)), data = worksVM });
         }
 
         // GET: Works/5
@@ -560,7 +560,7 @@ namespace PslibThesesBackend.Controllers
 
             var goals = _context.WorkGoals
                 .Where(wg => wg.Work == work)
-                .Select(wg => new { WorkId = wg.WorkId, Order = wg.Order, Text = wg.Text })
+                .Select(wg => new { wg.WorkId, wg.Order, wg.Text })
                 .OrderBy(wg => wg.Order)
                 .AsNoTracking();
             return Ok(goals);
@@ -584,7 +584,7 @@ namespace PslibThesesBackend.Controllers
 
             var goal = _context.WorkGoals
                 .Where(wg => wg.Work == work && wg.Order == order)
-                .Select(wg => new { WorkId = wg.WorkId, wg.Order, wg.Text })
+                .Select(wg => new { wg.WorkId, wg.Order, wg.Text })
                 .FirstOrDefault();
             if (goal == null)
             {
@@ -632,7 +632,7 @@ namespace PslibThesesBackend.Controllers
             var newGoal = new WorkGoal { WorkId = id, Order = maxGoalOrder + 1, Text = goalText.Text };
             _context.WorkGoals.Add(newGoal);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetWorkGoal", new { id = newGoal.WorkId, order = newGoal.Order }, new { WorkId = id, Order = maxGoalOrder + 1, Text = goalText.Text });
+            return CreatedAtAction("GetWorkGoal", new { id = newGoal.WorkId, order = newGoal.Order }, new { WorkId = id, Order = maxGoalOrder + 1, goalText.Text });
         }
 
         // PUT: Works/5/goals
@@ -767,7 +767,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order - 1; i >= newOrder; i--)
                 {
                     var item = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order + 1;
+                    if (item != null) item.Order += 1;
                     _context.SaveChanges();
                 }
             }
@@ -776,7 +776,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order + 1; i <= newOrder; i++)
                 {
                     var item = _context.WorkGoals.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order - 1;
+                    if (item != null) item.Order -= 1;
                     _context.SaveChanges();
                 }
             }
@@ -890,7 +890,7 @@ namespace PslibThesesBackend.Controllers
 
             var contents = _context.WorkOutlines
                 .Where(wc => wc.Work == work)
-                .Select(wc => new { WorkId = wc.WorkId, Order = wc.Order, Text = wc.Text })
+                .Select(wc => new { wc.WorkId, wc.Order, wc.Text })
                 .OrderBy(ic => ic.Order)
                 .AsNoTracking();
             return Ok(contents);
@@ -914,7 +914,7 @@ namespace PslibThesesBackend.Controllers
 
             var content = _context.WorkOutlines
                 .Where(wg => wg.Work == work && wg.Order == order)
-                .Select(wg => new { WorkId = wg.WorkId, wg.Order, wg.Text })
+                .Select(wg => new { wg.WorkId, wg.Order, wg.Text })
                 .FirstOrDefault();
             if (content == null)
             {
@@ -960,7 +960,7 @@ namespace PslibThesesBackend.Controllers
             var newOutline = new WorkOutline { WorkId = id, Order = maxOrder + 1, Text = outlineText.Text };
             _context.WorkOutlines.Add(newOutline);
             await _context.SaveChangesAsync();
-            return CreatedAtAction("GetWorkOutline", new { id = newOutline.WorkId, order = newOutline.Order }, new { WorkId = id, Order = maxOrder + 1, Text = outlineText.Text });
+            return CreatedAtAction("GetWorkOutline", new { id = newOutline.WorkId, order = newOutline.Order }, new { WorkId = id, Order = maxOrder + 1, outlineText.Text });
         }
 
         // PUT: Works/5/outlines
@@ -1093,7 +1093,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order - 1; i >= newOrder; i--)
                 {
                     var item = _context.WorkOutlines.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order + 1;
+                    if (item != null) item.Order += 1;
                     _context.SaveChanges();
                 }
             }
@@ -1102,7 +1102,7 @@ namespace PslibThesesBackend.Controllers
                 for (int i = order + 1; i <= newOrder; i++)
                 {
                     var item = _context.WorkOutlines.Where(wg => wg.Work == work && wg.Order == i).FirstOrDefault();
-                    if (item != null) item.Order = item.Order - 1;
+                    if (item != null) item.Order -= 1;
                     _context.SaveChanges();
                 }
             }
@@ -1339,6 +1339,74 @@ namespace PslibThesesBackend.Controllers
             return assigned;
         }
 
+        [HttpPost("{id}/roles/{workRoleId}/users")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult> PostWorkRoleAssignments(int id, int workRoleId, [FromBody] RoleUserInputModel input)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var workRole = await _context.WorkRoles.FindAsync(workRoleId);
+            if (workRole == null)
+            {
+                return NotFound("workRole not found");
+            }
+            if (workRole.WorkId != work.Id)
+            {
+                return BadRequest("work does not contain specified role");
+            }
+            var user = await _context.Users.FindAsync(Guid.Parse(input.Id));
+            if (user == null)
+            {
+                return NotFound("user not found");
+            }
+            WorkRoleUser roleUser = _context.WorkRoleUsers.Where(wru => wru.WorkRoleId == workRoleId && wru.UserId == user.Id).FirstOrDefault();
+            if (roleUser != null)
+            {
+                return Ok("user was already assigned to this role");
+            }
+
+            WorkRoleUser nwru = new WorkRoleUser { WorkRole = workRole, User = user };
+            _context.WorkRoleUsers.Add(nwru);
+            await _context.SaveChangesAsync();
+            return Ok(nwru);
+        }
+
+        [HttpDelete("{id}/roles/{roleId}/users/{userId}")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<WorkRole>> DeleteWorkRoleUser(int id, int roleId, string userId)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+            var workRole = await _context.WorkRoles.FindAsync(roleId);
+            if (workRole == null)
+            {
+                return NotFound("workRole not found");
+            }
+            if (workRole.WorkId != work.Id)
+            {
+                return BadRequest("work does not contain specified role");
+            }
+            var user = await _context.Users.FindAsync(Guid.Parse(userId));
+            if (user == null)
+            {
+                return NotFound("user not found");
+            }
+            WorkRoleUser roleUser = _context.WorkRoleUsers.Where(wru => wru.WorkRoleId == roleId && wru.UserId == user.Id).FirstOrDefault();
+            if (roleUser == null)
+            {
+                return NotFound("user is not assigned to this role in this work");
+            }
+            _context.WorkRoleUsers.Remove(roleUser);
+            _context.SaveChanges();
+            return Ok(workRole);
+        }
+
         // print version
         [HttpGet("{id}/application")]
         public async Task<ActionResult> DownloadApplication(int id)
@@ -1469,6 +1537,6 @@ namespace PslibThesesBackend.Controllers
 
     public class RoleUserInputModel
     {
-        public Guid Id { get; set; }
+        public string Id { get; set; }
     }
 }
