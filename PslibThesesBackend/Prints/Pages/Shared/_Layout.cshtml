@@ -12,44 +12,24 @@
             font-size: 9pt;
             width: 210mm;
         }
-        @@page {
-            size: A4 portrait;
-            margin: 1cm;
-        }
-        @@page:left {
-            margin-right: 2cm;
-
-            @@bottom-right {
+        @@media print {
+            @@page {
+                size: auto;
                 margin: 0;
-                border-top: thin solid green;
-                content: counter(page) " / " counter(pages);
-                font-size: 9pt;
-            }
+                margin-bottom: 1cm;
 
-            @@bottom-left {
-                margin: 0;
-                border-top: thin solid red;
-                content: "Test";
-                font-size: 9pt;
+                @@bottom-center {
+                    border-top: .25pt solid #666;
+                    content: counter(page) " / " counter(pages);
+                    font-size: 9pt;
+                    color: #333;
+                }
             }
-        }
-        @@page:right {
-            margin-left: 2cm;
-
-            @@bottom-right {
-                margin: 0;
-                border-top: thin solid #666;
-                content: counter(page) " / " counter(pages);
-                font-size: 9pt;
+            @@page :blank {
+                @@top-center { content: "This page is intentionally left blank." }
             }
-        }
-        @@page:first {
-        }
-
-        @@page:blank {
-            @@top-center {
-                content: "This page is intentionally left blank.";
-                font-style: italic;
+            body {
+                margin: 1.6cm;
             }
         }
         h1, h2, h3, h4, h5 {
@@ -83,6 +63,12 @@
         }
         table.fixed {
             table-layout: fixed;
+        }
+        table td.number-column {
+            width: 1cm;
+        }
+        table td.vertical-top {
+            vertical-align: top;
         }
         .no-bold,
         .no-bold td {

@@ -1,7 +1,7 @@
 ﻿@using PslibThesesBackend.Prints.ViewModels
 @model AssignmentViewModel
 <header id="document-title">
-    <h1>Přihláška k maturitní práci</h1>
+    <h1>Přihláška k absolventské práci</h1>
 </header>
 <section id="work-data">
     <table>
@@ -51,21 +51,21 @@
             <tr>
                 @foreach (var role in Model.Roles)
                 {
-                <td class="vertical-top">
-                    @foreach (var wru in role.WorkRoleUsers)
-                    {
-                        <div class="signature signature-space">Podpis</div>
-                        @if (wru.User != null)
+                    <td class="vertical-top">
+                        @foreach (var wru in role.WorkRoleUsers)
                         {
-                            <div class="center">@wru.User.Name</div>
-                        }
-                        else
-                        {
-                            <div class="center"></div>
-                        }
+                            <div class="signature signature-space">Podpis</div>
+                            @if (wru.User != null)
+                            {
+                                <div class="center">@wru.User.Name</div>
+                            }
+                            else
+                            {
+                                <div class="center"></div>
+                            }
 
-                    }
-                </td>
+                        }
+                    </td>
                 }
             </tr>
         </table>
@@ -99,7 +99,7 @@
         </tr>
         <tr>
             <td>
-                Veškeré náklady na MP včetně vyhotovení obou tištěných kopií si student hradí sám.
+                Veškeré náklady na AP včetně vyhotovení obou tištěných kopií si student hradí sám.
             </td>
         </tr>
         <tr>
@@ -138,7 +138,7 @@
             <td>@Model.ServicesCostsProvidedBySchool</td>
         </tr>
     </table>
-    <p>Jedná se o MP, jejíž vypracování si škola vyžádala? <strong>Ano</strong> &ndash; <strong>Ne</strong></p>
+    <p>Jedná se o AP, jejíž vypracování si škola vyžádala? <strong>Ano</strong> &ndash; <strong>Ne</strong></p>
 </section>
 <section id="signatures">
     <table class="fixed">
@@ -214,7 +214,7 @@
     </table>
 </section>
 <header id="page-title" class="new-page">
-    <h1>Zadání maturitní práce</h1>
+    <h1>Zadání absolventské práce</h1>
 </header>
 <section id="work-theme">
     <table>
@@ -259,7 +259,7 @@
     @if (Model.Goals.Count > 0)
     {
         <table class="table">
-            @foreach(var goal in Model.Goals)
+            @foreach (var goal in Model.Goals)
             {
                 <tr>
                     <td class="number-column">@goal.Order</td>

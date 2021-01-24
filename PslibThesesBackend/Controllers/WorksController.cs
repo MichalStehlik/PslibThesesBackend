@@ -1409,6 +1409,7 @@ namespace PslibThesesBackend.Controllers
 
         // print version
         [HttpGet("{id}/application")]
+        [Authorize]
         public async Task<ActionResult> DownloadApplication(int id)
         {
             var work = await _context.Works.Include(w => w.Author).Include(w => w.Goals).Include(w => w.Outlines).FirstOrDefaultAsync();
@@ -1416,18 +1417,46 @@ namespace PslibThesesBackend.Controllers
             {
                 return NotFound("work not found");
             }
+            var isEvaluator = await _authorizationService.AuthorizeAsync(User, "AdministratorOrManagerOrEvaluator");
+            if (!User.HasClaim(ClaimTypes.NameIdentifier, work.AuthorId.ToString()) 
+                && !User.HasClaim(ClaimTypes.NameIdentifier, work.ManagerId.ToString())
+                && !isEvaluator.Succeeded)
+            {
+                return BadRequest("You are not allowed do download application for this work");
+            }
             var set = await _context.Sets.Where(s => s.Id == work.SetId).FirstOrDefaultAsync();
             if (work == null)
             {
                 return NotFound("set not found");
             }
-            var roles = _context.WorkRoles.Include(wr => wr.SetRole).Where(wr => wr.WorkId == id && wr.SetRole.PrintedInApplication == true).Include(wr => wr.WorkRoleUsers).ToList();
+            var roles = _context.WorkRoles.Include(wr => wr.SetRole)
+                .Where(wr => wr.WorkId == id && wr.SetRole.PrintedInApplication == true)
+                .Include(wr => wr.WorkRoleUsers).ThenInclude(wru => wru.User)
+                .ToList();
+            var goals = _context.WorkGoals.Where(wg => wg.WorkId == id).ToList();
+            var outlines = _context.WorkOutlines.Where(wo => wo.WorkId == id).ToList();
+
             string templateFileName = "";
             string outputFileName = "";
+            bool signDepartmentHead = true;
+            bool signClassTeacher = true;
+            bool signGarant = true;
+            bool signDirector = true;
+            bool signConsultant = true;
             switch (set.Template)
             {
                 case ApplicationTemplate.SeminarWork:
                     {
+                        templateFileName = "/Prints/Pages/AssignmentSeminar.cshtml";
+                        outputFileName = "RP" + set.Year + "_";
+                        signDirector = false;
+                        signDepartmentHead = false;
+                        break;
+                    }
+                case ApplicationTemplate.GraduationWorkHigher:
+                    {
+                        templateFileName = "/Prints/Pages/AssignmentGraduationHigher.cshtml";
+                        outputFileName = "AP" + set.Year + "_";
                         break;
                     }
                 default:
@@ -1440,8 +1469,7 @@ namespace PslibThesesBackend.Controllers
             outputFileName += work.Name;
             string documentBody = await _razorRenderer.RenderViewToStringAsync(templateFileName, new AssignmentViewModel
             {
-                AuthorFirstName = work.Author.FirstName,
-                AuthorLastName = work.Author.LastName,
+                AuthorName = work.Author.Name,
                 ClassName = work.ClassName,
                 Title = work.Name,
                 Subject = work.Subject,
@@ -1455,11 +1483,16 @@ namespace PslibThesesBackend.Controllers
                 AppUrl = HtmlEncoder.Default.Encode(Request.Scheme + "://" + Request.Host.Value),
                 Date = DateTime.Now,
                 Roles = roles,
-                Goals = work.Goals.OrderBy(g => g.Order).ToList(),
-                Outlines = work.Outlines.OrderBy(g => g.Order).ToList()
+                Goals = goals,
+                Outlines = outlines,
+                HasClassTeacherSignature = signClassTeacher,
+                HasDepartmentHeadSignature = signDepartmentHead,
+                HasGarantSignature = signGarant,
+                HasDirectorSignature = signDirector,
+                HasConsultantSignature = signConsultant
             });
             MemoryStream memory = new MemoryStream(Encoding.UTF8.GetBytes(documentBody));
-            return File(memory, "text/plain", outputFileName + ".html");
+            return File(memory, "text/html", outputFileName + ".html");
         }
     }
 

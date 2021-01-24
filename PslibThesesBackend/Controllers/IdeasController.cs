@@ -21,7 +21,7 @@ namespace PslibThesesBackend.Controllers
     public class IdeasController : ControllerBase
     {
         private readonly ThesesContext _context;
-        private ILogger<IdeasController> _logger;
+        private readonly ILogger<IdeasController> _logger;
         private readonly IAuthorizationService _authorizationService;
 
         public IdeasController(ThesesContext context, ILogger<IdeasController> logger, IAuthorizationService authorizationService)

@@ -8,8 +8,7 @@ namespace PslibThesesBackend.Prints.ViewModels
 {
     public class AssignmentViewModel
     {
-        public string AuthorFirstName { get; set; }
-        public string AuthorLastName { get; set; }
+        public string AuthorName { get; set; }
         public string ClassName { get; set; }
         public string Title { get; set; }
         public string SetName { get; set; }
