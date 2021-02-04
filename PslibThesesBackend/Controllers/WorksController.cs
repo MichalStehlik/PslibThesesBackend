@@ -180,7 +180,8 @@ namespace PslibThesesBackend.Controllers
                 AuthorId = work.AuthorId,
                 ManagerId = work.ManagerId,
                 RepositoryURL = work.RepositoryURL,
-                SetId = work.SetId
+                SetId = work.SetId,
+                State = work.State
             }
             );
         }
@@ -529,7 +530,30 @@ namespace PslibThesesBackend.Controllers
             {
                 return BadRequest("Only admin can delete work in this state");
             }
+            var goals = _context.WorkGoals.Where(ig => ig.Work == work).AsNoTracking().ToList();
+            if (goals != null)
+            {
+                _context.WorkGoals.RemoveRange(goals);
+                _context.SaveChanges();
+            }
+            var outlines = _context.WorkOutlines.Where(ig => ig.Work == work).AsNoTracking().ToList();
+            if (outlines != null)
+            {
+                _context.WorkOutlines.RemoveRange(outlines);
+                _context.SaveChanges();
+            }
+            var roles = _context.WorkRoles.Where(wr => wr.WorkId == work.Id).ToList();
+            foreach(WorkRole role in roles)
+            {
+                var usersAssigned = _context.WorkRoleUsers.Where(wru => wru.WorkRoleId == role.Id).ToList();
+                if (usersAssigned != null)
+                {
+                    _context.WorkRoleUsers.RemoveRange(usersAssigned);
+                    _context.SaveChanges();
+                }
+            }
 
+            work.Updated = DateTime.Now;
             _context.Works.Remove(work);
             await _context.SaveChangesAsync();
 
@@ -633,6 +657,33 @@ namespace PslibThesesBackend.Controllers
             _context.WorkGoals.Add(newGoal);
             await _context.SaveChangesAsync();
             return CreatedAtAction("GetWorkGoal", new { id = newGoal.WorkId, order = newGoal.Order }, new { WorkId = id, Order = maxGoalOrder + 1, goalText.Text });
+        }
+
+        [HttpPost("{id}/goals/all")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult<WorkGoal>> PostWorkGoalsAll(int id, [FromBody] List<string> goals)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
+            }
+            for (int i = 0; i < goals.Count; i++)
+            {
+                if (!String.IsNullOrEmpty(goals[i]))
+                {
+                    var newGoal = new WorkGoal { WorkId = id, Order = i+1, Text = goals[i] };
+                    _context.WorkGoals.Add(newGoal);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            return Ok();
         }
 
         // PUT: Works/5/goals
@@ -963,6 +1014,33 @@ namespace PslibThesesBackend.Controllers
             return CreatedAtAction("GetWorkOutline", new { id = newOutline.WorkId, order = newOutline.Order }, new { WorkId = id, Order = maxOrder + 1, outlineText.Text });
         }
 
+        [HttpPost("{id}/outlines/all")]
+        [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
+        public async Task<ActionResult> PostWorkOutlinesAll(int id, [FromBody] List<string> outlines)
+        {
+            var work = await _context.Works.FindAsync(id);
+            if (work == null)
+            {
+                return NotFound("work not found");
+            }
+
+            var isAdministrator = await _authorizationService.AuthorizeAsync(User, "Administrator");
+            if (work.State != WorkState.InPreparation && !isAdministrator.Succeeded)
+            {
+                return BadRequest("Only admin can modify work in this state");
+            }
+            for (int i = 0; i < outlines.Count; i++)
+            {
+                if (!String.IsNullOrEmpty(outlines[i]))
+                {
+                    var newOutline = new WorkOutline { WorkId = id, Order = i+1, Text = outlines[i] };
+                    _context.WorkOutlines.Add(newOutline);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            return Ok();
+        }
+
         // PUT: Works/5/outlines
         /// <summary>
         /// Replaces all outlines inside a work with a new ones
@@ -1229,7 +1307,7 @@ namespace PslibThesesBackend.Controllers
             return Enum.GetValues(typeof(WorkState)).Cast<WorkState>().Select(v => new StateDescription { Code = v, Description = v.ToString()}).ToList();
         }
 
-        [HttpPut("{id}/state")]
+        [HttpPut("{id}/state/{newState}")]
         [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
         public async Task<ActionResult<WorkState>> PutWorkState(int id, WorkState newState)
         {
@@ -1239,7 +1317,8 @@ namespace PslibThesesBackend.Controllers
                 return NotFound("work not found");
             }
             var next = _stateTransitions[work.State];
-            if (!next.Contains(newState) || (User.HasClaim(c => ((c.Type == Security.THESES_ADMIN_CLAIM) && (c.Value == "1")))) || (User.HasClaim(c => ((c.Type == Security.THESES_ROBOT_CLAIM) && (c.Value == "1")))))
+            //  || (User.HasClaim(c => ((c.Type == Security.THESES_ADMIN_CLAIM) && (c.Value == "1")))) || (User.HasClaim(c => ((c.Type == Security.THESES_ROBOT_CLAIM) && (c.Value == "1"))))
+            if (!next.Contains(newState))
             {
                 return BadRequest("state transition is not valid");
             }
