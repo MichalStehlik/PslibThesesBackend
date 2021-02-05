@@ -173,7 +173,15 @@ namespace Authority.Quickstart.UI
                     catch { }
                     try
                     {
+                        var oldClaims = await _userManager.GetClaimsAsync(user);
+                        var oldDepartmentClaim = oldClaims.Where(c => c.Type == "department").SingleOrDefault();
+                        ;
+                        if (oldDepartmentClaim != null)
+                        {
+                            await _userManager.RemoveClaimAsync(user, oldDepartmentClaim);
+                        }
                         string department = content.department;
+                        await _userManager.AddClaimAsync(user, new Claim("department", department));
                         additionalLocalClaims.Add(new Claim("department", department));
                     }
                     catch { }
