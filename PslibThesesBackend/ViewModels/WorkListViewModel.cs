@@ -22,6 +22,16 @@ namespace PslibThesesBackend.ViewModels
         public string AuthorFirstName { get; set; }
         public string AuthorLastName { get; set; }
         public string AuthorEmail { get; set; }
+
+        public Guid ManagerId { get; set; }
+        public string ManagerFirstName { get; set; }
+        public string ManagerLastName { get; set; }
+        public string ManagerEmail { get; set; }
+
+        public Guid UserId { get; set; }
+        public string UserFirstName { get; set; }
+        public string UserLastName { get; set; }
+        public string UserEmail { get; set; }
         public int SetId { get; set; }
         public string SetName { get; set; }
         public DateTime Updated { get; set; }

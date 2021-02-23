@@ -31,15 +31,8 @@ namespace PslibThesesBackend.Controllers
         private readonly EmailSender _emailSender;
         private readonly IAuthorizationService _authorizationService;
 
-        private readonly Dictionary<WorkState, List<WorkState>> _stateTransitions = new Dictionary<WorkState, List<WorkState>>
-        {
-            { WorkState.InPreparation, new List<WorkState> {WorkState.WorkedOut} },
-            { WorkState.WorkedOut, new List<WorkState> {WorkState.Completed, WorkState.Failed} },
-            { WorkState.Completed, new List<WorkState> {WorkState.Undefended, WorkState.Succesful} },
-            { WorkState.Failed, new List<WorkState> {} },
-            { WorkState.Succesful, new List<WorkState> {} },
-            { WorkState.Undefended, new List<WorkState> {} }
-        };
+        private readonly Dictionary<WorkState, List<WorkState>> _stateTransitions = Definitions.StateTransitions;
+
         public WorksController(ThesesContext context, RazorViewToStringRenderer razorRenderer, IConfiguration configuration, EmailSender emailSender, IAuthorizationService authorizationService)
         {
             _context = context;
@@ -57,8 +50,8 @@ namespace PslibThesesBackend.Controllers
             Guid? authorId = null,
             Guid? managerId = null,
             Guid? userId = null,
-            string authorfirstname = null,
-            string authorlastname = null,
+            string firstname = null,
+            string lastname = null,
             int? setId = null,
             int? year = null,
             string classname = null,
@@ -79,10 +72,10 @@ namespace PslibThesesBackend.Controllers
                 works = works.Where(i => (i.Name.Contains(name)));
             if (!String.IsNullOrEmpty(subject))
                 works = works.Where(i => (i.Subject.Contains(subject)));
-            if (!String.IsNullOrEmpty(authorfirstname))
-                works = works.Where(i => (i.Author.FirstName.Contains(authorfirstname)));
-            if (!String.IsNullOrEmpty(authorlastname))
-                works = works.Where(i => (i.Author.LastName.Contains(authorlastname)));
+            if (!String.IsNullOrEmpty(firstname))
+                works = works.Where(i => (i.Author.FirstName.Contains(firstname)));
+            if (!String.IsNullOrEmpty(lastname))
+                works = works.Where(i => (i.Author.LastName.Contains(lastname)));
             if (!String.IsNullOrEmpty(classname))
                 works = works.Where(i => (i.ClassName.Contains(classname)));
             if (userId != null)
@@ -134,6 +127,12 @@ namespace PslibThesesBackend.Controllers
                 AuthorLastName = i.Author.LastName,
                 AuthorId = i.AuthorId,
                 AuthorEmail = i.Author.Email,
+                UserFirstName = i.User.FirstName,
+                UserLastName = i.User.LastName,
+                UserId = i.UserId,
+                ManagerFirstName = i.Manager.FirstName,
+                ManagerLastName = i.Manager.LastName,
+                ManagerId = i.ManagerId,
                 Updated = i.Updated,
                 SetId = i.SetId,
                 SetName = i.Set.Name,
@@ -1491,7 +1490,7 @@ namespace PslibThesesBackend.Controllers
         [Authorize]
         public async Task<ActionResult> DownloadApplication(int id)
         {
-            var work = await _context.Works.Include(w => w.Author).Include(w => w.Goals).Include(w => w.Outlines).FirstOrDefaultAsync();
+            var work = await _context.Works.Include(w => w.Author).Where(w => w.Id == id).FirstOrDefaultAsync();
             if (work == null)
             {
                 return NotFound("work not found");
