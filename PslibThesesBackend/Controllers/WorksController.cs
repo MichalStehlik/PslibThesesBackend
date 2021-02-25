@@ -52,6 +52,8 @@ namespace PslibThesesBackend.Controllers
             Guid? userId = null,
             string firstname = null,
             string lastname = null,
+            string managerfirstname = null,
+            string managerlastname = null,
             int? setId = null,
             int? year = null,
             string classname = null,
@@ -76,6 +78,10 @@ namespace PslibThesesBackend.Controllers
                 works = works.Where(i => (i.Author.FirstName.Contains(firstname)));
             if (!String.IsNullOrEmpty(lastname))
                 works = works.Where(i => (i.Author.LastName.Contains(lastname)));
+            if (!String.IsNullOrEmpty(managerfirstname))
+                works = works.Where(i => (i.Manager.FirstName.Contains(firstname)));
+            if (!String.IsNullOrEmpty(managerlastname))
+                works = works.Where(i => (i.Manager.LastName.Contains(lastname)));
             if (!String.IsNullOrEmpty(classname))
                 works = works.Where(i => (i.ClassName.Contains(classname)));
             if (userId != null)
@@ -130,9 +136,11 @@ namespace PslibThesesBackend.Controllers
                 UserFirstName = i.User.FirstName,
                 UserLastName = i.User.LastName,
                 UserId = i.UserId,
+                UserEmail = i.User.Email,
                 ManagerFirstName = i.Manager.FirstName,
                 ManagerLastName = i.Manager.LastName,
                 ManagerId = i.ManagerId,
+                ManagerEmail = i.Manager.Email,
                 Updated = i.Updated,
                 SetId = i.SetId,
                 SetName = i.Set.Name,

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace PslibThesesBackend.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     [Authorize(Policy = "AdministratorOrManagerOrEvaluator")]
     public class EvaluationController : ControllerBase
